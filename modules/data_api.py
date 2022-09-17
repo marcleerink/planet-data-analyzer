@@ -1,15 +1,8 @@
-from datetime import datetime
-import json
-import os
 import requests
-from datetime import datetime
 import logging
 from retrying import retry
 import pandas as pd
-from pandas import json_normalize
-from shapely.geometry import shape
-import geopandas as gpd
-import geojson
+
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -79,7 +72,7 @@ def search(session, search_request):
         raise Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
                                                                        response.text))
 
-def search_requester(item_types, start_date, end_date, cc):
+def search_requester(item_types, start_date, end_date, cc, geometry):
     # Create search payload with full geometry and full TOI
     payload = {
         "item_types": item_types,  # Default item type to search for
@@ -105,9 +98,14 @@ def search_requester(item_types, start_date, end_date, cc):
         }
     }
 
+    geometry_filter = {
+        "type": "GeometryFilter",
+        "field_name": "geometry",
+        "config":geometry}
+
     and_filter = {
         "type": "AndFilter",
-        "config": [date_range_filter, cloud_filter]
+        "config": [date_range_filter, cloud_filter, geometry_filter]
     }
 
     search_request = {
@@ -116,19 +114,16 @@ def search_requester(item_types, start_date, end_date, cc):
     }
     return search_request
 
-def do_search(api_key=None, item_types=None, start_date=None, end_date=None, cc=None):
+def do_search(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
     # Start Planet Session
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
 
     item_types = [item_types] if not isinstance(item_types, list) else item_types
     
-    # Take input TOI as reference
-    start_date = start_date.strftime("%Y-%m-%d")
-    end_date = end_date.strftime("%Y-%m-%d")
     
     # create search request with filters
-    search_request = search_requester(item_types, start_date, end_date, cc)
+    search_request = search_requester(item_types, start_date, end_date, cc, geometry)
 
     # Search for items
     items = search(session, search_request)
