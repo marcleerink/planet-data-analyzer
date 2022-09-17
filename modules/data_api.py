@@ -114,25 +114,21 @@ def search_requester(item_types, start_date, end_date, cc, geometry):
     }
     return search_request
 
-def do_search(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
+def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
     # Start Planet Session
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
 
     item_types = [item_types] if not isinstance(item_types, list) else item_types
     
-    
     # create search request with filters
     search_request = search_requester(item_types, start_date, end_date, cc, geometry)
 
     # Search for items
     items = search(session, search_request)
-    
     logger.info("Total items found: {}".format(len(items)))
 
-    items_df = pd.DataFrame(items)
-    print(items_df)
-    return items_df.to_dict('index')
+    return items
 
 
 

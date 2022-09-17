@@ -2,7 +2,9 @@ import argparse
 import os
 import pandas as pd
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def arguments():
     parser = argparse.ArgumentParser(description="Creates a usage report for all SkySat Tasks and Orders.")
