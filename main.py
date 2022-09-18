@@ -37,12 +37,12 @@ def main(args):
     engine = db.db_engine()
 
     # store in postgis
-    gdf.to_postgis(name='planet', con= engine, if_exists='append')
-    
+    gdf.to_postgis(name='planet', con= engine, if_exists='replace')
+
     # export df to excel
     exporter.export_reports(gdf,'test', args.get('out_dir'))
 
-# run when file is directly executed
+
 if __name__ == "__main__":
     # parse arguments and bundle
     args_bundle = arg_parser.parser()

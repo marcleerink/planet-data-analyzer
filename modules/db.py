@@ -3,9 +3,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from geoalchemy2 import Geometry
 import pandas as pd
+import os
 
 def db_engine():
-    engine = create_engine('postgresql://postgres:5jippie5@localhost:5432/planet', echo=True)
+    engine = create_engine(os.getenv('POSTGIS'), echo=True)
     return engine
    
 
