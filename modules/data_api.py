@@ -1,7 +1,8 @@
 import requests
 import logging
 from retrying import retry
-import pandas as pd
+
+from main import LOGGER
 
 
 # Logger
@@ -17,6 +18,17 @@ class RateLimitException(Exception):
 
 def _retry_if_rate_limit_error(exception):
     return isinstance(exception, RateLimitException)
+
+def get_item_types(session):
+    response = session.get(ITEM_TYPES)
+    items = response.json()
+    item_types = items['item_types']
+    return [item['id'] for item in item_types]
+
+        
+    
+    
+    
 
 @retry(
     wait_exponential_multiplier=1000,
@@ -49,10 +61,8 @@ def search(session, search_request):
     """Created a search filter using the input payload and makes calls to the Data API quick-search endpoints returning
     all features in API response"""
 
-
     # Search API request
-    logger.info("Searching {} - {}".format(SEARCH_URL, search_request))
-    response = session.post(SEARCH_URL, json=search_request, params={"strict": "true"})
+    response = session.post(SEARCH_URL, json=search_request, params={"strict": "false"})
     
     # Exponential back-off, uo to 5 times retry
     while response.status_code == 429:
@@ -119,8 +129,12 @@ def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=N
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
 
-    item_types = [item_types] if not isinstance(item_types, list) else item_types
     
+    # get all item_types if none provided
+    item_types = get_item_types(session) if not item_types else item_types
+
+    logger.debug(f'Searching for item types:{item_types}')
+
     # create search request with filters
     search_request = search_requester(item_types, start_date, end_date, cc, geometry)
 

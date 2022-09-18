@@ -44,12 +44,11 @@ def arguments():
         help="Path to geojson file containing AOIs")
 
     parser.add_argument(
-        '--item-types', 
+        '--item_types', 
         type=str, 
         required=False,
-        default="PSScene",
         help="Item Type(s) to run the search for, comma-delimited. "
-            "Defaults to PSScene", )
+            "Defaults to all item types available", )
             
     parser.add_argument(
         "--cc", 
@@ -76,10 +75,11 @@ def args_validate(args):
             raise ValueError("No API was provided, please provide a valid API key or use an environment variable")
     
     # Accept multiple csv item types
-    if "," in args.item_types:
-        args.item_types = args.item_types.split(",")
-    else:
-        args.item_types = [args.item_types]
+    if args.item_types:
+        if "," in args.item_types:
+            args.item_types = args.item_types.split(",")
+        else:
+            args.item_types = [args.item_types]
 
     return args
 

@@ -12,32 +12,19 @@ def export_path_maker(dir_name, file_name , start_date, end_date):
 
     return export_filename, export_directory
 
-def export_reports(df, export_filename, export_directory):
-    """Saves the provided GeoDataFrames in an excel workbook with separate sheets in the export_directory.
-
-    Parameters
-    ----------
-    gdf_tasks : GeoDataFrame
-        A geopandas GeoDataFrame containing all tasks.
-    gdf_orders : GeoDataFrame
-        A geopandas GeoDataFrame containing all orders.
-    df_merged_agg_tasks: GeoDataFrame
-        DataFrame containing the aggregated tasks report
-    start_date: str
-        Start date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.
-    end_date: str
-        End date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.
-    export_directory: str
-        Filesystem path for storing the resulting report and plots
-    """
-    
+def export_reports(df, export_filename, export_directory, df2=None, df3=None):
+    """Saves the provided DataFrames in an excel workbook with separate sheets in the export_directory."""
     
     # write tables to an excel spreadsheet
-    output_filename = "".join(['usage_report_', export_filename, '_.xlsx'])
+    output_filename = "".join([export_filename, '_.xlsx'])
     output_path = os.path.join(export_directory, output_filename)
     writer = pd.ExcelWriter(output_path)
     with writer:
-        df.to_excel(writer, sheet_name = 'quick search', index=False)
+        df.to_excel(writer, sheet_name = 'quick_search', index=False)
+        if df2:
+            df2.to_excel(writer, sheet_name = '2', index=False)
+        if df3:
+            df3.to_excel(writer, sheet_name = '3', index=False)
         
 
 
