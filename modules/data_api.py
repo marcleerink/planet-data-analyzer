@@ -15,19 +15,30 @@ ITEM_TYPES = 'https://api.planet.com/data/v1/item-types'
 class RateLimitException(Exception):
     pass
 
+def handle_exception(response):
+    while response.status_code == 429:
+        logger.debug("We got 429 error, retrying!")
+        raise RateLimitException("Rate limit error")
+
+    if response.status_code > 299:
+        logger.error("Error when paginating through results")
+        logger.error("HTTP code {}: {}\n".format(response.status_code, response.reason))
+    else:
+        Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
+                                                                       response.text))
 
 def _retry_if_rate_limit_error(exception):
     return isinstance(exception, RateLimitException)
 
 def get_item_types(session):
     response = session.get(ITEM_TYPES)
-    items = response.json()
-    item_types = items['item_types']
+    
+    if response.status_code == 200:
+        items = response.json()
+        item_types = items['item_types']
+    else:
+        handle_exception(response)
     return [item['id'] for item in item_types]
-
-        
-    
-    
     
 
 @retry(
@@ -38,18 +49,11 @@ def get_item_types(session):
 def _paginate(session, url):
     """Navigates through the pages of an API response"""
     response = session.get(url)
-
-    while response.status_code == 429:
-        logger.debug("We got 429 error, retrying!")
-        raise RateLimitException("Rate limit error")
-
-    if response.status_code > 299:
-        logger.error("Error when paginating through results")
-        logger.error("HTTP code {}: {}\n".format(response.status_code, response.reason))
-        page = {"_links": {"_next": url}, "features": []}
-    else:
+    if response.status_code == 200:
         page = response.json()
-
+    else:
+        page = {"_links": {"_next": url}, "features": []}
+        handle_exception(response)
     return page
 
 @retry(
@@ -62,12 +66,7 @@ def search(session, search_request):
     all features in API response"""
 
     # Search API request
-    response = session.post(SEARCH_URL, json=search_request, params={"strict": "false"})
-    
-    # Exponential back-off, uo to 5 times retry
-    while response.status_code == 429:
-        logger.debug("We got 429, retrying!")
-        raise RateLimitException("Rate limit error")
+    response = session.post(SEARCH_URL, json=search_request, params={"strict": "true"})
 
     if response.status_code == 200:
         page = response.json()
@@ -79,13 +78,12 @@ def search(session, search_request):
             features += page["features"]
         return features
     else:
-        raise Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
-                                                                       response.text))
+        handle_exception(response)
 
 def search_requester(item_types, start_date, end_date, cc, geometry):
-    # Create search payload with full geometry and full TOI
+    # Create search payload with geometry and TOI
     payload = {
-        "item_types": item_types,  # Default item type to search for
+        "item_types": item_types,
         "gte": start_date,
         "lt": end_date,
         "cc": cc
@@ -129,7 +127,6 @@ def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=N
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
 
-    
     # get all item_types if none provided
     item_types = get_item_types(session) if not item_types else item_types
 

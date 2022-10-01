@@ -22,8 +22,8 @@ def api_response_to_clean_df(response):
 
 def df_cleaner(df):
     # replace NaN values with None (this also converts empty values which have a type to None)
-    df = df.replace({None : None})
-    return df
+    return df.replace({None : None})
+    
 
 def build_timestamp(df, date_col):
     """Converts a column with a timestamp (in string format) into a column with the same name but in datetime format without timezone.
@@ -85,6 +85,12 @@ def move_column(df, cols_to_move=[], ref_col='', place='After'):
     seg3 = [i for i in cols if i not in seg1 + seg2]
     
     return(df[seg1 + seg2 + seg3])
+
+def item_types():
+    return ['Landsat8L1G', 'MOD09GA', 'MOD09GQ', 'MYD09GA', 'MYD09GQ', 
+            'PSOrthoTile', 'PSScene', 'PSScene3Band', 'PSScene4Band', 
+            'REOrthoTile', 'REScene', 'Sentinel1', 'Sentinel2L1C', 
+            'SkySatCollect', 'SkySatScene', 'SkySatVideo']
 
 # multiprocessing tool
 import multiprocessing.pool

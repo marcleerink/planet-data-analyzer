@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from pathlib import Path
+from modules import db
 
 
 def export_path_maker(dir_name, file_name , start_date, end_date):
@@ -12,7 +13,11 @@ def export_path_maker(dir_name, file_name , start_date, end_date):
 
     return export_filename, export_directory
 
-def export_reports(df, export_filename, export_directory, df2=None, df3=None):
+def gdf_to_postgis(gdf, name='Berlin', if_exists='fail'):
+    engine = db.db_engine()
+    gdf.to_postgis(name=name, con=engine, if_exists=if_exists)
+
+def export_reports(df, export_filename, export_directory):
     """Saves the provided DataFrames in an excel workbook with separate sheets in the export_directory."""
     
     # write tables to an excel spreadsheet
@@ -20,35 +25,28 @@ def export_reports(df, export_filename, export_directory, df2=None, df3=None):
     output_path = os.path.join(export_directory, output_filename)
     writer = pd.ExcelWriter(output_path)
     with writer:
-        df.to_excel(writer, sheet_name = 'quick_search', index=False)
-        if df2:
-            df2.to_excel(writer, sheet_name = '2', index=False)
-        if df3:
-            df3.to_excel(writer, sheet_name = '3', index=False)
-        
+        df.to_excel(writer, sheet_name = 'sat_images', index=False)
+            
 
-
-def export_footprints(gdf, export_filename, export_directory, entity):
+def export_footprints(gdf, export_filename, export_directory):
     """Exports the footprints of the downloaded data as a geojson file.
 
     Parameters
     ----------
     gdf_all : GeoDataFrame
         Contains all footprints except for those that need to be ignored.
-    start_date : str
-        Start date of the time interval to create a report for, in ISO ("
-        "YYYY-MM-DD) format.
-    end_date : str
-        End date of the time interval to create a report for, in ISO ("
-        "YYYY-MM-DD) format.
     export_directory : str
         Directory in which to save the footprints in (must already exist).
     """
     
-    # drop columns that cannot be exported as geojson
-    gdf = gdf.drop(['centroid', 'fulfilled_geometry'], axis=1, errors='ignore')
     
-    filename = "".join(["footprints_",entity,'_', export_filename, ".geojson"])
+    filename = "".join(["footprints_",'_', export_filename, ".geojson"])
     footprints_path = os.path.join(export_directory, filename)
     gdf.to_file(footprints_path, driver="GeoJSON")
 
+
+def exporter(gdf,export_filename, export_directory):
+    
+    gdf_to_postgis(gdf,'sat_images_staging', if_exists='replace')
+    export_reports(gdf,export_filename, export_directory)
+    export_footprints(gdf, export_filename, export_directory)

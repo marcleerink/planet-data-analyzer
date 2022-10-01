@@ -8,7 +8,6 @@ load_dotenv()
 
 def arguments():
     parser = argparse.ArgumentParser(description="Creates a usage report for all SkySat Tasks and Orders.")
-    
     parser.add_argument(
         '--api_key', 
         type=str, 
@@ -54,27 +53,21 @@ def arguments():
         "--cc", 
         type=float, 
         required=False,
-        default=0.3,
-        help="Cloud cover value to be used for filtering. Defaults to 0.3")
-    args = parser.parse_args()
-
-    return args
+        default=1.0,
+        help="Cloud cover value to be used for filtering. Defaults to 1.0")
+    
+    return parser.parse_args()
 
 def args_validate(args):
-     # validate arguments passed to the script by the user (from the command line)
-
-    # check if end date is after start date
     if pd.to_datetime(args.end_date) <= pd.to_datetime(args.start_date):
         raise ValueError('The end date can not be before the start date')
 
-    # Get API key
     if not args.api_key:
         try:
             args.api_key = os.environ["PL_API_KEY"]
         except Exception as e:
             raise ValueError("No API was provided, please provide a valid API key or use an environment variable")
     
-    # Accept multiple csv item types
     if args.item_types:
         if "," in args.item_types:
             args.item_types = args.item_types.split(",")
@@ -85,10 +78,10 @@ def args_validate(args):
 
 
 def args_bundler(args):
-        args_bundle = []
-        bundle = vars(args).copy()
-        args_bundle.append(bundle)
-        return args_bundle
+    args_bundle = []
+    bundle = vars(args).copy()
+    args_bundle.append(bundle)
+    return args_bundle
        
 
 def parser():
@@ -97,6 +90,3 @@ def parser():
     args_bundle = args_bundler(args)
 
     return args_bundle
-
-    
-   
