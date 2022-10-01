@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-import database
+import geopandas as gpd
 
 from modules import api_importer
 from modules import arg_parser
@@ -9,11 +9,10 @@ from modules import exporter
 from modules import data_wrangler
 from modules import plotter
 from modules import postgis_exporter
-from database import db, tables
 
 
 # Logger
-logging.basicConfig(level=logging.DEBUG, format="%(processName)s:%(message)s")
+logging.basicConfig(level=logging.INFO, format="%(processName)s:%(message)s")
 LOGGER = logging.getLogger(__name__)
 
 def main(args):

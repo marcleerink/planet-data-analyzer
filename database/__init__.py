@@ -1,1 +1,1 @@
-from . import db, psql_insert_copy, tables
+from . import db, psql_insert_copy

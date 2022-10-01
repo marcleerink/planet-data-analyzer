@@ -1,6 +1,7 @@
 from functools import partial
 from geoalchemy2 import Geometry
 import pandas as pd
+import geopandas as gpd
 
 from database.db import ENGINE
 from database.psql_insert_copy import psql_insert_copy
@@ -50,7 +51,6 @@ def export_satellites_table(gdf):
 def export_sat_images_table(gdf):
     sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 'pixel_res', 'time_acquired', 'geom', 'sat_id', 'item_type_id']]
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
-    print(sat_image_gdf['geom'])
     sat_image_gdf.to_sql(name='sat_images',
                         con=ENGINE,
                         schema='public',
@@ -59,7 +59,26 @@ def export_sat_images_table(gdf):
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
 
+def export_countries_table():
+    gdf_world = gpd.read_file('data/World_Countries_(Generalized).geojson')
+    gdf_world = gdf_world.rename_geometry('geom')
+    gdf_world = gdf_world[['COUNTRY', 'ISO', 'geom']]
+    gdf_world = gdf_world.rename(columns={'ISO' : 'iso',
+                                        'COUNTRY' : 'formal_name'})
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    gdf_world.to_sql(name='countries',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False,
+                        dtype={'geom': Geometry('MultiPolygon', srid=4326)})
+
+    
+    
+
 def postgis_exporter(gdf):
+    export_countries_table()
     export_satellites_table(gdf)
     export_item_types_table(gdf)
     export_asset_types_table(gdf)
