@@ -28,11 +28,11 @@ def main(args):
     # converts api response to cleaned dataframe
     df = utils.api_response_to_clean_df(items_list)
 
-    # split df for different satellites and convert to gdf
+    # convert to gdf, split for postGIS tables
     gdf = data_wrangler.wrangler(df)
-
+    
     # export to postGIS, excel and footprints
-    exporter.exporter(gdf,'planet', args.get('out_dir'))
+    exporter.exporter(gdf, 'planet', args.get('out_dir'))
 
     
     # # folium web_map

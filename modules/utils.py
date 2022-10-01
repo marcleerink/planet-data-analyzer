@@ -7,13 +7,12 @@ def geojson_import(aoi_file):
         geometry = json.load(f)
     return geometry['features'][0]['geometry']
 
+def select_columns_df(df, columns):
+    return df[columns]
 
 def api_response_to_clean_df(response):
     '''saves response as pandas dataframe'''
     df = json_normalize(response)
-    
-    # drop empty columns
-    df = drop_columns(df)
     
     # clean df from empty values
     df = df_cleaner(df)
