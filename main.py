@@ -1,12 +1,15 @@
 import logging
 from pathlib import Path
+import database
 
-from modules import data_api
+from modules import api_importer
 from modules import arg_parser
 from modules import utils
 from modules import exporter
 from modules import data_wrangler
 from modules import plotter
+from modules import postgis_exporter
+from database import db, tables
 
 
 # Logger
@@ -18,7 +21,7 @@ def main(args):
     geometry = utils.geojson_import(args.get('aoi_file'))
     
     # search items for provided AOI,TOI, item types and cloud cover threshold
-    items_list = data_api.searcher(args.get('api_key'),
+    items_list = api_importer.searcher(args.get('api_key'),
                                 args.get('item_types'), 
                                 args.get('start_date'), 
                                 args.get('end_date'), 
@@ -31,9 +34,15 @@ def main(args):
     # convert to gdf, split for postGIS tables
     gdf = data_wrangler.wrangler(df)
     
-    # export to postGIS, excel and footprints
+    # export to postgis
+    postgis_exporter.postgis_exporter(gdf)
+
+    # export to excel and footprints
     exporter.exporter(gdf, 'planet', args.get('out_dir'))
 
+    # session = db.SESSION()
+    # query = session.query(tables.SatImage).order_by(tables.SatImage.geom).all()
+    # print(query)
     
     # # folium web_map
     # plotter.folium_web_map(gdf, 

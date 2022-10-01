@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 SEARCH_URL = "https://api.planet.com/data/v1/quick-search"
 ITEM_TYPES = 'https://api.planet.com/data/v1/item-types'
+ASSET_TYPES = 'https://api.planet.com/data/v1/asset-types'
 
 
 class RateLimitException(Exception):
@@ -39,7 +40,16 @@ def get_item_types(session):
     else:
         handle_exception(response)
     return [item['id'] for item in item_types]
+
+def get_asset_types(session):
+    response = session.get(ASSET_TYPES)
     
+    if response.status_code == 200:
+        assets = response.json()
+        asset_types = assets['asset_types']
+    else:
+        handle_exception(response)
+    return [asset['id'] for asset in asset_types]
 
 @retry(
     wait_exponential_multiplier=1000,
