@@ -6,6 +6,39 @@ import geopandas as gpd
 from database.db import ENGINE
 from database.psql_insert_copy import psql_insert_copy
 
+def export_cities_table():
+    gdf_cities = gpd.read_file('data/cities.geojson')
+    gdf_cities = gdf_cities.rename_geometry('geom')
+    gdf_cities = gdf_cities.dropna()
+    gdf_cities = gdf_cities.reset_index(names='id')
+    gdf_cities.columns = gdf_cities.columns.str.lower()
+
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    gdf_cities.to_sql(name='cities',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False,
+                        dtype={'geom': Geometry('Polygon', srid=4326)})
+
+def export_countries_table():
+    gdf_countries = gpd.read_file('data/World_Countries_(Generalized).geojson')
+    gdf_countries = gdf_countries.rename_geometry('geom')
+    gdf_countries = gdf_countries[['COUNTRY', 'ISO', 'geom']]
+    gdf_countries = gdf_countries.rename(columns={'ISO' : 'iso',
+                                        'COUNTRY' : 'formal_name'})
+                                        
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    gdf_countries.to_sql(name='countries',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False,
+                        dtype={'geom': Geometry('MultiPolygon', srid=4326)})
+
+    
 
 def export_asset_types_table(gdf):
     asset_types_df = gdf['assets']
@@ -36,7 +69,6 @@ def export_item_types_table(gdf):
 
 def export_satellites_table(gdf):
     satellites_df = gdf[['sat_id', 'satellite', 'pixel_res']]
-    satellites_df = satellites_df.drop_duplicates(subset='sat_id')
     satellites_df = satellites_df.dropna(subset='sat_id')
     satellites_df = satellites_df.rename(columns={'sat_id' : 'id', 'satellite' : 'name'})
 
@@ -59,25 +91,10 @@ def export_sat_images_table(gdf):
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
 
-def export_countries_table():
-    gdf_world = gpd.read_file('data/World_Countries_(Generalized).geojson')
-    gdf_world = gdf_world.rename_geometry('geom')
-    gdf_world = gdf_world[['COUNTRY', 'ISO', 'geom']]
-    gdf_world = gdf_world.rename(columns={'ISO' : 'iso',
-                                        'COUNTRY' : 'formal_name'})
-    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
-    gdf_world.to_sql(name='countries',
-                        con=ENGINE,
-                        schema='public',
-                        method=psql_insert,
-                        if_exists='append',
-                        index=False,
-                        dtype={'geom': Geometry('MultiPolygon', srid=4326)})
-
-    
-    
 
 def postgis_exporter(gdf):
+    
+    export_cities_table()
     export_countries_table()
     export_satellites_table(gdf)
     export_item_types_table(gdf)

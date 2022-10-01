@@ -1,7 +1,7 @@
 import argparse
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,10 +14,12 @@ def arguments():
         required=False,
         help="Planet's API key")
 
+    yesterday= datetime.utcnow() - timedelta(days=1)
     parser.add_argument(
         "--start_date",
         type=str,
-        required=True,
+        required=False,
+        default = yesterday.strftime("%Y-%m-%d"),
         help="Required.Start date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.(gte)")
 
     parser.add_argument(

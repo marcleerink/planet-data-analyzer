@@ -1,22 +1,17 @@
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Float, String, DateTime, ForeignKey
+from sqlalchemy import create_engine, Table, Column, Integer, Float, String, DateTime, ForeignKey, func
 from geoalchemy2 import Geometry
 import os
-load_dotenv()
 
+load_dotenv()
 POSTGIS_URL = os.environ['POSTGIS_URL']
 ENGINE = create_engine(POSTGIS_URL, echo=True)
 
 BASE = declarative_base()
 
 SESSION = sessionmaker(bind=ENGINE)
-SESSION.configure(bind=ENGINE)
-
-
-
 
 class Satellite(BASE):
     __tablename__='satellites'
@@ -74,23 +69,35 @@ class Country(BASE):
     formal_name = Column(String(50), nullable=False)
     geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326), nullable=False)
 
-    cities = relationship('City', backref='countries')
-
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Contains(foreign(Country.geom), SatImage.geom).as_comparison(1,2)',
         backref=backref('countries', uselist=False),
-        viewonly=True,
-    )
+        viewonly=True,)
+    
+    cities = relationship(
+        'City',
+        primaryjoin='func.ST_Contains(foreign(Country.geom), City.geom).as_comparison(1,2)',
+        backref=backref('countries', uselist=False),
+        viewonly=True,)
 
 class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    population = Column(Integer)
-    geom = Column(Geometry(geometry_type='Point', srid=4326), nullable=False)
+    name = Column(String(50), nullable=False)
+    geom = Column(Geometry(geometry_type='Polygon', srid=4326), nullable=False)
 
-    country_iso = Column(String(3), ForeignKey('countries.iso'))
+    sat_images = relationship(
+        'SatImage',
+        primaryjoin='func.ST_Contains(foreign(City.geom), SatImage.geom).as_comparison(1,2)',
+        backref=backref('cities', uselist=False),
+        viewonly=True,)
+    
+    def get_cities_within_radius(self, radius):
+        """Return all cities within a given radius (in meters) of this city."""
+        return City.query.filter(func.ST_Distance_Sphere(City.geom, self.geom) < radius).all()
 
-# BASE.metadata.drop_all(ENGINE)
-# BASE.metadata.create_all(ENGINE)
+
+if __name__ == "__main__":
+    BASE.metadata.drop_all(ENGINE)
+    BASE.metadata.create_all(ENGINE)

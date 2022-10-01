@@ -2,8 +2,6 @@ import requests
 import logging
 from retrying import retry
 
-from main import LOGGER
-
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -22,10 +20,10 @@ def handle_exception(response):
         raise RateLimitException("Rate limit error")
 
     if response.status_code > 299:
-        logger.error("Error when paginating through results")
-        logger.error("HTTP code {}: {}\n".format(response.status_code, response.reason))
+        logger.error("Error getting results")
+        raise Exception("HTTP code {}: {}\n".format(response.status_code, response.reason))
     else:
-        Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
+        raise Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
                                                                        response.text))
 
 def _retry_if_rate_limit_error(exception):
@@ -60,11 +58,10 @@ def _paginate(session, url):
     """Navigates through the pages of an API response"""
     response = session.get(url)
     if response.status_code == 200:
-        page = response.json()
+        return response.json()
     else:
-        page = {"_links": {"_next": url}, "features": []}
         handle_exception(response)
-    return page
+    
 
 @retry(
     wait_exponential_multiplier=1000,
@@ -82,7 +79,7 @@ def search(session, search_request):
         page = response.json()
         features = page["features"]
         while page['_links'].get('_next'):
-            logger.debug("...Paging results...")
+            logger.info("...Paging results...")
             page_url = page['_links'].get('_next')
             page = _paginate(session, page_url)
             features += page["features"]
@@ -133,14 +130,14 @@ def search_requester(item_types, start_date, end_date, cc, geometry):
     return search_request
 
 def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
-    # Start Planet Session
+    """Searches for all items in AOI,TOI"""
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
 
     # get all item_types if none provided
     item_types = get_item_types(session) if not item_types else item_types
 
-    logger.debug(f'Searching for item types:{item_types}')
+    logger.info(f'Searching for item types:{item_types}')
 
     # create search request with filters
     search_request = search_requester(item_types, start_date, end_date, cc, geometry)
