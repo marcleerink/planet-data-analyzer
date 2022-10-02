@@ -60,12 +60,10 @@ class AssetType(BASE):
 
 class Country(BASE):
     __tablename__='countries'
-    iso3 = Column(String(3), primary_key=True)
+    iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
-    continent = Column(String(50))
-    geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326, spatial_index=False), 
-                            nullable=False,
-                            unique=True)
+    geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326, spatial_index=True), 
+                            nullable=False)
 
     sat_images = relationship(
         'SatImage',
@@ -74,17 +72,13 @@ class Country(BASE):
         viewonly=True,
         uselist=True)
     
-    def __init__(self,geom):
-        self.geom = func.ST_SetSRID(func.ST_Multi(geom), 4326)
-
 class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
-    country_iso3 = Column(String(3), ForeignKey('countries.iso3'))
-    geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True), 
-                            nullable=False,
-                            unique=True)
+    name = Column(String(50), nullable=False, unique=True)
+    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), 
+                            nullable=False)
+
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Contains(foreign(City.geom), SatImage.geom).as_comparison(1,2)',

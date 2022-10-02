@@ -7,14 +7,13 @@ from geoalchemy2.shape import from_shape, to_shape
 def main():
     session = SESSION()    
     amsterdam = session.query(City).filter_by(name = 'amsterdam')
-    
 
-    query = session.query(City.name, func.ST_Area(func.ST_Buffer(City.geom, 2)).label('bufferarea'))
-
-    nl = session.query(Country).filter_by(iso = 'FR ')
+    nl = session.query(Country).filter_by(iso = 'ES')
     nl_geom = nl[0].geom
+    polygon_spain = to_shape(nl_geom)
+    print(polygon_spain)
     
-    sat_image_berlin = session.query(SatImage.id).filter(SatImage.geom.ST_Intersects(nl_geom)).all()
+    sat_image_berlin = session.query(SatImage).filter(SatImage.geom.ST_Intersects(nl_geom)).all()
     print(sat_image_berlin)
    
    
