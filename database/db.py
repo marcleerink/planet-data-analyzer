@@ -1,3 +1,4 @@
+from enum import unique
 from dotenv import load_dotenv
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
@@ -7,7 +8,7 @@ import os
 
 load_dotenv()
 POSTGIS_URL = os.environ['POSTGIS_URL']
-ENGINE = create_engine(POSTGIS_URL, echo=True)
+ENGINE = create_engine(POSTGIS_URL, echo=False)
 
 BASE = declarative_base()
 
@@ -19,8 +20,8 @@ class Satellite(BASE):
     name = Column(String(100), nullable=False)
     pixel_res = Column(Float)
 
-    sat_images = relationship('SatImage', back_populates='satellites')
-    items = relationship('ItemType', back_populates='satellites')
+    sat_images = relationship('SatImage', backref='satellites')
+    items = relationship('ItemType', backref='satellites')
 
 class SatImage(BASE):
     __tablename__='sat_images'
@@ -29,14 +30,10 @@ class SatImage(BASE):
     cloud_cover = Column(Float, nullable=False)
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
-    geom = Column(Geometry(geometry_type='Polygon', srid=4326), nullable=False)
+    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
-    satellite = relationship('Satellite', back_populates='sat_images')
-
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
-    item_type = relationship('ItemType', back_populates='sat_images')
-
 
 items_assets = Table(
     'items_assets',
@@ -50,48 +47,50 @@ class ItemType(BASE):
     id = Column(String(50), primary_key=True)
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
-    satellite = relationship('Satellite', back_populates='item_types')
 
-    sat_image = relationship('SatImage', back_populates='item_types')
+    sat_image = relationship('SatImage', backref='item_types')
 
-    assets = relationship('AssetType', secondary=items_assets, back_populates='item_types')
+    assets = relationship('AssetType', secondary=items_assets, backref='item_types')
     
     
 class AssetType(BASE):
     __tablename__='asset_types'
     id = Column(String(50), primary_key=True) 
-    items = relationship('ItemType', secondary=items_assets, back_populates='asset_types')
 
 
 class Country(BASE):
     __tablename__='countries'
-    iso = Column(String(3), primary_key=True)
-    formal_name = Column(String(50), nullable=False)
-    geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326), nullable=False)
+    iso3 = Column(String(3), primary_key=True)
+    name = Column(String(50), nullable=False)
+    continent = Column(String(50))
+    geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326, spatial_index=False), 
+                            nullable=False,
+                            unique=True)
 
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Contains(foreign(Country.geom), SatImage.geom).as_comparison(1,2)',
         backref=backref('countries', uselist=False),
-        viewonly=True,)
+        viewonly=True,
+        uselist=True)
     
-    cities = relationship(
-        'City',
-        primaryjoin='func.ST_Contains(foreign(Country.geom), City.geom).as_comparison(1,2)',
-        backref=backref('countries', uselist=False),
-        viewonly=True,)
+    def __init__(self,geom):
+        self.geom = func.ST_SetSRID(func.ST_Multi(geom), 4326)
 
 class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    geom = Column(Geometry(geometry_type='Polygon', srid=4326), nullable=False)
-
+    country_iso3 = Column(String(3), ForeignKey('countries.iso3'))
+    geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True), 
+                            nullable=False,
+                            unique=True)
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Contains(foreign(City.geom), SatImage.geom).as_comparison(1,2)',
         backref=backref('cities', uselist=False),
-        viewonly=True,)
+        viewonly=True,
+        uselist=True)
     
     def get_cities_within_radius(self, radius):
         """Return all cities within a given radius (in meters) of this city."""

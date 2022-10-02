@@ -3,13 +3,9 @@ from shapely.geometry import Polygon, MultiPolygon
 import geopandas as gpd
 from modules import utils
 from modules.Logger import LOGGER
-from pandarallel import pandarallel
-
-pandarallel.initialize()
 
 
 def rename_columns(df):
-
     df.columns = df.columns.str.replace\
                     ('properties.', '', regex=False)
     columns = {
@@ -37,7 +33,7 @@ def list_to_polygon(row):
 def gdf_creator(df, geom_column):
     df = df.dropna(subset=geom_column, axis=0)
     # convert geometries from nested list for input in GeoDataFrame
-    df[geom_column] = df[geom_column].parallel_apply(lambda row: list_to_polygon(row))
+    df[geom_column] = df[geom_column].apply(lambda row: list_to_polygon(row))
     
     gdf = gpd.GeoDataFrame(df, geometry=df[geom_column]).set_crs("epsg:4326").reset_index(drop=True)
     gdf = gdf.rename_geometry('geom')
