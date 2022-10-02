@@ -1,10 +1,7 @@
 import requests
-import logging
 from retrying import retry
+from modules.Logger import LOGGER
 
-
-# Logger
-logger = logging.getLogger(__name__)
 
 SEARCH_URL = "https://api.planet.com/data/v1/quick-search"
 ITEM_TYPES = 'https://api.planet.com/data/v1/item-types'
@@ -16,11 +13,11 @@ class RateLimitException(Exception):
 
 def handle_exception(response):
     while response.status_code == 429:
-        logger.debug("We got 429 error, retrying!")
+        LOGGER.debug("We got 429 error, retrying!")
         raise RateLimitException("Rate limit error")
 
     if response.status_code > 299:
-        logger.error("Error getting results")
+        LOGGER.error("Error getting results")
         raise Exception("HTTP code {}: {}\n".format(response.status_code, response.reason))
     else:
         raise Exception("Search failed with error {}: {} -> {}".format(response.status_code, response.reason,
@@ -79,7 +76,7 @@ def search(session, search_request):
         page = response.json()
         features = page["features"]
         while page['_links'].get('_next'):
-            logger.info("...Paging results...")
+            LOGGER.info("...Paging results...")
             page_url = page['_links'].get('_next')
             page = _paginate(session, page_url)
             features += page["features"]
@@ -137,14 +134,14 @@ def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=N
     # get all item_types if none provided
     item_types = get_item_types(session) if not item_types else item_types
 
-    logger.info(f'Searching for item types:{item_types}')
+    LOGGER.info(f'Searching for item types:{item_types}')
 
     # create search request with filters
     search_request = search_requester(item_types, start_date, end_date, cc, geometry)
 
     # Search for items
     items = search(session, search_request)
-    logger.info("Total items found: {}".format(len(items)))
+    LOGGER.info("Total items found: {}".format(len(items)))
 
     return items
 

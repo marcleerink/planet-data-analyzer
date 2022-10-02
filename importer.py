@@ -4,14 +4,9 @@ from pathlib import Path
 from modules import api_importer
 from modules import arg_parser
 from modules import utils
-from modules import exporter
 from modules import data_wrangler
 from modules import to_postgis
-
-
-# Logger
-logging.basicConfig(level=logging.INFO, format="%(processName)s:%(message)s")
-LOGGER = logging.getLogger(__name__)
+from modules.Logger import LOGGER
 
 def importer(args):
     '''imports satellite imagery metadata for the given AOI, TOI.
@@ -33,7 +28,7 @@ def importer(args):
     # converts api response to cleaned dataframe
     df = utils.api_response_to_clean_df(items_list)
 
-    # convert to gdf, split for postGIS tables
+    # convert to gdf and wrangle data
     gdf = data_wrangler.wrangler(df)
     
     LOGGER.info('Exporting to postgis tables')
