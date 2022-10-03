@@ -45,14 +45,22 @@ class SatImage(BASE):
         self.time_acquired = row['time_acquired']
         self.geom = row['geom']
 
-    def get_point(self):
+    def get_wkt(self):
         return to_shape(self.geom)
 
     def get_centroid(self):
         return session.query(self.geom.ST_Centroid()).all()
 
-    def get_area_sqm(self):
-        return session.query(self.geom.ST_Transform(2249).ST_Area()).all()
+    def get_lon_lat(self):
+        lon = session.query(self.geom.ST_Centroid().ST_X()).all()
+        lat = session.query(self.geom.ST_Centroid().ST_Y()).all()
+        return lon, lat
+
+    def get_area(self):
+        return session.query(self.geom.ST_Area()).all()
+
+    def get_geojson(self):
+        return session.query(self.geom.ST_AsGeoJSON()).all()
 
 items_assets = Table(
     'items_assets',
@@ -90,10 +98,10 @@ class Country(BASE):
         backref='countries',
         viewonly=True,
         uselist=True,
-        lazy="joined")
+        lazy='joined')
 
     def get_sat_images(self):
-        sat_images = session.query(self.sat_images).filter_by(iso=self.iso).all()
+        sat_images = session.query(self.sat_images).filter_by(iso=self.iso).join(Country.sat_images).all()
         return [image[0] for image in sat_images]
     
 class City(BASE):
