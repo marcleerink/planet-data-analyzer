@@ -1,12 +1,9 @@
 import logging
 from pathlib import Path
 
-from modules import api_importer
-from modules import arg_parser
+from modules.importer import arg_parser, to_postgis, data_wrangler, api_importer
 from modules import utils
-from modules import data_wrangler
-from modules import to_postgis
-from modules.Logger import LOGGER
+from modules.logger import LOGGER
 
 def importer(args):
     '''imports satellite imagery metadata for the given AOI, TOI.

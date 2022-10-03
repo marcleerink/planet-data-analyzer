@@ -1,6 +1,6 @@
 import requests
 from retrying import retry
-from modules.Logger import LOGGER
+from modules.logger import LOGGER
 
 
 SEARCH_URL = "https://api.planet.com/data/v1/quick-search"

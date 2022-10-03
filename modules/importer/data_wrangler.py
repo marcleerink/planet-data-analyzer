@@ -2,8 +2,7 @@ from pandas import json_normalize
 from shapely.geometry import Polygon, MultiPolygon
 import geopandas as gpd
 from modules import utils
-from modules.Logger import LOGGER
-
+from modules.logger import LOGGER
 
 def rename_columns(df):
     df.columns = df.columns.str.replace\

@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String, DateTime, ForeignKey, func
 from geoalchemy2 import Geometry
+from geoalchemy2.shape import from_shape, to_shape
 import os
 
 load_dotenv()
@@ -13,6 +14,7 @@ ENGINE = create_engine(POSTGIS_URL, echo=False)
 BASE = declarative_base()
 
 SESSION = sessionmaker(bind=ENGINE)
+session = SESSION()
 
 class Satellite(BASE):
     __tablename__='satellites'
@@ -34,6 +36,23 @@ class SatImage(BASE):
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
+
+    def __init__(self,row):
+        self.id = row['id']
+        self.clear_confidence_percent = row['clear_confidence_percent']
+        self.cloud_cover = row['cloud_cover']
+        self.pixel_res = row['pixel_res']
+        self.time_acquired = row['time_acquired']
+        self.geom = row['geom']
+
+    def get_point(self):
+        return to_shape(self.geom)
+
+    def get_centroid(self):
+        return session.query(self.geom.ST_Centroid()).all()
+
+    def get_area_sqm(self):
+        return session.query(self.geom.ST_Transform(2249).ST_Area()).all()
 
 items_assets = Table(
     'items_assets',
@@ -67,10 +86,15 @@ class Country(BASE):
 
     sat_images = relationship(
         'SatImage',
-        primaryjoin='func.ST_Contains(foreign(Country.geom), SatImage.geom).as_comparison(1,2)',
-        backref=backref('countries', uselist=False),
+        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
+        backref='countries',
         viewonly=True,
-        uselist=True)
+        uselist=True,
+        lazy="joined")
+
+    def get_sat_images(self):
+        sat_images = session.query(self.sat_images).filter_by(iso=self.iso).all()
+        return [image[0] for image in sat_images]
     
 class City(BASE):
     __tablename__='cities'
