@@ -16,14 +16,33 @@ BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
 
+# class Company(BASE):
+#     __tablename__='companies'
+#     id = 
+
+# class Provider(BASE):
+#     __tablename__='providers'
+#     name = Column(String(50), primary_key=True)
+
+#     satellites = relationship('Satellite',
+#                                 backref='providers',
+#                                 uselist=True,
+#                                 viewonly=True)
+#     sat_images = relationship('SatImage',
+#                                 backref='providers',
+#                                 uselist=True,
+#                                 viewonly=True)
 class Satellite(BASE):
     __tablename__='satellites'
     id = Column(String(50), primary_key=True)
     name = Column(String(100), nullable=False)
     pixel_res = Column(Float)
-
-    sat_images = relationship('SatImage', backref='satellites')
-    items = relationship('ItemType', backref='satellites')
+    
+    # provider_name = Column(String(50), ForeignKey('providers.name'))
+    sat_images = relationship('SatImage', 
+                            backref='satellite')
+    items = relationship('ItemType', 
+                        backref='satellites',)
 
 class SatImage(BASE):
     __tablename__='sat_images'
@@ -49,7 +68,7 @@ class SatImage(BASE):
         return to_shape(self.geom)
 
     def get_centroid(self):
-        return session.query(self.geom.ST_Centroid()).all()
+        return session.query(self.geom.ST_Centroid().ST_AsText()).all()
 
     def get_lon_lat(self):
         lon = session.query(self.geom.ST_Centroid().ST_X()).all()
@@ -91,7 +110,7 @@ class Country(BASE):
     name = Column(String(50), nullable=False)
     geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326, spatial_index=True), 
                             nullable=False)
-
+    
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Contains(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
@@ -108,8 +127,9 @@ class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False, unique=True)
-    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), 
-                            nullable=False)
+    geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True), 
+                            nullable=False,
+                            unique=True)
 
     sat_images = relationship(
         'SatImage',

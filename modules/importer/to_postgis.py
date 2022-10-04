@@ -8,17 +8,23 @@ from shapely.geometry.multipolygon import MultiPolygon
 
 from modules.database.db import ENGINE
 from modules.database.psql_insert_copy import psql_insert_copy
-
+# gdf_countries.columns = gdf_countries.columns.str.lower()
+#     gdf_countries = gdf_countries.rename_geometry('geom')
+#     gdf_countries = gdf_countries[['iso', 'country', 'geom']]
+#     gdf_countries = gdf_countries.rename(columns={'country' : 'name'})
+    
+#     gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
+#     else feature for feature in gdf_countries['geom']]
 def export_countries_table():
-    gdf_countries = gpd.read_file('data/World_Countries_(Generalized).geojson')
+    gdf_countries = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson')
     gdf_countries.columns = gdf_countries.columns.str.lower()
     gdf_countries = gdf_countries.rename_geometry('geom')
-    gdf_countries = gdf_countries[['iso', 'country', 'geom']]
-    gdf_countries = gdf_countries.rename(columns={'country' : 'name'})
+    gdf_countries = gdf_countries.rename(columns={'iso_a2' : 'iso'})
+    gdf_countries = gdf_countries[['iso', 'name', 'geom']]
     
     gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
     else feature for feature in gdf_countries['geom']]
-    
+    print(gdf_countries)
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     gdf_countries.to_sql(name='countries',
                         con=ENGINE,
@@ -29,12 +35,12 @@ def export_countries_table():
                         dtype={'geom': Geometry('MultiPolygon', srid=4326)})
 
 def export_cities_table():
-    gdf_cities = gpd.read_file('data/cities.geojson')
-    gdf_cities = gdf_cities.rename_geometry('geom')
+    gdf_cities = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_populated_places_simple.geojson')
     gdf_cities.columns = gdf_cities.columns.str.lower()
-    gdf_cities['name'] = gdf_cities['name'].str.lower()
+    gdf_cities = gdf_cities.rename_geometry('geom')
+    gdf_cities = gdf_cities[['name', 'geom']]
     gdf_cities = gdf_cities.reset_index(names='id')
-
+    
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     gdf_cities.to_sql(name='cities',
                         con=ENGINE,
