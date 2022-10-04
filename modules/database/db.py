@@ -90,7 +90,7 @@ class Country(BASE):
         primaryjoin='func.ST_Contains(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
-        uselist=True,
+        uselist=False,
         lazy='joined')
 
     def get_sat_images(self):

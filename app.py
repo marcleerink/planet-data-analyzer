@@ -2,7 +2,7 @@ import streamlit as st
 import geopandas as gpd
 from streamlit_folium import st_folium
 import folium
-from modules.database.db import ENGINE, SESSION, SatImage, Satellite
+from modules.database.db import ENGINE, SESSION, SatImage, Satellite, City, Country
 from folium.plugins import HeatMap, HeatMapWithTime
 from sqlalchemy import select
 
@@ -11,46 +11,79 @@ session = SESSION()
 APP_TITLE = "Satellite Images"
 APP_SUB_TITLE = 'Source: Planet'
 
+def get_images_from_satellite(sat_name):
+    sql = """
+        SELECT ST_AsText(centroid) AS centroid,
+                ST_X(centroid) AS lon,
+                ST_Y(centroid) AS lat,
+                geom
+        FROM sat_images, satellites 
+        WHERE satellites.name = '{}'
+        """.format(sat_name)
+    return gpd.read_postgis(sql = sql, con=ENGINE, crs=4326)
+
+def get_lat_lon_lst(lat,lon):
+    return list(map(list,zip(lat,lon)))
+
+def get_sat_image_country(session, iso_code):
+    '''gets a list of sat_images objects in a country'''
+    query = session.query(Country).join(Country.sat_images)
+    return [image for row in query for image in row.sat_images]
 
 def folium_map():
-    cities_sql = "SELECT * FROM cities WHERE name='Berlin'"
-    cities = gpd.read_postgis(sql = cities_sql, con=ENGINE, crs=4326)
+    
+    planetscope_images = get_images_from_satellite('planetscope')
+    planetscope_lat_lon_lst = get_lat_lon_lst(planetscope_images['lat'], 
+                                            planetscope_images['lon'])
 
-    planetscope_sql = """
-                    SELECT ST_AsText(centroid) AS centroid,
-                            ST_X(centroid) AS lon,
-                            ST_Y(centroid) AS lat,
-                            geom
-                    FROM sat_images, satellites 
-                    WHERE satellites.name = 'planetscope'
-                    """
-    planetscope_images = gpd.read_postgis(sql = planetscope_sql, con=ENGINE, crs=4326)
-    print(planetscope_images)
-    skysat_sql = "SELECT * FROM sat_images, satellites WHERE satellites.name = 'skysat'"
-    
-    skysat_images = gpd.read_postgis(sql = skysat_sql, con=ENGINE, crs=4326)
-    
-    
-    map = folium.Map(location=[52.5200, 13.4050], zoom_start=7, tiles="cartodbpositron")
+    skysat_images = get_images_from_satellite('skysat')
+    skysat_lat_lon_lst = get_lat_lon_lst(skysat_images['lat'],
+                                        skysat_images['lon'])
 
-    # HeatMap(data=lat_lon_list,
-    #         name='All Satellite Imagery').add_to(map)   
+    heat_data_list = [
+        [planetscope_lat_lon_lst, 'PlanetScope Images'],
+        [skysat_lat_lon_lst, 'SkySat Images']
+    ]
+    
+    map = folium.Map(location=[52.5200, 13.4050], 
+                        zoom_start=7, 
+                        tiles="cartodbpositron",)
+
+    for heat_data, title in heat_data_list:
+        HeatMap(data=heat_data, name=title).add_to(map)
+       
     
     # add footprints of sat images to map
-    # polygons_gjson = folium.features.GeoJson(gdf['geom'], name='Footprints Images', show=True)
-    # polygons_gjson.add_to(map)
+    polygons_gjson = folium.features.GeoJson(planetscope_images['geom'], 
+                                        name='PlanetScope Footprints', 
+                                        show=True).add_to(map)
+    polygons_gjson = folium.features.GeoJson(skysat_images['geom'], 
+                                        name='Skysat Footprints', 
+                                        show=True).add_to(map)
+    
+    countries_sql = """
+                    SELECT iso, countries.geom, count(sat_images.geom) AS total_images
+                    FROM countries
+                    LEFT JOIN sat_images ON ST_Contains(countries.geom, sat_images.geom)
+                    GROUP BY countries.iso
+                    """
+    
+    countries = gpd.read_postgis(sql = countries_sql, con=ENGINE, crs=4326)
+    print(countries[countries['iso'] == 'DE'])
+    folium.Choropleth(geo_data=countries['geom'],
+                    name='Choropleth',
+                    data=countries,
+                    columns=['iso', 'total_images']).add_to(map)
+    
      
     folium.LayerControl().add_to(map)
     st_map = st_folium(map, height= 700, width=700)
+
 def main():
     #config
     st.set_page_config(APP_TITLE)
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
-
-    # load data
-    sql = 'SELECT * FROM sat_images'
-    gdf = gpd.read_postgis(sql = sql, con=ENGINE)
     
     #map
     folium_map()
