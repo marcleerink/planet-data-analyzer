@@ -54,10 +54,10 @@ def folium_map():
        
     
     # add footprints of sat images to map
-    polygons_gjson = folium.features.GeoJson(planetscope_images['geom'], 
+    folium.features.GeoJson(planetscope_images['geom'], 
                                         name='PlanetScope Footprints', 
                                         show=True).add_to(map)
-    polygons_gjson = folium.features.GeoJson(skysat_images['geom'], 
+    folium.features.GeoJson(skysat_images['geom'], 
                                         name='Skysat Footprints', 
                                         show=True).add_to(map)
     
@@ -69,11 +69,14 @@ def folium_map():
                     """
     
     countries = gpd.read_postgis(sql = countries_sql, con=ENGINE, crs=4326)
-    print(countries[countries['iso'] == 'PL'])
-    folium.Choropleth(geo_data=countries['geom'],
-                    name='Choropleth',
+    countries_geojson = gpd.GeoSeries(countries.set_index('iso')['geom']).to_json()
+
+    folium.Choropleth(geo_data=countries_geojson,
+                    name='Total Satellite Imagery per Country',
                     data=countries,
-                    columns=['iso', 'total_images']).add_to(map)
+                    columns=['iso', 'total_images'],
+                    key_on ='feature.id',
+                    legend_name='Total Satellite Images').add_to(map)
     
      
     folium.LayerControl().add_to(map)
