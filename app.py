@@ -64,12 +64,12 @@ def folium_map():
     countries_sql = """
                     SELECT iso, countries.geom, count(sat_images.geom) AS total_images
                     FROM countries
-                    LEFT JOIN sat_images ON ST_Contains(countries.geom, sat_images.geom)
+                    LEFT JOIN sat_images ON ST_DWithin(countries.geom, sat_images.geom, 0)
                     GROUP BY countries.iso
                     """
     
     countries = gpd.read_postgis(sql = countries_sql, con=ENGINE, crs=4326)
-    print(countries[countries['iso'] == 'DE'])
+    print(countries[countries['iso'] == 'PL'])
     folium.Choropleth(geo_data=countries['geom'],
                     name='Choropleth',
                     data=countries,
