@@ -16,22 +16,6 @@ BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
 
-# class Company(BASE):
-#     __tablename__='companies'
-#     id = 
-
-# class Provider(BASE):
-#     __tablename__='providers'
-#     name = Column(String(50), primary_key=True)
-
-#     satellites = relationship('Satellite',
-#                                 backref='providers',
-#                                 uselist=True,
-#                                 viewonly=True)
-#     sat_images = relationship('SatImage',
-#                                 backref='providers',
-#                                 uselist=True,
-#                                 viewonly=True)
 class Satellite(BASE):
     __tablename__='satellites'
     id = Column(String(50), primary_key=True)
@@ -51,28 +35,18 @@ class SatImage(BASE):
     cloud_cover = Column(Float, nullable=False)
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
+    centroid = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True, nullable=False))
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
-    def __init__(self,row):
-        self.id = row['id']
-        self.clear_confidence_percent = row['clear_confidence_percent']
-        self.cloud_cover = row['cloud_cover']
-        self.pixel_res = row['pixel_res']
-        self.time_acquired = row['time_acquired']
-        self.geom = row['geom']
-
     def get_wkt(self):
         return to_shape(self.geom)
 
-    def get_centroid(self):
-        return session.query(self.geom.ST_Centroid().ST_AsText()).all()
-
     def get_lon_lat(self):
-        lon = session.query(self.geom.ST_Centroid().ST_X()).all()
-        lat = session.query(self.geom.ST_Centroid().ST_Y()).all()
+        lon = session.query(self.centroid.ST_X()).all()
+        lat = session.query(self.centroid.ST_Y()).all()
         return lon, lat
 
     def get_area(self):

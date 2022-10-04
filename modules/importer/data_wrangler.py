@@ -4,6 +4,20 @@ import geopandas as gpd
 from modules import utils
 from modules.logger import LOGGER
 
+def centroid_from_polygon(gdf):
+    '''Gets centroid of polygon using Albers Equal Area proj'''
+    # Project to equal-area projected crs
+    gdf = gdf.to_crs({'proj':'cea'}) 
+
+    # convert polygons to points and add as column
+    gdf['centroid'] = gdf.centroid
+
+    # Project back to WGS84 geographic crs
+    gdf= gdf.to_crs(epsg=4326)
+    gdf['centroid'] = gdf['centroid'].to_crs(epsg=4326)
+
+    return gdf
+
 def rename_columns(df):
     df.columns = df.columns.str.replace\
                     ('properties.', '', regex=False)
@@ -26,7 +40,7 @@ def list_to_polygon(row):
     else:
         LOGGER.error('Couldnt transform geometry coordinates to polygon')
         return
-    
+
 
 
 def gdf_creator(df, geom_column):
@@ -45,7 +59,8 @@ def wrangler(df):
     df = utils.build_timestamp(df,'properties.published')
 
     gdf = gdf_creator(df, 'geometry.coordinates')
-
+    gdf = centroid_from_polygon(gdf)
+    
     #only keep rows with Polygon geometries
     gdf = gdf[gdf.geom_type == 'Polygon']
     

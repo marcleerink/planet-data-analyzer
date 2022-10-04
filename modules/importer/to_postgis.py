@@ -24,7 +24,7 @@ def export_countries_table():
     
     gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
     else feature for feature in gdf_countries['geom']]
-    print(gdf_countries)
+    
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     gdf_countries.to_sql(name='countries',
                         con=ENGINE,
@@ -92,7 +92,9 @@ def export_satellites_table(gdf):
                         index=False)
 
 def export_sat_images_table(gdf):
-    sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 'pixel_res', 'time_acquired', 'geom', 'sat_id', 'item_type_id']]
+    sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 
+                        'pixel_res', 'time_acquired', 'centroid', 'geom', 
+                        'sat_id', 'item_type_id']]
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     sat_image_gdf.to_sql(name='sat_images',
                         con=ENGINE,
