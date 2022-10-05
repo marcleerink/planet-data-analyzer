@@ -1,18 +1,13 @@
-from enum import unique
-from dotenv import load_dotenv
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref
-from sqlalchemy import create_engine, Table, Column, Integer, Float, String, DateTime, ForeignKey, func
+from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
+from sqlalchemy import create_engine, Table, Column, Integer, Float, String, DateTime, ForeignKey, func, select
+from sqlalchemy.ext.hybrid import hybrid_property
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape, to_shape
-import os
+from modules.config import POSTGIS_URL
 
-load_dotenv()
-POSTGIS_URL = os.environ['POSTGIS_URL']
 ENGINE = create_engine(POSTGIS_URL, echo=False)
-
 BASE = declarative_base()
-
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
 
@@ -22,7 +17,6 @@ class Satellite(BASE):
     name = Column(String(100), nullable=False)
     pixel_res = Column(Float)
     
-    # provider_name = Column(String(50), ForeignKey('providers.name'))
     sat_images = relationship('SatImage', 
                             backref='satellite')
     items = relationship('ItemType', 
@@ -37,10 +31,10 @@ class SatImage(BASE):
     time_acquired = Column(DateTime, nullable=False)
     centroid = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True, nullable=False))
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
-
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
+    
     def get_wkt(self):
         return to_shape(self.geom)
 
@@ -93,10 +87,6 @@ class Country(BASE):
         uselist=False,
         lazy='joined')
 
-    def get_sat_images(self):
-        sat_images = session.query(self.sat_images).filter_by(iso=self.iso).join(Country.sat_images).all()
-        return [image[0] for image in sat_images]
-    
 class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from modules.importer import arg_parser, to_postgis, data_wrangler, api_importer
 from modules import utils
-from modules.logger import LOGGER
+from modules.config import LOGGER
 
 def importer(args):
     '''imports satellite imagery metadata for the given AOI, TOI.

@@ -5,6 +5,7 @@ import folium
 from modules.database.db import ENGINE, SESSION, SatImage, Satellite, City, Country
 from folium.plugins import HeatMap, HeatMapWithTime
 from sqlalchemy import select
+import json
 
 
 session = SESSION()
@@ -13,14 +14,14 @@ APP_SUB_TITLE = 'Source: Planet'
 
 def get_images_from_satellite(sat_name):
     sql = """
-        SELECT  sat_images.id,
-                cloud_cover,
-                sat_images.pixel_res,
-                clear_confidence_percent,
-                ST_X(sat_images.centroid) AS lon,
-                ST_Y(sat_images.centroid) AS lat,
-                sat_images.geom AS geom,
-                satellites.name AS sat_name
+        SELECT DISTINCT sat_images.id,
+                        sat_images.cloud_cover,
+                        sat_images.pixel_res,
+                        sat_images.clear_confidence_percent,
+                        ST_X(sat_images.centroid) AS lon,
+                        ST_Y(sat_images.centroid) AS lat,
+                        sat_images.geom AS geom,
+                        satellites.name AS sat_name
         FROM sat_images, satellites 
         WHERE satellites.name = '{}'
         """.format(sat_name)
@@ -39,13 +40,16 @@ def get_total_images_countries():
     return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
     
 def footprints(map, gdf, name):
+    # geojson_str = gdf.to_json()
+    # geojson = json.loads(geojson_str)
+    
     for _, r in gdf.iterrows():
-        geo_j = folium.GeoJson(data=r,
-                                control=False,
-                                tooltip=folium.features.GeoJsonTooltip(
-                                fields=['id', 'sat_name', 'pixel_res', 'cloud_cover'],
-                                aliases=['ID:  ','Satellite Type: ', 'Pixel Resolution(meter per pixel): ', 'cloud_cover: ']
-                                )).add_to(map)
+        folium.GeoJson(data=r['geom'],
+            control=False,
+            # tooltip=folium.GeoJsonTooltip(
+            # fields=['id', 'sat_name', 'pixel_res', 'cloud_cover'],
+            # aliases=['ID:  ','Satellite Type: ', 'Pixel Resolution(meter per pixel): ', 'cloud_cover: ']
+            ).add_to(map)
     return map
 
 def choropleth_map(countries):
@@ -71,24 +75,25 @@ def choropleth_map(countries):
                                 'color':'#000000', 
                                 'fillOpacity': 0.50, 
                                 'weight': 0.1}
-    folium.features.GeoJson(
+                    
+    folium.GeoJson(
         countries,
         control=False,
         style_function=style_function,
         highlight_function = highlight_function,
-        tooltip=folium.features.GeoJsonTooltip(
+        tooltip=folium.GeoJsonTooltip(
             fields=['name', 'total_images'],
             aliases=['Country:  ','Total Images: '],
             
             )).add_to(map)
     folium.LayerControl().add_to(map)
-    st_folium(map, height= 700, width=700)
+    st_folium(map, height= 500, width=700)
 
 def heatmap(planetscope_images, skysat_images):
     map = folium.Map(location=[52.5200, 13.4050], 
                         zoom_start=7)
-
     folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
+
     planetscope_lat_lon_lst = get_lat_lon_lst(planetscope_images['lat'], 
                                             planetscope_images['lon'])
     skysat_lat_lon_lst = get_lat_lon_lst(skysat_images['lat'],
@@ -102,17 +107,19 @@ def heatmap(planetscope_images, skysat_images):
         HeatMap(data=heat_data, name=title).add_to(map)
 
     folium.LayerControl().add_to(map)
-    st_folium(map, height= 700, width=700)
+    st_folium(map, height= 500, width=700)
 
 def toolbar_map(planetscope_images, skysat_images):
     map = folium.Map(location=[52.5200, 13.4050], 
                         zoom_start=7)
+    folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
 
     map = footprints(map, planetscope_images, name='PlanetScope Footprints')
     map = footprints(map, skysat_images, name='SkySat Footprints')
-    
-    st_folium(map, height= 700, width=700)
 
+    folium.LayerControl().add_to(map)
+    st_folium(map, height= 500, width=700)
+    
 
 
 def main():
@@ -121,15 +128,17 @@ def main():
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
     
-    planetscope_images = get_images_from_satellite('planetscope')
-    skysat_images = get_images_from_satellite('skysat')
+    planetscope_images = get_images_from_satellite('Planetscope')
+    
+    skysat_images = get_images_from_satellite('Skysat')
     countries = get_total_images_countries()
 
-    print(planetscope_images[planetscope_images['id'] == '5976445_3363512_2022-10-03_2478'])
     #map
     choropleth_map(countries)
     heatmap(planetscope_images, skysat_images)
     toolbar_map(planetscope_images,skysat_images)
+
+    
 
 
 if __name__=='__main__':

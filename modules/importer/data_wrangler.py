@@ -2,7 +2,7 @@ from pandas import json_normalize
 from shapely.geometry import Polygon, MultiPolygon
 import geopandas as gpd
 from modules import utils
-from modules.logger import LOGGER
+from modules.config import LOGGER
 
 def centroid_from_polygon(gdf):
     '''Gets centroid of polygon using Albers Equal Area proj'''
@@ -60,12 +60,14 @@ def wrangler(df):
 
     gdf = gdf_creator(df, 'geometry.coordinates')
     gdf = centroid_from_polygon(gdf)
-    
+
     #only keep rows with Polygon geometries
     gdf = gdf[gdf.geom_type == 'Polygon']
     
     gdf = rename_columns(gdf)
 
+    gdf['satellite'] = gdf['satellite'].str.title()
+    
     #cleans df from geometry rows with NaNs
     gdf = gdf.dropna(how='any', subset=['geom', 'clear_confidence_percent'])  
 
