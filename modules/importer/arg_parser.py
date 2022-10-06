@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def arguments():
-    parser = argparse.ArgumentParser(description="Creates a usage report for all SkySat Tasks and Orders.")
+    parser = argparse.ArgumentParser(description="Search all satellite imagery in AOI and TOI")
     parser.add_argument(
         '--api_key', 
         type=str, 

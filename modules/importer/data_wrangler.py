@@ -59,7 +59,7 @@ def wrangler(df):
     df = utils.build_timestamp(df,'properties.published')
 
     gdf = gdf_creator(df, 'geometry.coordinates')
-    gdf = centroid_from_polygon(gdf)
+    # gdf = centroid_from_polygon(gdf)
 
     #only keep rows with Polygon geometries
     gdf = gdf[gdf.geom_type == 'Polygon']
@@ -69,7 +69,7 @@ def wrangler(df):
     gdf['satellite'] = gdf['satellite'].str.title()
     
     #cleans df from geometry rows with NaNs
-    gdf = gdf.dropna(how='any', subset=['geom', 'clear_confidence_percent'])  
+    gdf = gdf.dropna(how='any', subset=['geom'])  
 
     # drop duplicates
     gdf = gdf.drop_duplicates(subset=['id'])

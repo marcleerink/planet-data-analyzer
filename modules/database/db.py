@@ -5,11 +5,23 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape, to_shape
 from modules.config import POSTGIS_URL
+from sqlalchemy import types
+
 
 ENGINE = create_engine(POSTGIS_URL, echo=False)
 BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
+
+class CentroidFromPolygon(types.TypeDecorator):
+    '''Insert the centroid points on each Polygon insert'''
+    impl = types.Geometry
+    cache_ok = True
+
+    def bind_expression(self, bindparam):
+        return func.ST_Centroid(
+                self.impl.bind_expression(bindparam),
+                type=self)
 
 class Satellite(BASE):
     __tablename__='satellites'
@@ -25,12 +37,12 @@ class Satellite(BASE):
 class SatImage(BASE):
     __tablename__='sat_images'
     id = Column(String(100), primary_key=True)
-    clear_confidence_percent = Column(Float, nullable=False)
+    clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
-    centroid = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True, nullable=False))
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
+    centroid = Column(CentroidFromPolygon(geometry_type='Point', srid=4326), nullable=False)
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
