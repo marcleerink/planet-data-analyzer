@@ -24,11 +24,6 @@ class CentroidFromPolygon(TypeDecorator):
     def bind_expression(self, bindvalue):
         return functions.ST_Centroid(self.impl.bind_expression(bindvalue))
 
-class Centroid(BASE):
-    __tablename__='centroid'
-    id = Column(Integer, primary_key=True)
-    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT'))
-
 class Satellite(BASE):
     __tablename__='satellites'
     id = Column(String(50), primary_key=True)
@@ -48,7 +43,7 @@ class SatImage(BASE):
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
-    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT'))
+    centroid = Column(Geometry(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
