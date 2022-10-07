@@ -12,7 +12,7 @@ def arguments():
         '--api_key', 
         type=str, 
         required=False,
-        help="Planet's API key")
+        help="Optional. Planet's API key")
 
     yesterday= datetime.utcnow() - timedelta(days=1)
     parser.add_argument(
@@ -20,23 +20,16 @@ def arguments():
         type=str,
         required=False,
         default = yesterday.strftime("%Y-%m-%d"),
-        help="Required.Start date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.(gte)")
+        help="Required. Start date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.(gte)"
+            "\nDefaults to yesterday")
 
     parser.add_argument(
         "--end_date",
         type=str,
         required=False,
         default=datetime.utcnow().strftime("%Y-%m-%d"),
-        help="Optional. End date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.(lte)" 
+        help="Optional. End date of the time interval in ISO (YYYY-MM-DD) format.(lte)" 
         "\nDefaults to the current date.")
-
-    parser.add_argument(
-        '--out_dir', 
-        type=str, 
-        required=False,
-        default='reports',
-        help="Destination path where reports should be exported."
-            "\nDefaults to 'reports' in current directory")
 
     parser.add_argument(
         '--aoi_file', 
@@ -44,13 +37,6 @@ def arguments():
         required=True,
         help="Path to geojson file containing AOIs")
 
-    parser.add_argument(
-        '--item_types', 
-        type=str, 
-        required=False,
-        help="Item Type(s) to run the search for, comma-delimited. "
-            "Defaults to all item types available", )
-            
     parser.add_argument(
         "--cc", 
         type=float, 
@@ -70,12 +56,6 @@ def args_validate(args):
         except Exception as e:
             raise ValueError("No API was provided, please provide a valid API key or use an environment variable")
     
-    if args.item_types:
-        if "," in args.item_types:
-            args.item_types = args.item_types.split(",")
-        else:
-            args.item_types = [args.item_types]
-
     return args
 
 

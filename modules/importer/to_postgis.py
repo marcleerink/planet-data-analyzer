@@ -4,17 +4,11 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-
-
-from modules.database.db import ENGINE
+from modules.database.db import ENGINE, SESSION, SatImage
 from modules.database.psql_insert_copy import psql_insert_copy
-# gdf_countries.columns = gdf_countries.columns.str.lower()
-#     gdf_countries = gdf_countries.rename_geometry('geom')
-#     gdf_countries = gdf_countries[['iso', 'country', 'geom']]
-#     gdf_countries = gdf_countries.rename(columns={'country' : 'name'})
-    
-#     gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
-#     else feature for feature in gdf_countries['geom']]
+from sqlalchemy import MetaData
+
+
 def export_countries_table():
     gdf_countries = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson')
     gdf_countries.columns = gdf_countries.columns.str.lower()
@@ -93,8 +87,9 @@ def export_satellites_table(gdf):
 
 def export_sat_images_table(gdf):
     sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 
-                        'pixel_res', 'time_acquired', 'geom', 
+                        'pixel_res', 'time_acquired', 'centroid', 'geom', 
                         'sat_id', 'item_type_id']]
+
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     sat_image_gdf.to_sql(name='sat_images',
                         con=ENGINE,
@@ -103,7 +98,8 @@ def export_sat_images_table(gdf):
                         if_exists='append',
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
-
+    
+    
 
 def postgis_exporter(gdf):
     export_countries_table()

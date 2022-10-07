@@ -59,7 +59,7 @@ def wrangler(df):
     df = utils.build_timestamp(df,'properties.published')
 
     gdf = gdf_creator(df, 'geometry.coordinates')
-    # gdf = centroid_from_polygon(gdf)
+    gdf = centroid_from_polygon(gdf)
 
     #only keep rows with Polygon geometries
     gdf = gdf[gdf.geom_type == 'Polygon']

@@ -1,11 +1,14 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
-from sqlalchemy import create_engine, Table, Column, Integer, Float, String, DateTime, ForeignKey, func, select
-from sqlalchemy.ext.hybrid import hybrid_property
-from geoalchemy2 import Geometry
+from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
+    DateTime, ForeignKey, select, func
+from geoalchemy2 import Geometry, functions
+from sqlalchemy.types import TypeDecorator
+from sqlalchemy.dialects.postgresql import insert
 from geoalchemy2.shape import from_shape, to_shape
+
 from modules.config import POSTGIS_URL
-from sqlalchemy import types
+
 
 
 ENGINE = create_engine(POSTGIS_URL, echo=False)
@@ -13,15 +16,18 @@ BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
 
-class CentroidFromPolygon(types.TypeDecorator):
+class CentroidFromPolygon(TypeDecorator):
     '''Insert the centroid points on each Polygon insert'''
-    impl = types.Geometry
+    impl = Geometry
     cache_ok = True
 
-    def bind_expression(self, bindparam):
-        return func.ST_Centroid(
-                self.impl.bind_expression(bindparam),
-                type=self)
+    def bind_expression(self, bindvalue):
+        return functions.ST_Centroid(self.impl.bind_expression(bindvalue))
+
+class Centroid(BASE):
+    __tablename__='centroid'
+    id = Column(Integer, primary_key=True)
+    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT'))
 
 class Satellite(BASE):
     __tablename__='satellites'
@@ -42,7 +48,7 @@ class SatImage(BASE):
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
-    centroid = Column(CentroidFromPolygon(geometry_type='Point', srid=4326), nullable=False)
+    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT'))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
@@ -120,5 +126,16 @@ class City(BASE):
 
 
 if __name__ == "__main__":
-    BASE.metadata.drop_all(ENGINE)
+    BASE.metadata.drop_all(ENGINE, checkfirst=True)
     BASE.metadata.create_all(ENGINE)
+
+    centroid = Centroid()
+    
+    centroid.centroid = 'POLYGON((0 0,1 0,1 1,0 1,0 0))'
+    statement = insert(centroid)
+
+   
+    
+    session.add(centroid)
+    session.commit()
+
