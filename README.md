@@ -2,7 +2,7 @@
 
 ## Purpose
 This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries and cities. 
-The aggregated and spatial statistics about the imagery on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover). 
+The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover) referenced against cities/countries. 
 
 
 ## Dependencies
@@ -12,9 +12,10 @@ The aggregated and spatial statistics about the imagery on a Streamlit dashboard
 
       pip3 install -r requirements.txt
 
-* Postgres with [PostGIS plugin installed](https://postgis.net/install/) and active database.
+* Postgres with [PostGIS plugin installed](https://postgis.net/install/) and an active database.
 
-* .env file containing the Postgres connection url: POSTGIS_URL='postgresql://USERNAME:PASSWORD@localhost:5432/DATABASE_NAME'
+* .env file containing the Postgres connection url: 
+```POSTGIS_URL='postgresql://USERNAME:PASSWORD@localhost:5432/DATABASE_NAME'```
 
 ## Usage
 
