@@ -124,13 +124,3 @@ if __name__ == "__main__":
     BASE.metadata.drop_all(ENGINE, checkfirst=True)
     BASE.metadata.create_all(ENGINE)
 
-    centroid = Centroid()
-    
-    centroid.centroid = 'POLYGON((0 0,1 0,1 1,0 1,0 0))'
-    statement = insert(centroid)
-
-   
-    
-    session.add(centroid)
-    session.commit()
-
