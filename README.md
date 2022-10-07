@@ -12,6 +12,10 @@ The aggregated and spatial statistics about the imagery on a Streamlit dashboard
 
       pip3 install -r requirements.txt
 
+* Postgres with [PostGIS plugin installed](https://postgis.net/install/) and active database.
+
+* .env file containing the Postgres connection url: POSTGIS_URL='postgresql://USERNAME:PASSWORD@localhost:5432/DATABASE_NAME'
+
 ## Usage
 
 * The importer.py file should first be run.
