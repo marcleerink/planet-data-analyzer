@@ -100,6 +100,22 @@ class Country(BASE):
         uselist=False,
         lazy='joined')
 
+    cities = relationship(
+        'Cities',
+        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(City.geom).as_comparison(1,2)',
+        backref='countries',
+        viewonly=True,
+        uselist=False,
+        lazy='joined')
+
+    urban_areas = relationship(
+        'UrbanArea',
+        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(UrbanArea.geom).as_comparison(1,2)',
+        backref='countries',
+        viewonly=True,
+        uselist=False,
+        lazy='joined')
+    
 class City(BASE):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
@@ -110,16 +126,33 @@ class City(BASE):
 
     sat_images = relationship(
         'SatImage',
-        primaryjoin='func.ST_Contains(foreign(City.geom), SatImage.geom).as_comparison(1,2)',
-        backref=backref('cities', uselist=False),
+        primaryjoin='func.ST_Intersects(func.ST_Buffer(foreign(City.geom),5), remote(SatImage.geom).as_comparison(1,2)',
+        backref='cities',
         viewonly=True,
-        uselist=True)
+        uselist=False,
+        lazy='joined')
     
     def get_cities_within_radius(self, radius):
         """Return all cities within a given radius (in meters) of this city."""
         return City.query.filter(func.ST_Distance_Sphere(City.geom, self.geom) < radius).all()
 
 
+class UrbanArea(BASE):
+    __tablename__='urban_areas'
+    id = Column(Integer, primary_key=True)
+    area_sqkm = Column(Float)
+    featureclass = Column(String(50))
+    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True),
+                    nullable=False)
+    
+    cities = relationship(
+        'City',
+        primaryjoin='func.ST_Within(foreign(UrbanArea.geom), remote(City.geom).as_comparison(1,2)',
+        backref='urban_areas',
+        viewonly=True,
+        uselist=False,
+        lazy='joined')
+    
 if __name__ == "__main__":
     BASE.metadata.drop_all(ENGINE, checkfirst=True)
     BASE.metadata.create_all(ENGINE)

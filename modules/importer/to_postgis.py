@@ -16,6 +16,7 @@ def export_countries_table():
     gdf_countries = gdf_countries.rename(columns={'iso_a2' : 'iso'})
     gdf_countries = gdf_countries[['iso', 'name', 'geom']]
     
+    
     gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
     else feature for feature in gdf_countries['geom']]
     
@@ -44,6 +45,20 @@ def export_cities_table():
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
 
+def export_urban_areas_table():
+    gdf_urban_areas = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson')
+    gdf_urban_areas = gdf_urban_areas.rename_geometry('geom')
+    gdf_urban_areas = gdf_urban_areas.drop('scalerank', axis=1)
+    gdf_urban_areas = gdf_urban_areas.reset_index(names='id')
+    
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    gdf_urban_areas.to_sql(name='urban_areas',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False,
+                        dtype={'geom': Geometry('Polygon', srid=4326)})
 
 def export_asset_types_table(gdf):
     asset_types_df = gdf['assets']
@@ -104,6 +119,7 @@ def export_sat_images_table(gdf):
 def postgis_exporter(gdf):
     export_countries_table()
     export_cities_table()
+    export_urban_areas_table()
     export_satellites_table(gdf)
     export_item_types_table(gdf)
     export_asset_types_table(gdf)
