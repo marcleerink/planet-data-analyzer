@@ -6,7 +6,8 @@ from geoalchemy2 import Geometry, functions
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.dialects.postgresql import insert
 from geoalchemy2.shape import from_shape, to_shape
-
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import Insert
 from modules.config import POSTGIS_URL
 
 
@@ -16,10 +17,22 @@ BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
 
+# hack that sets every insert to ON CONFLICT DO NOTHING
+@compiles(Insert)
+def prefix_inserts(insert, compiler, **kw):
+    return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
+
 class CentroidFromPolygon(TypeDecorator):
     '''Insert the centroid points on each Polygon insert'''
     impl = Geometry
     cache_ok = True
+    def column_expression(self, col):
+         """The column_expression() method is overridden to set the correct type.
+
+         This is not needed in this example but it is needed if one wants to override other methods
+         of the TypeDecorator class, like ``process_result_value()`` for example.
+         """
+         return getattr(func, self.impl.as_binary)(col, type_=self)
 
     def bind_expression(self, bindvalue):
         return functions.ST_Centroid(self.impl.bind_expression(bindvalue))
@@ -43,7 +56,7 @@ class SatImage(BASE):
     pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
-    centroid = Column(Geometry(srid=4326, geometry_type='POINT', nullable=False))
+    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
 
@@ -101,8 +114,8 @@ class Country(BASE):
         lazy='joined')
 
     cities = relationship(
-        'Cities',
-        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(City.geom).as_comparison(1,2)',
+        'City',
+        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
         uselist=False,
@@ -110,7 +123,7 @@ class Country(BASE):
 
     urban_areas = relationship(
         'UrbanArea',
-        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(UrbanArea.geom).as_comparison(1,2)',
+        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(UrbanArea.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
         uselist=False,
@@ -126,7 +139,7 @@ class City(BASE):
 
     sat_images = relationship(
         'SatImage',
-        primaryjoin='func.ST_Intersects(func.ST_Buffer(foreign(City.geom),5), remote(SatImage.geom).as_comparison(1,2)',
+        primaryjoin='func.ST_Intersects(func.ST_Buffer(foreign(City.geom),5), remote(SatImage.geom)).as_comparison(1,2)',
         backref='cities',
         viewonly=True,
         uselist=False,
@@ -155,7 +168,7 @@ class UrbanArea(BASE):
     
     cities = relationship(
         'City',
-        primaryjoin='func.ST_Within(foreign(UrbanArea.geom), remote(City.geom).as_comparison(1,2)',
+        primaryjoin='func.ST_Within(foreign(UrbanArea.geom), remote(City.geom)).as_comparison(1,2)',
         backref='urban_areas',
         viewonly=True,
         uselist=False,
@@ -173,8 +186,8 @@ class RiverLake(BASE):
 
     cities = relationship(
         'City',
-        primaryjoin='func.ST_Within(foreign(RiverLake.geom), remote(City.geom).as_comparison(1,2)',
-        backref='urban_areas',
+        primaryjoin='func.ST_Within(foreign(RiverLake.geom), remote(City.geom)).as_comparison(1,2)',
+        backref='rivers_lakes',
         viewonly=True,
         uselist=False,
         lazy='joined')

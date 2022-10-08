@@ -6,9 +6,12 @@ from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-from modules.database.db import ENGINE
+from modules.database.db import ENGINE, SatImage, SESSION
 from modules.database.psql_insert_copy import psql_insert_copy
+from shapely import wkt
 
+
+session = SESSION()
 
 def export_countries_table():
     gdf_countries = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson')
@@ -134,19 +137,34 @@ def export_satellites_table(gdf):
                         index=False)
 
 def export_sat_images_table(gdf):
-    sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 
-                        'pixel_res', 'time_acquired', 'centroid', 'geom', 
-                        'sat_id', 'item_type_id']]
-
-    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
-    sat_image_gdf.to_sql(name='sat_images',
-                        con=ENGINE,
-                        schema='public',
-                        method=psql_insert,
-                        if_exists='append',
-                        index=False,
-                        dtype={'geom': Geometry('Polygon', srid=4326)})
+    # gdf['centroid_test'] = gdf['geom']
+    # sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 
+    #                     'pixel_res', 'time_acquired', 'centroid', 'centroid_test', 
+    #                     'geom', 'sat_id', 'item_type_id']]
     
+    # psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    # sat_image_gdf.to_sql(name='sat_images',
+    #                     con=ENGINE,
+    #                     schema='public',
+    #                     method=psql_insert,
+    #                     if_exists='append',
+    #                     index=False,
+    #                     dtype={'geom': Geometry('Polygon', srid=4326)})
+
+    for i in gdf.index:
+        sat_image = SatImage(id = gdf.loc[i,'id'], 
+                        clear_confidence_percent = gdf.loc[i,'clear_confidence_percent'],
+                        cloud_cover = gdf.loc[i,'cloud_cover'],
+                        pixel_res = gdf.loc[i,'pixel_res'],
+                        time_acquired = gdf.loc[i, 'time_acquired'],
+                        centroid = wkt.dumps(gdf.loc[i, 'geom']),
+                        geom = wkt.dumps(gdf.loc[i, 'geom']),
+                        sat_id = gdf.loc[i, 'sat_id'],
+                        item_type_id = gdf.loc[i, 'item_type_id'])
+
+        
+        session.add(sat_image)
+        session.commit()
     
 
 def postgis_exporter(gdf):
