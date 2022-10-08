@@ -60,7 +60,7 @@ streamlit run app.py
 
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
-- Add weather data from weather API to reference imagery against.
+- Add more land cover classifications to reference imagery against.
 - Add satellite constellations from other companies.
 - Automate the import to PostGIS by deploying it on a server.
 
