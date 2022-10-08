@@ -1,8 +1,8 @@
 # Satellite Image Joiner
 
 ## Purpose
-This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries and cities. 
-The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover) referenced against cities/countries. 
+This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data. 
+The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover) referenced against cities/countries and land cover classification data. 
 
 
 ## Dependencies
@@ -16,6 +16,9 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 
 * .env file containing the Postgres connection url: 
 ```POSTGIS_URL='postgresql://USERNAME:PASSWORD@localhost:5432/DATABASE_NAME'```
+
+* [Planet API Key](https://www.planet.com/account/#/user-settings) 
+You can create an account and access the Data API for free.
 
 ## Usage
 
@@ -57,7 +60,6 @@ streamlit run app.py
 
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
-- Add more geospatial information on land types(Populated Area, Forest, Agriculture...) to reference imagery against.
 - Add weather data from weather API to reference imagery against.
 - Add satellite constellations from other companies.
 - Automate the import to PostGIS by deploying it on a server.

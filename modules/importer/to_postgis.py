@@ -6,9 +6,8 @@ from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
-from modules.database.db import ENGINE, SESSION, SatImage
+from modules.database.db import ENGINE
 from modules.database.psql_insert_copy import psql_insert_copy
-from sqlalchemy import MetaData
 
 
 def export_countries_table():
@@ -47,16 +46,26 @@ def export_cities_table():
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
 
+def export_land_cover_class_table(df_land_cover):
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    df_land_cover.to_sql(name='land_cover_classes',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False)
+
 def export_rivers_lakes_table():
     gdf_rivers_lakes = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_rivers_lake_centerlines.geojson')
     gdf_rivers_lakes = gdf_rivers_lakes.rename_geometry('geom')
     gdf_rivers_lakes = gdf_rivers_lakes[['featureclass', 'name', 'geom']]
     gdf_rivers_lakes = gdf_rivers_lakes.reset_index(names='id')
-    
+    gdf_rivers_lakes = gdf_rivers_lakes.dropna(subset=['geom', 'featureclass'])
 
     gdf_rivers_lakes['geom'] = [MultiLineString([feature]) if isinstance(feature, LineString) \
     else feature for feature in gdf_rivers_lakes['geom']]
 
+    export_land_cover_class_table(gdf_rivers_lakes['featureclass'])
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     gdf_rivers_lakes.to_sql(name='rivers_lakes',
                         con=ENGINE,
@@ -72,7 +81,9 @@ def export_urban_areas_table():
     gdf_urban_areas = gdf_urban_areas.rename_geometry('geom')
     gdf_urban_areas = gdf_urban_areas.drop('scalerank', axis=1)
     gdf_urban_areas = gdf_urban_areas.reset_index(names='id')
-    
+    gdf_urban_areas = gdf_urban_areas.dropna(subset=['geom', 'featureclass'])
+
+    export_land_cover_class_table(gdf_urban_areas['featureclass'])
     psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
     gdf_urban_areas.to_sql(name='urban_areas',
                         con=ENGINE,
@@ -139,6 +150,7 @@ def export_sat_images_table(gdf):
     
 
 def postgis_exporter(gdf):
+  
     export_countries_table()
     export_cities_table()
     export_urban_areas_table()

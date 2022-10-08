@@ -136,12 +136,20 @@ class City(BASE):
         """Return all cities within a given radius (in meters) of this city."""
         return City.query.filter(func.ST_Distance_Sphere(City.geom, self.geom) < radius).all()
 
+class LandCoverClass(BASE):
+    __tablename__='land_cover_classes'
+    featureclass = Column(String(50), primary_key=True)
+    
+    rivers_lakes = relationship('RiverLake', backref='land_cover_classes')
+    urban_areas = relationship('UrbanArea', backref='land_cover_classes')
 
 class UrbanArea(BASE):
     __tablename__='urban_areas'
     id = Column(Integer, primary_key=True)
     area_sqkm = Column(Float)
-    featureclass = Column(String(50))
+    featureclass = Column(String(50), 
+                    ForeignKey('land_cover_classes.featureclass'),
+                    nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True),
                     nullable=False)
     
@@ -157,11 +165,20 @@ class RiverLake(BASE):
     __tablename__='rivers_lakes'
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
-    featureclass = Column(String(50))
+    featureclass = Column(String(50), 
+                    ForeignKey('land_cover_classes.featureclass'), 
+                    nullable=False)
     geom = Column(Geometry(geometry_type='MultiLineString', srid=4326, spatial_index=True),
                             nullable=False)
 
-     
+    cities = relationship(
+        'City',
+        primaryjoin='func.ST_Within(foreign(RiverLake.geom), remote(City.geom).as_comparison(1,2)',
+        backref='urban_areas',
+        viewonly=True,
+        uselist=False,
+        lazy='joined')
+
 if __name__ == "__main__":
     BASE.metadata.drop_all(ENGINE, checkfirst=True)
     BASE.metadata.create_all(ENGINE)
