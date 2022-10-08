@@ -2,6 +2,8 @@ from functools import partial
 from geoalchemy2 import Geometry
 import pandas as pd
 import geopandas as gpd
+from shapely.geometry.linestring import LineString
+from shapely.geometry.multilinestring import MultiLineString
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 from modules.database.db import ENGINE, SESSION, SatImage
@@ -44,6 +46,26 @@ def export_cities_table():
                         if_exists='append',
                         index=False,
                         dtype={'geom': Geometry('Polygon', srid=4326)})
+
+def export_rivers_lakes_table():
+    gdf_rivers_lakes = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_rivers_lake_centerlines.geojson')
+    gdf_rivers_lakes = gdf_rivers_lakes.rename_geometry('geom')
+    gdf_rivers_lakes = gdf_rivers_lakes[['featureclass', 'name', 'geom']]
+    gdf_rivers_lakes = gdf_rivers_lakes.reset_index(names='id')
+    
+
+    gdf_rivers_lakes['geom'] = [MultiLineString([feature]) if isinstance(feature, LineString) \
+    else feature for feature in gdf_rivers_lakes['geom']]
+
+    psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
+    gdf_rivers_lakes.to_sql(name='rivers_lakes',
+                        con=ENGINE,
+                        schema='public',
+                        method=psql_insert,
+                        if_exists='append',
+                        index=False,
+                        dtype={'geom': Geometry('MultiLineString', srid=4326)})
+
 
 def export_urban_areas_table():
     gdf_urban_areas = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson')
@@ -120,6 +142,7 @@ def postgis_exporter(gdf):
     export_countries_table()
     export_cities_table()
     export_urban_areas_table()
+    export_rivers_lakes_table()
     export_satellites_table(gdf)
     export_item_types_table(gdf)
     export_asset_types_table(gdf)

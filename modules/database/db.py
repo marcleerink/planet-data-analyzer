@@ -152,7 +152,16 @@ class UrbanArea(BASE):
         viewonly=True,
         uselist=False,
         lazy='joined')
-    
+
+class RiverLake(BASE):
+    __tablename__='rivers_lakes'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50))
+    featureclass = Column(String(50))
+    geom = Column(Geometry(geometry_type='MultiLineString', srid=4326, spatial_index=True),
+                            nullable=False)
+
+     
 if __name__ == "__main__":
     BASE.metadata.drop_all(ENGINE, checkfirst=True)
     BASE.metadata.create_all(ENGINE)

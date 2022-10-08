@@ -7,10 +7,12 @@ from folium.plugins import HeatMap, HeatMapWithTime
 from sqlalchemy import select
 import json
 
-
-session = SESSION()
 APP_TITLE = "Satellite Images"
 APP_SUB_TITLE = 'Source: Planet'
+
+
+def init_db_connect():
+    return SESSION()
 
 def get_images_from_satellite(sat_name):
     sql = """
@@ -30,6 +32,7 @@ def get_images_from_satellite(sat_name):
 def get_lat_lon_lst(lat,lon):
     return list(map(list,zip(lat,lon)))
 
+
 def get_total_images_countries():
     sql = """
         SELECT iso, name, countries.geom, count(sat_images.geom) AS total_images
@@ -38,7 +41,7 @@ def get_total_images_countries():
         GROUP BY countries.iso
         """
     return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
-    
+
 def footprints(map, gdf, name):
     # geojson_str = gdf.to_json()
     # geojson = json.loads(geojson_str)
@@ -51,6 +54,7 @@ def footprints(map, gdf, name):
             # aliases=['ID:  ','Satellite Type: ', 'Pixel Resolution(meter per pixel): ', 'cloud_cover: ']
             ).add_to(map)
     return map
+
 
 def choropleth_map(countries):
     map = folium.Map(location=[52.5200, 13.4050], 
