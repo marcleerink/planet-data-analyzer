@@ -136,45 +136,31 @@ def export_satellites_table(gdf):
                         if_exists='append', 
                         index=False)
 
-def export_sat_images_table(gdf):
-    # gdf['centroid_test'] = gdf['geom']
-    # sat_image_gdf = gdf[['id', 'clear_confidence_percent', 'cloud_cover', 
-    #                     'pixel_res', 'time_acquired', 'centroid', 'centroid_test', 
-    #                     'geom', 'sat_id', 'item_type_id']]
-    
-    # psql_insert = partial(psql_insert_copy, on_conflict_ignore=True)
-    # sat_image_gdf.to_sql(name='sat_images',
-    #                     con=ENGINE,
-    #                     schema='public',
-    #                     method=psql_insert,
-    #                     if_exists='append',
-    #                     index=False,
-    #                     dtype={'geom': Geometry('Polygon', srid=4326)})
-
-    for i in gdf.index:
-        sat_image = SatImage(id = gdf.loc[i,'id'], 
-                        clear_confidence_percent = gdf.loc[i,'clear_confidence_percent'],
-                        cloud_cover = gdf.loc[i,'cloud_cover'],
-                        pixel_res = gdf.loc[i,'pixel_res'],
-                        time_acquired = gdf.loc[i, 'time_acquired'],
-                        centroid = wkt.dumps(gdf.loc[i, 'geom']),
-                        geom = wkt.dumps(gdf.loc[i, 'geom']),
-                        sat_id = gdf.loc[i, 'sat_id'],
-                        item_type_id = gdf.loc[i, 'item_type_id'])
-
-        
-        session.add(sat_image)
-        session.commit()
+def export_sat_images_table(r):
+    sat_image = SatImage(id = r['id'], 
+                clear_confidence_percent = r['clear_confidence_percent'],
+                cloud_cover = r['cloud_cover'],
+                pixel_res = r['pixel_res'],
+                time_acquired = r[ 'time_acquired'],
+                centroid = wkt.dumps(r['geom']),
+                geom = wkt.dumps(r['geom']),
+                sat_id = r['sat_id'],
+                item_type_id = r['item_type_id'])
+    session.add(sat_image)
+    session.commit()
     
 
 def postgis_exporter(gdf):
-  
+    
     export_countries_table()
     export_cities_table()
     export_urban_areas_table()
     export_rivers_lakes_table()
+
+        
     export_satellites_table(gdf)
     export_item_types_table(gdf)
     export_asset_types_table(gdf)
-    export_sat_images_table(gdf)
+    for _,r in gdf.iterrows():
+        export_sat_images_table(r)
   
