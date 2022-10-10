@@ -22,20 +22,21 @@ session = SESSION()
 def prefix_inserts(insert, compiler, **kw):
     return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
 
+class MultiGeomFromSingle(TypeDecorator):
+    '''Converts single geometries to multi geometries(multipolygon/multilinestring'''
+    impl = Geometry
+    cache_ok = True
+
+    def bind_expression(self, bindvalue):
+        return func.ST_Multi(self.impl.bind_expression(bindvalue))
+
 class CentroidFromPolygon(TypeDecorator):
     '''Insert the centroid points on each Polygon insert'''
     impl = Geometry
     cache_ok = True
-    def column_expression(self, col):
-         """The column_expression() method is overridden to set the correct type.
-
-         This is not needed in this example but it is needed if one wants to override other methods
-         of the TypeDecorator class, like ``process_result_value()`` for example.
-         """
-         return getattr(func, self.impl.as_binary)(col, type_=self)
 
     def bind_expression(self, bindvalue):
-        return functions.ST_Centroid(self.impl.bind_expression(bindvalue))
+        return func.ST_Centroid(self.impl.bind_expression(bindvalue))
 
 class Satellite(BASE):
     __tablename__='satellites'
@@ -102,7 +103,7 @@ class Country(BASE):
     __tablename__='countries'
     iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
-    geom = Column(Geometry(geometry_type='MultiPolygon', srid=4326, spatial_index=True), 
+    geom = Column(MultiGeomFromSingle(geometry_type='MultiPolygon', srid=4326, spatial_index=True), 
                             nullable=False)
     
     sat_images = relationship(
@@ -181,7 +182,7 @@ class RiverLake(BASE):
     featureclass = Column(String(50), 
                     ForeignKey('land_cover_classes.featureclass'), 
                     nullable=False)
-    geom = Column(Geometry(geometry_type='MultiLineString', srid=4326, spatial_index=True),
+    geom = Column(MultiGeomFromSingle(geometry_type='MultiLineString', srid=4326, spatial_index=True),
                             nullable=False)
 
     cities = relationship(

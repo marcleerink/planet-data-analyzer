@@ -1,16 +1,10 @@
-from functools import partial
-from unicodedata import name
-from geoalchemy2 import Geometry
+
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry.linestring import LineString
-from shapely.geometry.multilinestring import MultiLineString
-from shapely.geometry.polygon import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
-from modules.database.db import ENGINE, SESSION,\
- AssetType, ItemType, SatImage, Satellite, Country, City, RiverLake, UrbanArea, LandCoverClass
+from shapely.geometry import LineString, MultiLineString, Polygon, MultiPolygon
+from modules.database.db import SESSION, AssetType, ItemType, SatImage, Satellite,\
+                                 Country, City, RiverLake, UrbanArea, LandCoverClass
 from shapely import wkt
-
 
 session = SESSION()
 
@@ -20,9 +14,6 @@ def export_countries_table():
     gdf_countries = gdf_countries.rename_geometry('geom')
     gdf_countries = gdf_countries.rename(columns={'iso_a2' : 'iso'})
     gdf_countries = gdf_countries[['iso', 'name', 'geom']]
-
-    gdf_countries['geom'] = [MultiPolygon([feature]) if isinstance(feature, Polygon) \
-    else feature for feature in gdf_countries['geom']]
 
     for r in gdf_countries.itertuples():
         country = Country(
@@ -58,9 +49,6 @@ def export_rivers_lakes_table():
     gdf_rivers_lakes = gdf_rivers_lakes[['featureclass', 'name', 'geom']]
     gdf_rivers_lakes = gdf_rivers_lakes.reset_index(names='id')
     gdf_rivers_lakes = gdf_rivers_lakes.dropna(subset=['geom', 'featureclass'])
-
-    gdf_rivers_lakes['geom'] = [MultiLineString([feature]) if isinstance(feature, LineString) \
-    else feature for feature in gdf_rivers_lakes['geom']]
 
     for r in gdf_rivers_lakes.itertuples():
         export_land_cover_class_table(r)
