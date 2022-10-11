@@ -20,7 +20,6 @@ def rename_columns(df):
 
 def list_to_polygon(row):
     '''convert nested lists to polygons, skip other geometries or emtpy rows'''
-    
     if len(row) == 1:
         return Polygon(row[0])
     else:
@@ -35,9 +34,7 @@ def gdf_creator(df, geom_column):
     df[geom_column] = df[geom_column].apply(lambda row: list_to_polygon(row))
     
     gdf = gpd.GeoDataFrame(df, geometry=df[geom_column]).set_crs("epsg:4326").reset_index(drop=True)
-    gdf = gdf.rename_geometry('geom')
-              
-    return gdf
+    return gdf.rename_geometry('geom')
 
 def wrangler(df):
 

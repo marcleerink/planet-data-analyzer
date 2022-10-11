@@ -5,6 +5,7 @@ from shapely.geometry import LineString, MultiLineString, Polygon, MultiPolygon
 from modules.database.db import SESSION, AssetType, ItemType, SatImage, Satellite,\
                                  Country, City, RiverLake, UrbanArea, LandCoverClass
 from shapely import wkt
+from geoalchemy2.shape import from_shape
 
 session = SESSION()
 
@@ -19,7 +20,7 @@ def export_countries_table():
         country = Country(
                         iso = r.iso,
                         name = r.name,
-                        geom = wkt.dumps(r.geom))
+                        geom = from_shape(r.geom, srid=4326))
         session.add(country)
         session.commit()
     
@@ -34,7 +35,7 @@ def export_cities_table():
     for r in gdf_cities.itertuples():
         city = City(id = r.id,
                     name = r.name,
-                    geom = wkt.dumps(r.geom))
+                    geom = from_shape(r.geom, srid=4326))
         session.add(city)
         session.commit()
     
@@ -55,7 +56,7 @@ def export_rivers_lakes_table():
         river_lake = RiverLake(id = r.id,
                                 name = r.name,
                                 featureclass = r.featureclass,
-                                geom = wkt.dumps(r.geom))
+                                geom = from_shape(r.geom, srid=4326))
         session.add(river_lake)
         session.commit()
 
@@ -73,7 +74,7 @@ def export_urban_areas_table():
         urban_area = UrbanArea(id = r.id,
                                 area_sqkm = r.area_sqkm,
                                 featureclass = r.featureclass,
-                                geom = wkt.dumps(r.geom))
+                                geom = from_shape(r.geom, srid=4326))
    
 
 def export_asset_types_table(gdf):
@@ -110,8 +111,8 @@ def export_sat_images_table(r):
                 cloud_cover = r.cloud_cover,
                 pixel_res = r.pixel_res,
                 time_acquired = r.time_acquired,
-                centroid = wkt.dumps(r.geom),
-                geom = wkt.dumps(r.geom),
+                centroid = from_shape(r.geom, srid=4326),
+                geom = from_shape(r.geom, srid=4326),
                 sat_id = r.sat_id,
                 item_type_id = r.item_type_id
                 )

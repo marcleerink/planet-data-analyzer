@@ -1,8 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, select, func
-from geoalchemy2 import Geometry, functions
+    DateTime, ForeignKey, func, CheckConstraint
+from geoalchemy2 import Geometry
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.dialects.postgresql import insert
 from geoalchemy2.shape import from_shape, to_shape
@@ -60,8 +60,12 @@ class SatImage(BASE):
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
-
     
+    def check_wkb(wkb, x, y):
+        pt = to_shape(wkb)
+        assert round(pt.x, 5) == x
+        assert round(pt.y, 5) == y
+
     def get_wkt(self):
         return to_shape(self.geom)
 
