@@ -12,7 +12,7 @@ from modules.config import POSTGIS_URL
 
 
 
-ENGINE = create_engine(POSTGIS_URL, echo=False)
+ENGINE = create_engine(POSTGIS_URL, echo=True)
 BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
@@ -45,9 +45,11 @@ class Satellite(BASE):
     pixel_res = Column(Float)
     
     sat_images = relationship('SatImage', 
-                            backref='satellite')
+                            backref='satellite',
+                            )
     items = relationship('ItemType', 
-                        backref='satellites',)
+                        backref='satellites',
+                        )
 
 class SatImage(BASE):
     __tablename__='sat_images'
@@ -93,9 +95,12 @@ class ItemType(BASE):
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
 
-    sat_image = relationship('SatImage', backref='item_types')
+    sat_image = relationship('SatImage', 
+                            backref='item_types',)
 
-    assets = relationship('AssetType', secondary=items_assets, backref='item_types')
+    assets = relationship('AssetType', 
+                            secondary=items_assets, 
+                            backref='item_types')
     
     
 class AssetType(BASE):

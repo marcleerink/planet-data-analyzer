@@ -88,10 +88,9 @@ def export_asset_types_table(gdf):
     
 
 def export_item_types_table(r):
-    item_types = ItemType(
-                id = r.item_type_id,
-                sat_id = r.sat_id
-                )
+    item_types = ItemType(id = r.item_type_id,
+                        sat_id = r.sat_id
+                        )
     session.add(item_types)
     session.commit()
 
