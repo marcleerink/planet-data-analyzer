@@ -1,18 +1,19 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, func, CheckConstraint
+    DateTime, ForeignKey, func
 from geoalchemy2 import Geometry
 from sqlalchemy.types import TypeDecorator
-from sqlalchemy.dialects.postgresql import insert
 from geoalchemy2.shape import from_shape, to_shape
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
 from modules.config import POSTGIS_URL
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 
-ENGINE = create_engine(POSTGIS_URL, echo=True)
+
+ENGINE = create_engine(POSTGIS_URL, echo=False)
 BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
@@ -70,11 +71,14 @@ class SatImage(BASE):
 
     def get_wkt(self):
         return to_shape(self.geom)
-
-    def get_lon_lat(self):
-        lon = session.query(self.centroid.ST_X()).all()
-        lat = session.query(self.centroid.ST_Y()).all()
-        return lon, lat
+    
+    @hybrid_property
+    def lon(self):
+        return session.query(self.centroid.ST_X()).all()
+    @hybrid_property   
+    def lat(self):
+        return session.query(self.centroid.ST_Y()).all()
+  
 
     def get_area(self):
         return session.query(self.geom.ST_Area()).all()

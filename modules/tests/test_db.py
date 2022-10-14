@@ -3,14 +3,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import os
 from datetime import datetime
-from geojson.utils import generate_random
-from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
 import geopandas as gpd
+
 from modules.database.db import SatImage, Satellite, ItemType, AssetType, Country
 
 
-engine = create_engine(os.environ['POSTGIS_URL'], echo=True)
+engine = create_engine(os.environ['POSTGIS_URL'], echo=False)
 Session = sessionmaker()
 
 @pytest.fixture(scope='module')
@@ -96,7 +95,6 @@ def country_create(session):
 
 def test_land_cover_models(session):
     country = country_create(session)
-
     delete_instance(session, country.iso, Country, Country.iso)
 
 
