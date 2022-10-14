@@ -178,8 +178,9 @@ def image_info_map(all_images):
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
-def apply_filters(df, sat_names, start_date, end_date):
+def apply_filters(df, sat_names, cloud_cover, start_date, end_date):
     df = df.loc[(df['time_acquired'] > start_date) & (df['time_acquired'] <= end_date)]
+    df = df[df['cloud_cover'] <= cloud_cover]
     return df[df['sat_name'] == sat_names]
 
 
@@ -195,6 +196,8 @@ def display_time_filter():
     end_date = pd.to_datetime(end_date)
     return start_date, end_date
 
+def display_cloud_cover_filter():
+    return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1)
 def main():
     #config
     st.set_page_config(page_title=APP_TITLE, layout='wide')
@@ -208,18 +211,19 @@ def main():
     # add sidebar with filters
     sat_names = display_sat_name_filter(all_images)
     start_date, end_date = display_time_filter()
+    cloud_cover = display_cloud_cover_filter()
 
-
-    all_images = apply_filters(all_images, sat_names, start_date, end_date)
+    all_images = apply_filters(all_images, sat_names, cloud_cover, start_date, end_date)
     
     
     # countries = apply_filters(countries, sat_names, start_date, end_date)
-    
+
     if len(all_images.index) ==0:
         st.write('No Images available for selected filters')
     else:
         heatmap(all_images)
         image_info_map(all_images)
+        st.write('Available Satellite Images for specified filters: {}'.format(all_images['id'].count()))
         # images_per_country_map(countries)
 
 if __name__=='__main__':
