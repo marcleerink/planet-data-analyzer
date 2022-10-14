@@ -100,14 +100,14 @@ class SatImage(BASE):
                 id=self.id,
                 geometry=geometry,
                 properties={
-                    "id" : self.id,
                     "cloud_cover" : self.cloud_cover,
                     "pixel_res" : self.pixel_res,
-                    "time_acquired" : (self.time_acquired).strftime("%Y-%m-%d"),
+                    "time_acquired" : self.time_acquired.strftime("%Y-%m-%d"),
                     "sat_id" : self.sat_id,
                     "sat_name" : self.satellites.name,
                     "item_type_id" : self.item_type_id,
-                    "srid" : self.srid
+                    "srid" : self.srid,
+                    "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)
         return dumps(FeatureCollection(json_lst))
