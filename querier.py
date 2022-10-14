@@ -12,3 +12,11 @@ def get_sat_image_satellite(session, satellite_name):
     query = session.query(SatImage, Satellite).filter(Satellite.name == satellite_name)
     print(query)
     return [image for image in query]
+
+session = SESSION()
+
+
+
+print(lon_list, lat_list)
+
+

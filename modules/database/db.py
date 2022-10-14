@@ -13,7 +13,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 
 
-ENGINE = create_engine(POSTGIS_URL, echo=False)
+ENGINE = create_engine(POSTGIS_URL, echo=True)
 BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
@@ -46,10 +46,12 @@ class Satellite(BASE):
     pixel_res = Column(Float)
     
     sat_images = relationship('SatImage', 
-                            backref='satellite',
+                            backref='satellites',
+                            lazy="selectin"
                             )
     items = relationship('ItemType', 
                         backref='satellites',
+                        lazy="selectin"
                         )
 
 class SatImage(BASE):
