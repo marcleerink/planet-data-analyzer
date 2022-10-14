@@ -9,6 +9,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
 from modules.config import POSTGIS_URL
 from sqlalchemy.ext.hybrid import hybrid_property
+from geojson import Feature, FeatureCollection, dumps
 
 
 
@@ -65,28 +66,51 @@ class SatImage(BASE):
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
-    
+   
+    @hybrid_property
     def check_wkb(wkb, x, y):
         pt = to_shape(wkb)
         assert round(pt.x, 5) == x
         assert round(pt.y, 5) == y
 
-    def get_wkt(self):
+    @hybrid_property
+    def wkt(self):
         return to_shape(self.geom)
-    
+
+    @hybrid_property
+    def srid(self):
+        return session.scalar(self.geom.ST_SRID())
     @hybrid_property
     def lon(self):
-        return session.query(self.centroid.ST_X()).all()
+        return session.scalar(self.centroid.ST_X())
     @hybrid_property   
     def lat(self):
-        return session.query(self.centroid.ST_Y()).all()
+        return session.scalar(self.centroid.ST_Y())
   
+    @hybrid_property
+    def area_sqkm(self):
+        area_mm = session.scalar((self.geom.ST_Transform(3035).ST_Area()))
+        return round((area_mm / 1000000), 3)
 
-    def get_area(self):
-        return session.query(self.geom.ST_Area()).all()
-
-    def get_geojson(self):
-        return session.query(self.geom.ST_AsGeoJSON()).all()
+    @hybrid_property
+    def geojson(self):
+        json_lst=[]
+        geometry = to_shape(self.geom)
+        feature = Feature(
+                id=self.id,
+                geometry=geometry,
+                properties={
+                    "id" : self.id,
+                    "cloud_cover" : self.cloud_cover,
+                    "pixel_res" : self.pixel_res,
+                    "time_acquired" : (self.time_acquired).strftime("%Y-%m-%d"),
+                    "sat_id" : self.sat_id,
+                    "sat_name" : self.satellites.name,
+                    "item_type_id" : self.item_type_id,
+                    "srid" : self.srid
+                })
+        json_lst.append(feature)
+        return dumps(FeatureCollection(json_lst))
 
 items_assets = Table(
     'items_assets',

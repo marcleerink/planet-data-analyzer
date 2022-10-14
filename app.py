@@ -14,7 +14,7 @@ from shapely import wkt
 from shapely.wkb import loads
 from itertools import chain
 from sqlalchemy import cast, String
-from geojson import Feature, FeatureCollection, dumps
+from geojson import Feature, FeatureCollection, dumps, GeometryCollection
 
 
 
@@ -68,8 +68,8 @@ def get_total_images_countries(engine):
 
 
 def get_lat_lon_lst(all_images):
-    lon_list = [session.scalar(image.centroid.ST_X()) for image in all_images]
-    lat_list = [session.scalar(image.centroid.ST_Y()) for image in all_images]
+    lon_list = [image.lon for image in all_images]
+    lat_list = [image.lat for image in all_images]
     return list(map(list,zip(lat_list,lon_list)))
 
 
@@ -137,7 +137,6 @@ def images_per_country_map(countries):
 def image_info_map(image_geojson, df_images):
     map = create_basemap()
     
-
     folium.Choropleth(geo_data=image_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
                 data=df_images,
@@ -194,23 +193,12 @@ def display_cloud_cover_filter():
     return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1)
 
 def create_geojson(sql_objects):
-    geojson = []
-    for i in sql_objects:
-        geometry = to_shape(i.geom)
-        feature = Feature(
-                id=i.id,
-                geometry=geometry,
-                properties={
-                    "id" : i.id,
-                    "cloud_cover" : i.cloud_cover,
-                    "pixel_res" : i.pixel_res,
-                    "time_acquired" : (i.time_acquired).strftime("%Y-%m-%d"),
-                    "sat_name" : i.satellites.name,
-                })
-        geojson.append(feature)
-    return dumps(FeatureCollection(geojson))
+    collection = [i.geojson for i in sql_objects]
+    
+    return GeometryCollection(collection)
+    
 
-def create_gdf(images):
+def create_df(images):
     return pd.DataFrame({
         'id': [image.id for image in images],
         'cloud_cover' : [image.cloud_cover for image in images],
@@ -236,10 +224,13 @@ def main():
                                     start_date, 
                                     end_date)
 
+    for i in images:
+        print(i.id, i.area_sqkm)
     images_geojson = create_geojson(images)
     
-    gdf_images = create_gdf(images)
-    print(gdf_images)
+    gdf_images = create_df(images)
+    
+
     if len(images) == 0:
         st.write('No Images available for selected filters')
     else:
