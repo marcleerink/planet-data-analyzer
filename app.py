@@ -18,13 +18,14 @@ from sqlalchemy import cast, String
 
 APP_TITLE = "Satellite Image Joins"
 APP_SUB_TITLE = 'Source: Planet'
-time_interval = 'Day'
-start_date = '2022-10-01'
-end_date = datetime.utcnow().strftime("%Y-%m-%d")
 
-session = SESSION()
+# @st.cache(allow_output_mutation=True)
+def get_db_conn():
+    return ENGINE
 
-def get_all_images():
+
+st.cache(hash_funcs={ENGINE: id})
+def get_all_images(engine):
     sql = """
         SELECT DISTINCT sat_images.id,
                         sat_images.cloud_cover,
@@ -37,57 +38,73 @@ def get_all_images():
                         satellites.name AS sat_name
         FROM sat_images, satellites 
         """
-    return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
+    return gpd.read_postgis(sql=sql, con=engine, crs=4326)
 
-def get_images_from_satellite(sat_name):
+st.cache(hash_funcs={ENGINE: id})
+def get_total_images_countries(engine):
     sql = """
-        SELECT DISTINCT sat_images.id,
-                        sat_images.cloud_cover,
-                        sat_images.pixel_res,
-                        sat_images.clear_confidence_percent,
-                        sat_images.time_acquired,
-                        ST_X(sat_images.centroid) AS lon,
-                        ST_Y(sat_images.centroid) AS lat,
-                        sat_images.geom AS geom,
-                        satellites.name AS sat_name
-        FROM sat_images, satellites 
-        WHERE satellites.name = '{}'
-        """.format(sat_name)
+        SELECT DISTINCT countries.iso AS iso, 
+                countries.name AS name, 
+                countries.geom, 
+                sat_images.time_acquired AS time_acquired, 
+                count(sat_images.geom) AS total_images
+        FROM countries
+        LEFT JOIN sat_images ON ST_DWithin(countries.geom, sat_images.geom, 0)
+        GROUP BY countries.iso, sat_images.time_acquired
+        """
+    return gpd.read_postgis(sql=sql, con=engine, crs=4326)
 
-    return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
+# def get_images_from_satellite(sat_name):
+#     sql = """
+#         SELECT DISTINCT sat_images.id,
+#                         sat_images.cloud_cover,
+#                         sat_images.pixel_res,
+#                         sat_images.clear_confidence_percent,
+#                         sat_images.time_acquired,
+#                         ST_X(sat_images.centroid) AS lon,
+#                         ST_Y(sat_images.centroid) AS lat,
+#                         sat_images.geom AS geom,
+#                         satellites.name AS sat_name
+#         FROM sat_images, satellites 
+#         WHERE satellites.name = '{}'
+#         """.format(sat_name)
+
+#     return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
 
 def get_lat_lon_lst(lat,lon):
     return list(map(list,zip(lat,lon)))
 
 
-def get_total_images_countries():
-    sql = """
-        SELECT iso, name, countries.geom, count(sat_images.geom) AS total_images
-        FROM countries
-        LEFT JOIN sat_images ON ST_DWithin(countries.geom, sat_images.geom, 0)
-        GROUP BY countries.iso
-        """
-    return gpd.read_postgis(sql=sql, con=ENGINE, crs=4326)
 
-def footprints(map, gdf, name):
-    # geojson_str = gdf.to_json()
-    # geojson = json.loads(geojson_str)
-    
-    for _, r in gdf.iterrows():
-        folium.GeoJson(data=r['geom'],
-            control=False,
-            tooltip=folium.GeoJsonTooltip(
-                    fields=['id', 'sat_name', 'pixel_res', 'cloud_cover'],
-                    aliases=['ID:  ','Satellite Type: ', 'Pixel Resolution(meter per pixel): ', 'cloud_cover: ']
-            )).add_to(map)
+def create_basemap():
+    map = folium.Map(location=[52.5200, 13.4050], 
+                        zoom_start=6)
+    folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
     return map
 
+def heatmap(all_images):
+    map = create_basemap()
+
+    all_images_lat_lon_lst = get_lat_lon_lst((all_images['lat']), 
+                                all_images['lon'])
+    
+    heat_data_list = [
+        [all_images_lat_lon_lst, 'PlanetScope Images']
+    ]
+
+    for heat_data, title in heat_data_list:
+        HeatMap(data=heat_data, name=title).add_to(map)
+
+    folium.LayerControl().add_to(map)
+    st_folium(map, height= 500, width=700)
 
 def images_per_country_map(countries):
-    map = folium.Map(location=[52.5200, 13.4050], 
-                        zoom_start=3)
-
+    map = create_basemap()
+    
     countries_geojson = gpd.GeoSeries(countries.set_index('iso')['geom']).to_json()
+    
+    # cast to string for geojson input
+    countries['time_acquired'] = countries['time_acquired'].dt.strftime('%Y-%m-%d')
     
     folium.Choropleth(geo_data=countries_geojson,
                     name='Choropleth: Total Satellite Imagery per Country',
@@ -120,80 +137,55 @@ def images_per_country_map(countries):
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
-def heatmap(planetscope_images, skysat_images):
-    map = folium.Map(location=[52.5200, 13.4050], 
-                        zoom_start=7)
-    folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
-
-    
-    planetscope_lat_lon_lst = get_lat_lon_lst((planetscope_images['lat']), 
-                                                planetscope_images['lon'])
-    
-    skysat_lat_lon_lst = get_lat_lon_lst(skysat_images['lat'],
-                                        skysat_images['lon'])
-    heat_data_list = [
-        [planetscope_lat_lon_lst, 'PlanetScope Images'],
-        [skysat_lat_lon_lst, 'SkySat Images']
-    ]
-    
-    for heat_data, title in heat_data_list:
-        HeatMap(data=heat_data, name=title).add_to(map)
-
-    folium.LayerControl().add_to(map)
-    st_folium(map, height= 500, width=700)
-
-def image_info_map(all_images, sat_name, start_date, end_date):
-    map = folium.Map(location=[52.5200, 13.4050], 
-                        zoom_start=7)
-    folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
-
-    # apply filters
-    all_images = all_images.loc[(all_images['time_acquired'] > start_date) & (all_images['time_acquired'] <= end_date)]
-    all_images = all_images[all_images['sat_name'] == sat_name]
+def image_info_map(all_images):
+    map = create_basemap()
 
     # cast to string for geojson input
     all_images['time_acquired'] = all_images['time_acquired'].dt.strftime('%Y-%m-%d')
 
     image_geojson = all_images.to_json(drop_id=True)
     
-    try: 
-        folium.Choropleth(geo_data=image_geojson,
-                    name='Choropleth: Total Satellite Imagery per Country',
-                    data=all_images,
-                    columns=['id', 'cloud_cover'],
-                    key_on ='feature.properties.id',
-                    fill_color='YlGnBu',
-                    legend_name='Cloud Cover',
-                    smooth_factor=0).add_to(map)
-    
-        style_function = lambda x: {'fillColor': '#ffffff', 
+    folium.Choropleth(geo_data=image_geojson,
+                name='Choropleth: Satellite Imagery Clear Confidence Percent',
+                data=all_images,
+                columns=['id', 'clear_confidence_percent'],
+                key_on ='feature.properties.id',
+                fill_color='YlGnBu',
+                legend_name='Clear Confidence Percent',
+                smooth_factor=0).add_to(map)
+
+    style_function = lambda x: {'fillColor': '#ffffff', 
+                        'color':'#000000', 
+                        'fillOpacity': 0.1, 
+                        'weight': 0.1}
+    highlight_function = lambda x: {'fillColor': '#000000', 
                             'color':'#000000', 
-                            'fillOpacity': 0.1, 
+                            'fillOpacity': 0.50, 
                             'weight': 0.1}
-        highlight_function = lambda x: {'fillColor': '#000000', 
-                                'color':'#000000', 
-                                'fillOpacity': 0.50, 
-                                'weight': 0.1}
-                    
-        folium.GeoJson(
-        all_images,
-        control=False,
-        style_function=style_function,
-        highlight_function = highlight_function,
-        tooltip=folium.GeoJsonTooltip(
-            fields=['id', 'sat_name', 'cloud_cover', 'clear_confidence_percent' ,'pixel_res', 'time_acquired'],
-            aliases=['ID:  ','Satellite: ', 'Cloud Cover: ', 'Clear Confidence Percent: ', 'Pixel Resolution: ', 'Time Acquired: '],
-            
-            )).add_to(map)
-    except IndexError:
-        st.write('No Images available for selected filter')
+                
+    folium.GeoJson(
+    all_images,
+    control=False,
+    style_function=style_function,
+    highlight_function = highlight_function,
+    tooltip=folium.GeoJsonTooltip(
+        fields=['id', 'sat_name', 'cloud_cover', 'clear_confidence_percent' ,'pixel_res', 'time_acquired'],
+        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ', 'Clear Confidence Percent: ', 'Pixel Resolution: ', 'Time Acquired: '],
+        
+        )).add_to(map)
+    
 
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
+def apply_filters(df, sat_names, start_date, end_date):
+    df = df.loc[(df['time_acquired'] > start_date) & (df['time_acquired'] <= end_date)]
+    return df[df['sat_name'] == sat_names]
+
+
 def display_sat_name_filter(all_images):
     sat_name_list = list(all_images['sat_name'].unique())
-    return st.sidebar.selectbox('Satellite Providers',sat_name_list, len(sat_name_list)-1)
+    return st.sidebar.radio('Satellite Providers',sat_name_list, len(sat_name_list)-1)
 
 def display_time_filter():
     start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=1))
@@ -209,28 +201,26 @@ def main():
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
     
-    # load data
-    planetscope_images = get_images_from_satellite('Planetscope')
-    skysat_images = get_images_from_satellite('Skysat')
-    
-    countries = get_total_images_countries()
-
-    all_images = get_all_images()
+    engine = get_db_conn()
+    countries = get_total_images_countries(engine)
+    all_images = get_all_images(engine)
 
     # add sidebar with filters
-    sat_names_filter = display_sat_name_filter(all_images)
+    sat_names = display_sat_name_filter(all_images)
     start_date, end_date = display_time_filter()
-    
 
-    
-    
-    
-    
-    # #map
-    # images_per_country_map(countries)
-    # heatmap(planetscope_images, skysat_images)
-    image_info_map(all_images, sat_names_filter, start_date, end_date)
 
+    all_images = apply_filters(all_images, sat_names, start_date, end_date)
     
+    
+    # countries = apply_filters(countries, sat_names, start_date, end_date)
+    
+    if len(all_images.index) ==0:
+        st.write('No Images available for selected filters')
+    else:
+        heatmap(all_images)
+        image_info_map(all_images)
+        # images_per_country_map(countries)
+
 if __name__=='__main__':
     main()
