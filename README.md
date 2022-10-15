@@ -58,6 +58,12 @@ After the data has been importer the app.py can be started:
 streamlit run app.py
 ```
 
+### Screenshots
+
+![Heatmap](http://url/to/img.png)
+![Choropleth Cloud Cover](http://url/to/img.png)
+![Choropleth Images per Country](http://url/to/img.png)
+
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
 - Add more land cover classifications to reference imagery against.

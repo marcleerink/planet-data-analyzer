@@ -91,17 +91,36 @@ def style_highlight_func():
                             'weight': 0.1}
     return style_function, highlight_function
 
+def create_country_geojson(countries):
+    json_lst=[]
+    for i in countries:
+        geometry = to_shape(i.geom)
+        feature = Feature(
+                id=i.iso,
+                geometry=geometry,
+                properties={
+                    "iso" : i.iso,
+                    "name" : i.name,
+                    "total_images" : i.total_images
+                })
+        json_lst.append(feature)
+    return dumps(FeatureCollection(json_lst))
+
+def create_countries_df(countries):
+    return pd.DataFrame({
+        'iso': [c.iso for c in countries],
+        'name' : [c.name for c in countries],
+        'total_images' : [c.total_images for c in countries],})
+
 def images_per_country_map(countries):
     map = create_basemap()
     
-    countries_geojson = gpd.GeoSeries(countries.set_index('iso')['geom']).to_json()
-    
-    # cast to string for geojson input
-    countries['time_acquired'] = countries['time_acquired'].dt.strftime('%Y-%m-%d')
+    countries_geojson = create_country_geojson(countries)
+    df_countries = create_countries_df(countries)
     
     folium.Choropleth(geo_data=countries_geojson,
                     name='Choropleth: Total Satellite Imagery per Country',
-                    data=countries,
+                    data=df_countries,
                     columns=['iso', 'total_images'],
                     key_on ='feature.id',
                     fill_color='YlGnBu',
@@ -111,7 +130,7 @@ def images_per_country_map(countries):
     style_func, highlight_func = style_highlight_func()
                     
     folium.GeoJson(
-        countries,
+        countries_geojson,
         control=False,
         style_function=style_func,
         highlight_function = highlight_func,
@@ -124,11 +143,40 @@ def images_per_country_map(countries):
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
+def create_images_df(images):
+    return pd.DataFrame({
+        'id': [image.id for image in images],
+        'cloud_cover' : [image.cloud_cover for image in images],
+        'pixel_res' : [image.pixel_res for image in images],
+        'time_acquired': [image.time_acquired.strftime("%Y-%m-%d") for image in images],
+        'sat_name' : [image.satellites.name for image in images]})
+    
+def create_images_geojson(images):
+    json_lst=[]
+    for i in images:
+        geometry = to_shape(i.geom)
+        feature = Feature(
+                id=i.id,
+                geometry=geometry,
+                properties={
+                    "id" : i.id,
+                    "cloud_cover" : i.cloud_cover,
+                    "pixel_res" : i.pixel_res,
+                    "time_acquired" : i.time_acquired.strftime("%Y-%m-%d"),
+                    "sat_id" : i.sat_id,
+                    "sat_name" : i.satellites.name,
+                    "item_type_id" : i.item_type_id,
+                    "srid" :i.srid,
+                    "area_sqkm": i.area_sqkm,
+                })
+        json_lst.append(feature)
+    return dumps(FeatureCollection(json_lst))
+
 def image_info_map(images):
     map = create_basemap()
     
-    images_geojson = create_geojson(images)
-    df_images = create_df(images)
+    images_geojson = create_images_geojson(images)
+    df_images = create_images_df(images)
 
     folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
@@ -155,11 +203,6 @@ def image_info_map(images):
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
-def apply_filters(df, sat_names, cloud_cover, start_date, end_date):
-    df = df.loc[(df['time_acquired'] > start_date) & (df['time_acquired'] <= end_date)]
-    df = df[df['cloud_cover'] <= cloud_cover]
-    return df[df['sat_name'] == sat_names]
-
 def display_sat_name_filter(session):
     satellites = session.query(Satellite.name).distinct()
     sat_name_list = [sat.name for sat in satellites]
@@ -175,38 +218,7 @@ def display_time_filter():
 
 def display_cloud_cover_filter():
     return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1)
-
-def create_geojson(sql_objects):
-    json_lst=[]
-    for i in sql_objects:
-        geometry = to_shape(i.geom)
-        feature = Feature(
-                id=i.id,
-                geometry=geometry,
-                properties={
-                    "id" : i.id,
-                    "cloud_cover" : i.cloud_cover,
-                    "pixel_res" : i.pixel_res,
-                    "time_acquired" : i.time_acquired.strftime("%Y-%m-%d"),
-                    "sat_id" : i.sat_id,
-                    "sat_name" : i.satellites.name,
-                    "item_type_id" : i.item_type_id,
-                    "srid" :i.srid,
-                    "area_sqkm": i.area_sqkm,
-                })
-        json_lst.append(feature)
-    return dumps(FeatureCollection(json_lst))
     
-
-def create_df(images):
-    return pd.DataFrame({
-        'id': [image.id for image in images],
-        'cloud_cover' : [image.cloud_cover for image in images],
-        'pixel_res' : [image.pixel_res for image in images],
-        'time_acquired': [image.time_acquired.strftime("%Y-%m-%d") for image in images],
-        'sat_name' : [image.satellites.name for image in images]})
-    
-
 def main():
     #config
     st.set_page_config(page_title=APP_TITLE, layout='wide')
@@ -226,12 +238,6 @@ def main():
                                     end_date)
 
     countries = get_countries_with_filters(session,sat_names,cloud_cover, start_date, end_date)
-
-    
-    for c in countries:
-        print(c.name, c.total_images)
-    
-    # countries = get_total_images_countries(ENGINE,start_date, end_date)
     
     if len(images) == 0:
         st.write('No Images available for selected filters')
@@ -239,8 +245,7 @@ def main():
         st.write('Total Satellite Images: {}'.format(len(images)))
         heatmap(images, sat_names)
         image_info_map(images)
-        
-        # images_per_country_map(countries)
+        images_per_country_map(countries)
 
 if __name__=='__main__':
     main()
