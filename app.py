@@ -30,19 +30,26 @@ def get_images_with_filter(session, sat_names,cloud_cover, start_date, end_date)
                                 .filter(SatImage.time_acquired <= end_date).all()
 
 def get_countries_with_filters(session, sat_names, cloud_cover, start_date, end_date):
-    return session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.id).label('total_images'))\
-                                                            .outerjoin(Country.sat_images)\
-                                                            .group_by(Country.iso).distinct()
+    subquery = session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
+    return session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.geom).label('total_images'))\
+                                                            .join(Country.sat_images)\
+                                                            .filter(SatImage.time_acquired >= start_date,
+                                                                    SatImage.time_acquired <= end_date)\
+                                                            .filter(SatImage.cloud_cover <= cloud_cover)\
+                                                            .filter(SatImage.sat_id.in_(subquery))\
+                                                            .group_by(Country.iso).all()
     
     
-def get_total_images_countries(engine):
-    sql = """
+def get_total_images_countries(engine, start_date, end_date):
+    sql = f"""
         SELECT DISTINCT countries.iso AS iso, 
                 countries.name AS name, 
                 countries.geom,
-                count(sat_images.geom) AS total_images
+                count(sat_images.geom) AS total_images,
+                sat_images.time_acquired AS time_acquired
         FROM countries
         LEFT JOIN sat_images ON ST_DWithin(countries.geom, sat_images.geom, 0)
+        WHERE sat_images.time_acquired BETWEEN {start_date} AND {end_date}
         GROUP BY countries.iso
         """
     return gpd.read_postgis(sql=sql, con=engine, crs=4326)
@@ -117,10 +124,13 @@ def images_per_country_map(countries):
     folium.LayerControl().add_to(map)
     st_folium(map, height= 500, width=700)
 
-def image_info_map(image_geojson, df_images):
+def image_info_map(images):
     map = create_basemap()
     
-    folium.Choropleth(geo_data=image_geojson,
+    images_geojson = create_geojson(images)
+    df_images = create_df(images)
+
+    folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
                 data=df_images,
                 columns=['id', 'cloud_cover'],
@@ -132,7 +142,7 @@ def image_info_map(image_geojson, df_images):
     style_func, highlight_func = style_highlight_func()
 
     folium.GeoJson(
-    image_geojson,
+    images_geojson,
     control=False,
     style_function=style_func,
     highlight_function = highlight_func,
@@ -215,18 +225,22 @@ def main():
                                     start_date, 
                                     end_date)
 
-    images_geojson = create_geojson(images)
-    df_images = create_df(images)
     countries = get_countries_with_filters(session,sat_names,cloud_cover, start_date, end_date)
 
+    
+    for c in countries:
+        print(c.name, c.total_images)
+    
+    # countries = get_total_images_countries(ENGINE,start_date, end_date)
+    
     if len(images) == 0:
         st.write('No Images available for selected filters')
     else:
         st.write('Total Satellite Images: {}'.format(len(images)))
         heatmap(images, sat_names)
-        image_info_map(images_geojson, df_images)
+        image_info_map(images)
         
-        images_per_country_map(countries)
+        # images_per_country_map(countries)
 
 if __name__=='__main__':
     main()

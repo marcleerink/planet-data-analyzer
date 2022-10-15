@@ -14,7 +14,7 @@ from geojson import Feature, FeatureCollection, dumps
 
 
 
-ENGINE = create_engine(POSTGIS_URL, echo=True)
+ENGINE = create_engine(POSTGIS_URL, echo=False)
 BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
@@ -147,7 +147,7 @@ class Country(BASE):
     
     sat_images = relationship(
         'SatImage',
-        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
+        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
         uselist=False,
@@ -155,7 +155,7 @@ class Country(BASE):
 
     cities = relationship(
         'City',
-        primaryjoin='func.ST_Contains(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
+        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
         uselist=False,
