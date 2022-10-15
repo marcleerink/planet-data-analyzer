@@ -60,8 +60,8 @@ streamlit run app.py
 
 ### Screenshots
 
-![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.30.48.png)
-![Choropleth Cloud Cover](http://url/to/img.png)
+![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.30.56.png)
+![Choropleth Cloud Cover](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.48.20.png)
 ![Choropleth Images per Country](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.41.57.png)
 
 ## Future Implementations:
