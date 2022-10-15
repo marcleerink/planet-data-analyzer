@@ -7,7 +7,7 @@ from modules.config import LOGGER
 
 def importer(args):
     '''imports satellite imagery metadata for the given AOI, TOI.
-     Exports all unique rows to tables (satellites, sat_images, item_types, asset_types) in PostGIS.
+     Exports all non-exisisting metadata to tables in PostGIS.
      '''
 
     # import geometry from file

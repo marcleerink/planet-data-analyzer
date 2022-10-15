@@ -34,42 +34,38 @@ def get_countries_with_filters(session, sat_names, cloud_cover, start_date, end_
     return session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.geom).label('total_images'))\
                                                             .join(Country.sat_images)\
                                                             .filter(SatImage.time_acquired >= start_date,
-                                                                    SatImage.time_acquired <= end_date)\
-                                                            .filter(SatImage.cloud_cover <= cloud_cover)\
-                                                            .filter(SatImage.sat_id.in_(subquery))\
+                                                                    SatImage.time_acquired <= end_date,
+                                                                    SatImage.cloud_cover <= cloud_cover,
+                                                                    SatImage.sat_id.in_(select(subquery)))\
                                                             .group_by(Country.iso).all()
-    
-    
-def get_total_images_countries(engine, start_date, end_date):
-    sql = f"""
-        SELECT DISTINCT countries.iso AS iso, 
-                countries.name AS name, 
-                countries.geom,
-                count(sat_images.geom) AS total_images,
-                sat_images.time_acquired AS time_acquired
-        FROM countries
-        LEFT JOIN sat_images ON ST_DWithin(countries.geom, sat_images.geom, 0)
-        WHERE sat_images.time_acquired BETWEEN {start_date} AND {end_date}
-        GROUP BY countries.iso
-        """
-    return gpd.read_postgis(sql=sql, con=engine, crs=4326)
 
 def get_lat_lon_lst(all_images):
     lon_list = [image.lon for image in all_images]
     lat_list = [image.lat for image in all_images]
     return list(map(list,zip(lat_list,lon_list)))
 
-def create_basemap():
-    map = folium.Map(location=[52.5200, 13.4050], 
-                        zoom_start=6)
+def get_min_max_list(list):
+    min_v = min(list)
+    max_v = max(list)
+    return min_v, max_v
+
+def create_basemap(zoom=None, lat_lon_list=None):
+    if zoom:
+        map = folium.Map(location=[52.5200, 13.4050], zoom_start=zoom)
+    else:
+        map = folium.Map(location=[52.5200, 13.4050])
+
     folium.TileLayer('CartoDB positron',name="Light Map",control=False).add_to(map)
+
+    if lat_lon_list:
+        map.fit_bounds(lat_lon_list, max_zoom=7)
     return map
 
 def heatmap(all_images, sat_names):
-    map = create_basemap()
-    
     all_images_lat_lon_lst = get_lat_lon_lst(all_images)
-    
+    map = create_basemap(lat_lon_list=all_images_lat_lon_lst)
+
+
     heat_data_list = [
         [all_images_lat_lon_lst, sat_names]
     ]
@@ -113,7 +109,7 @@ def create_countries_df(countries):
         'total_images' : [c.total_images for c in countries],})
 
 def images_per_country_map(countries):
-    map = create_basemap()
+    map = create_basemap(zoom=4)
     
     countries_geojson = create_country_geojson(countries)
     df_countries = create_countries_df(countries)
@@ -173,7 +169,7 @@ def create_images_geojson(images):
     return dumps(FeatureCollection(json_lst))
 
 def image_info_map(images):
-    map = create_basemap()
+    map = create_basemap(lat_lon_list = get_lat_lon_lst(images))
     
     images_geojson = create_images_geojson(images)
     df_images = create_images_df(images)
@@ -209,7 +205,7 @@ def display_sat_name_filter(session):
     return st.sidebar.radio('Satellite Providers',sat_name_list)
 
 def display_time_filter():
-    start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=1))
+    start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))
     end_date = st.sidebar.date_input('End_date', datetime.utcnow())
 
     start_date = pd.to_datetime(start_date)

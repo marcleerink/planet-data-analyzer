@@ -6,7 +6,7 @@ from datetime import datetime
 from geoalchemy2.shape import from_shape
 import geopandas as gpd
 
-from modules.database.db import SatImage, Satellite, ItemType, AssetType, Country
+from modules.database.db import Satellite, SatImage, AssetType, ItemType, Country, City
 
 
 engine = create_engine(os.environ['POSTGIS_URL'], echo=False)

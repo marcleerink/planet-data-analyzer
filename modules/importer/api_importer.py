@@ -85,20 +85,14 @@ def search(session, search_request):
         handle_exception(response)
 
 def search_requester(item_types, start_date, end_date, cc, geometry):
-    # Create search payload with geometry and TOI
-    payload = {
-        "item_types": item_types,
-        "gte": start_date,
-        "lt": end_date,
-        "cc": cc
-    }
+    # Create search payload with geometry and TOI   
 
     date_range_filter = {
         "type": "DateRangeFilter",
         "field_name": "acquired",
         "config": {
-            "gte": payload["gte"] + "T00:00:00.000Z",
-            "lte": payload["lt"] + "T00:00:00.000Z"
+            "gte": start_date + "T00:00:00.000Z",
+            "lte": end_date + "T00:00:00.000Z"
         }
     }
 
@@ -106,7 +100,7 @@ def search_requester(item_types, start_date, end_date, cc, geometry):
         "type": "RangeFilter",
         "field_name": "cloud_cover",
         "config": {
-            "lte": payload["cc"]
+            "lte": cc
         }
     }
 
@@ -121,7 +115,7 @@ def search_requester(item_types, start_date, end_date, cc, geometry):
     }
 
     search_request = {
-        "item_types": payload["item_types"],
+        "item_types": item_types,
         "filter": and_filter
     }
     return search_request
