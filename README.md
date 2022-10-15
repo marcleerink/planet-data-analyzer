@@ -60,9 +60,9 @@ streamlit run app.py
 
 ### Screenshots
 
-![Heatmap](http://url/to/img.png)
+![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.30.48.png)
 ![Choropleth Cloud Cover](http://url/to/img.png)
-![Choropleth Images per Country](http://url/to/img.png)
+![Choropleth Images per Country](https://github.com/marcleerink/sat_img_joiner/blob/main/app_screenshots/Screenshot%202022-10-15%20at%2013.41.57.png)
 
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
