@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 import pandas as pd
 from datetime import datetime, timedelta
 
-from modules.database.db import SESSION,Satellite
+from modules.database.db import Satellite, SESSION
 from modules.app.maps import heatmap, image_info_map, images_per_country_map
 from modules.app.query import get_countries_with_filters, get_images_with_filter
 
@@ -28,7 +28,7 @@ def display_cloud_cover_filter():
     return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1)
     
 def main():
-    st.set_page_config(page_title=APP_TITLE, layout='centered')
+    st.set_page_config(page_title=APP_TITLE, layout='wide')
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
     
@@ -38,7 +38,7 @@ def main():
     cloud_cover = display_cloud_cover_filter()
     
     # get data
-    images = get_images_with_filter(session, 
+    images = get_images_with_filter(session,
                                     sat_names, 
                                     cloud_cover, 
                                     start_date, 

@@ -10,14 +10,14 @@ from sqlalchemy.sql.expression import Insert
 from modules.config import POSTGIS_URL
 from sqlalchemy.ext.hybrid import hybrid_property
 from geojson import Feature, FeatureCollection, dumps
-
-
-
+import streamlit as st
 
 ENGINE = create_engine(POSTGIS_URL, echo=False)
-BASE = declarative_base()
 SESSION = sessionmaker(bind=ENGINE)
 session = SESSION()
+BASE = declarative_base()
+
+
 
 # hack that sets every insert to ON CONFLICT DO NOTHING
 @compiles(Insert)
@@ -48,11 +48,11 @@ class Satellite(BASE):
     
     sat_images = relationship('SatImage', 
                             backref='satellites',
-                            lazy="selectin"
+                            lazy='joined'
                             )
     items = relationship('ItemType', 
                         backref='satellites',
-                        lazy="selectin"
+                        lazy='joined'
                         )
 
 class SatImage(BASE):
@@ -233,6 +233,6 @@ class RiverLake(BASE):
         lazy='joined')
 
 if __name__ == "__main__":
-    BASE.metadata.drop_all(ENGINE, checkfirst=True)
+    BASE.metadata.drop_all(ENGINE)
     BASE.metadata.create_all(ENGINE)
 
