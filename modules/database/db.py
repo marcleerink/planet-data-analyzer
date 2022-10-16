@@ -13,11 +13,15 @@ from geojson import Feature, FeatureCollection, dumps
 import streamlit as st
 
 ENGINE = create_engine(POSTGIS_URL, echo=False)
-SESSION = sessionmaker(bind=ENGINE)
-session = SESSION()
 BASE = declarative_base()
 
+@st.experimental_singleton
+def get_db_session():
+    engine = create_engine(POSTGIS_URL, echo=False)
+    Session = sessionmaker(bind=engine)
+    return Session()
 
+session = get_db_session()
 
 # hack that sets every insert to ON CONFLICT DO NOTHING
 @compiles(Insert)

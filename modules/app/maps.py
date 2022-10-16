@@ -7,9 +7,9 @@ import pandas as pd
 import streamlit as st
 
 
-def get_lat_lon_lst(all_images):
-    lon_list = [image.lon for image in all_images]
-    lat_list = [image.lat for image in all_images]
+def get_lat_lon_lst(images):
+    lon_list = [image.lon for image in images]
+    lat_list = [image.lat for image in images]
     return list(map(list,zip(lat_list,lon_list)))
 
 def create_basemap(zoom=None, lat_lon_list=None):
@@ -24,12 +24,12 @@ def create_basemap(zoom=None, lat_lon_list=None):
         map.fit_bounds(lat_lon_list, max_zoom=7)
     return map
 
-def heatmap(all_images, sat_names):
-    all_images_lat_lon_lst = get_lat_lon_lst(all_images)
-    map = create_basemap(lat_lon_list=all_images_lat_lon_lst)
+def heatmap(image, sat_names):
+    lat_lon_lst = get_lat_lon_lst(image)
+    map = create_basemap(lat_lon_list=lat_lon_lst)
 
     heat_data_list = [
-        [all_images_lat_lon_lst, sat_names]
+        [lat_lon_lst, sat_names]
     ]
 
     for heat_data, title in heat_data_list:
@@ -47,34 +47,9 @@ def tooltip_highlight_func():
                             'color':'#000000', 
                             'fillOpacity': 0.50, 
                             'weight': 0.1}
-    
 
-def create_country_geojson(countries):
-    json_lst=[]
-    for i in countries:
-        geometry = to_shape(i.geom)
-        feature = Feature(
-                id=i.iso,
-                geometry=geometry,
-                properties={
-                    "iso" : i.iso,
-                    "name" : i.name,
-                    "total_images" : i.total_images
-                })
-        json_lst.append(feature)
-    return dumps(FeatureCollection(json_lst))
-
-def create_countries_df(countries):
-    return pd.DataFrame({
-        'iso': [c.iso for c in countries],
-        'name' : [c.name for c in countries],
-        'total_images' : [c.total_images for c in countries],})
-
-def images_per_country_map(countries):
+def images_per_country_map(countries_geojson, df_countries):
     map = create_basemap(zoom=4)
-    
-    countries_geojson = create_country_geojson(countries)
-    df_countries = create_countries_df(countries)
     
     folium.Choropleth(geo_data=countries_geojson,
                     name='Choropleth: Total Satellite Imagery per Country',
@@ -100,40 +75,9 @@ def images_per_country_map(countries):
 
     st_folium(map, height= 500, width=700)
 
-def create_images_df(images):
-    return pd.DataFrame({
-        'id': [image.id for image in images],
-        'cloud_cover' : [image.cloud_cover for image in images],
-        'pixel_res' : [image.pixel_res for image in images],
-        'time_acquired': [image.time_acquired.strftime("%Y-%m-%d") for image in images],
-        'sat_name' : [image.satellites.name for image in images]})
-    
-def create_images_geojson(images):
-    json_lst=[]
-    for i in images:
-        geometry = to_shape(i.geom)
-        feature = Feature(
-                id=i.id,
-                geometry=geometry,
-                properties={
-                    "id" : i.id,
-                    "cloud_cover" : i.cloud_cover,
-                    "pixel_res" : i.pixel_res,
-                    "time_acquired" : i.time_acquired.strftime("%Y-%m-%d"),
-                    "sat_id" : i.sat_id,
-                    "sat_name" : i.satellites.name,
-                    "item_type_id" : i.item_type_id,
-                    "srid" :i.srid,
-                    "area_sqkm": i.area_sqkm,
-                })
-        json_lst.append(feature)
-    return dumps(FeatureCollection(json_lst))
 
-def image_info_map(images):
+def image_info_map(images, images_geojson, df_images):
     map = create_basemap(lat_lon_list = get_lat_lon_lst(images))
-    
-    images_geojson = create_images_geojson(images)
-    df_images = create_images_df(images)
 
     folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
