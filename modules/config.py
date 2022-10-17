@@ -3,7 +3,15 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-POSTGIS_URL = os.environ['POSTGIS_URL']
+
+DB_USER = os.environ['DB_USER']
+DB_PW = os.environ['DB_PW']
+DB_NAME = os.environ['DB_NAME']
+DB_HOST = os.environ['DB_HOST']
+DB_PORT = os.environ['DB_PORT']
+
+POSTGIS_URL=f"postgresql://{DB_USER}:{DB_PW}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 PL_API_KEY = os.environ['PL_API_KEY']
 
 

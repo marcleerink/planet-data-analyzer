@@ -15,6 +15,7 @@ import streamlit as st
 ENGINE = create_engine(POSTGIS_URL, echo=False)
 BASE = declarative_base()
 
+
 @st.experimental_singleton
 def get_db_session():
     engine = create_engine(POSTGIS_URL, echo=False)
@@ -23,7 +24,7 @@ def get_db_session():
 
 session = get_db_session()
 
-# hack that sets every insert to ON CONFLICT DO NOTHING
+# set every insert to ON CONFLICT DO NOTHING
 @compiles(Insert)
 def prefix_inserts(insert, compiler, **kw):
     return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
@@ -70,7 +71,16 @@ class SatImage(BASE):
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
-   
+    
+    urban_area = relationship(
+                    'UrbanArea',
+                    primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(UrbanArea.geom)).as_comparison(1,2)',
+                    backref='sat_image',
+                    viewonly=True,
+                    uselist=False,
+                    lazy='joined')
+
+    
     @hybrid_property
     def check_wkb(wkb, x, y):
         pt = to_shape(wkb)
@@ -111,7 +121,7 @@ class SatImage(BASE):
                     "sat_name" : self.satellites.name,
                     "item_type_id" : self.item_type_id,
                     "srid" : self.srid,
-                    "area_sqkm": i.area_sqkm,
+                    "area_sqkm": self.area_sqkm,
                 })
         json_lst.append(feature)
         return dumps(FeatureCollection(json_lst))
@@ -209,15 +219,7 @@ class UrbanArea(BASE):
                     nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True),
                     nullable=False)
-    
-    cities = relationship(
-        'City',
-        primaryjoin='func.ST_Within(foreign(UrbanArea.geom), remote(City.geom)).as_comparison(1,2)',
-        backref='urban_areas',
-        viewonly=True,
-        uselist=False,
-        lazy='joined')
-
+   
 class RiverLake(BASE):
     __tablename__='rivers_lakes'
     id = Column(Integer, primary_key=True)
@@ -236,7 +238,7 @@ class RiverLake(BASE):
         uselist=False,
         lazy='joined')
 
-if __name__ == "__main__":
+def create_tables():
     BASE.metadata.drop_all(ENGINE)
     BASE.metadata.create_all(ENGINE)
 

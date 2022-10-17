@@ -18,7 +18,7 @@ def create_images_df(images):
         'sat_name' : [image.satellites.name for image in images]})
 
 
-def create_images_geojson(session, images):
+def create_images_geojson(images):
     json_lst=[]
     
     for i in images:
@@ -34,7 +34,7 @@ def create_images_geojson(session, images):
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,
                     "item_type_id" : i.item_type_id,
-                    "srid" :i.srid,
+                    "urban_area" : i.urban_area,
                     "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)
@@ -77,7 +77,8 @@ def get_images_with_filter(_session, sat_names,cloud_cover, start_date, end_date
                                 .filter(SatImage.cloud_cover <= cloud_cover)\
                                 .filter(SatImage.time_acquired >= start_date)\
                                 .filter(SatImage.time_acquired <= end_date).all()
-    images_geojson = create_images_geojson(_session,images)
+                        
+    images_geojson = create_images_geojson(images)
     df_images = create_images_df(images)
 
     return images, images_geojson, df_images
@@ -89,6 +90,7 @@ def get_countries_with_filters(_session, sat_names, cloud_cover, start_date, end
     gets all country objects with total images per country from postgis with applied filters.
     Creates geojson and df. Does that in this function to make single caching possible
     '''
+
     LOGGER.info('Getting countries from DB')
     
     subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
@@ -102,3 +104,5 @@ def get_countries_with_filters(_session, sat_names, cloud_cover, start_date, end
     countries_geojson = create_country_geojson(countries)
     df_countries = create_countries_df(countries)
     return countries, countries_geojson, df_countries
+
+

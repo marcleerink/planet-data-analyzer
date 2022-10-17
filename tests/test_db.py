@@ -5,12 +5,33 @@ import os
 from datetime import datetime
 from geoalchemy2.shape import from_shape
 import geopandas as gpd
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy_utils import database_exists, create_database
+import psycopg2
 
-from modules.database.db import Satellite, SatImage, AssetType, ItemType, Country, City
+from modules.config import POSTGIS_URL
+from modules.database.db import Satellite, SatImage, AssetType, ItemType, Country, City, get_db_session, BASE
 
+engine = create_engine(POSTGIS_URL, echo=True)
 
-engine = create_engine(os.environ['POSTGIS_URL'], echo=False)
-Session = sessionmaker()
+@pytest.fixture(scope='session', autouse=True)
+def setup_test_db():
+    if not database_exists(engine.url):
+        create_database(url=engine.url)
+        conn = psycopg2.connect(dbname=os.environ['DB_NAME'], 
+                                user=os.environ['DB_USER'], 
+                                password=os.environ['DB_PW'], 
+                                host=os.environ['DB_HOST'], 
+                                port=os.environ['DB_PORT'])
+        cursor = conn.cursor()
+        cursor.execute('CREATE EXTENSION postgis')
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    BASE.metadata.create_all(bind=engine)
+    yield
+    BASE.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope='module')
 def connection():
@@ -21,13 +42,15 @@ def connection():
 @pytest.fixture(scope='function')
 def session(connection):
     transaction = connection.begin()
-    session = Session(bind=connection)
+    session = get_db_session()
+
     yield session
     session.close()
     transaction.rollback()
+
     
-def delete_instance(session, model_id, model, model_primary):
-    session.query(model).filter(model_primary == model_id).delete()
+def delete_instance(session, instance_id, model, model_primary):
+    session.query(model).filter(model_primary == instance_id).delete()
     result = session.query(model).one_or_none()
     assert result is None
 
