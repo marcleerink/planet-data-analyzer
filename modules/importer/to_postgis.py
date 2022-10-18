@@ -2,12 +2,12 @@
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString, MultiLineString, Polygon, MultiPolygon
-from modules.database.db import SESSION, AssetType, ItemType, SatImage, Satellite,\
-                                 Country, City, RiverLake, UrbanArea, LandCoverClass
+from modules.database.db import AssetType, ItemType, SatImage, Satellite,\
+                                 Country, City, RiverLake, UrbanArea, LandCoverClass, get_db_session()
 from shapely import wkt
 from geoalchemy2.shape import from_shape
 
-session = SESSION()
+session = get_db_session()
 
 def export_countries_table():
     gdf_countries = gpd.read_file('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson')

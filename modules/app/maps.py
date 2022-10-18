@@ -2,10 +2,7 @@ import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 
-def get_lat_lon_lst(images):
-    lon_list = [image.lon for image in images]
-    lat_list = [image.lat for image in images]
-    return list(map(list,zip(lat_list,lon_list)))
+from modules.app.query import query_lat_lon_sat_images
 
 def create_basemap(zoom=None, lat_lon_list=None):
     if zoom:
@@ -20,7 +17,7 @@ def create_basemap(zoom=None, lat_lon_list=None):
     return map
 
 def heatmap(image, sat_names):
-    lat_lon_lst = get_lat_lon_lst(image)
+    lat_lon_lst = query_lat_lon_sat_images(image)
     map = create_basemap(lat_lon_list=lat_lon_lst)
 
     heat_data_list = [
@@ -72,7 +69,7 @@ def images_per_country_map(countries_geojson, df_countries):
 
 
 def image_info_map(images, images_geojson, df_images):
-    map = create_basemap(lat_lon_list = get_lat_lon_lst(images))
+    map = create_basemap(lat_lon_list = query_lat_lon_sat_images(images))
 
     folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',

@@ -11,18 +11,36 @@ from modules.config import POSTGIS_URL
 from sqlalchemy.ext.hybrid import hybrid_property
 from geojson import Feature, FeatureCollection, dumps
 import streamlit as st
+from sqlalchemy_utils import database_exists, create_database
+import psycopg2
+import os
 
-ENGINE = create_engine(POSTGIS_URL, echo=False)
-BASE = declarative_base()
-
+Base = declarative_base()
+engine = create_engine(POSTGIS_URL, echo=True)
 
 @st.experimental_singleton
 def get_db_session():
-    engine = create_engine(POSTGIS_URL, echo=False)
+    engine = create_engine(POSTGIS_URL, echo=True)
     Session = sessionmaker(bind=engine)
     return Session()
 
 session = get_db_session()
+
+def create_tables(engine, Base):
+    if not database_exists(engine.url):
+        create_database(url=engine.url)
+        conn = psycopg2.connect(dbname=os.environ['DB_NAME'], 
+                                user=os.environ['DB_USER'], 
+                                password=os.environ['DB_PW'], 
+                                host=os.environ['DB_HOST'], 
+                                port=os.environ['DB_PORT'])
+        cursor = conn.cursor()
+        cursor.execute('CREATE EXTENSION postgis')
+        conn.commit()
+        cursor.close()
+        conn.close()
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
 
 # set every insert to ON CONFLICT DO NOTHING
 @compiles(Insert)
@@ -45,7 +63,7 @@ class CentroidFromPolygon(TypeDecorator):
     def bind_expression(self, bindvalue):
         return func.ST_Centroid(self.impl.bind_expression(bindvalue))
 
-class Satellite(BASE):
+class Satellite(Base):
     __tablename__='satellites'
     id = Column(String(50), primary_key=True)
     name = Column(String(100), nullable=False)
@@ -60,7 +78,7 @@ class Satellite(BASE):
                         lazy='joined'
                         )
 
-class SatImage(BASE):
+class SatImage(Base):
     __tablename__='sat_images'
     id = Column(String(100), primary_key=True)
     clear_confidence_percent = Column(Float)
@@ -128,12 +146,12 @@ class SatImage(BASE):
 
 items_assets = Table(
     'items_assets',
-    BASE.metadata,
+    Base.metadata,
     Column('item_id', ForeignKey('item_types.id'), primary_key=True),
     Column('asset_id', ForeignKey('asset_types.id'), primary_key=True)
 )
 
-class ItemType(BASE):
+class ItemType(Base):
     __tablename__='item_types'
     id = Column(String(50), primary_key=True)
 
@@ -147,12 +165,12 @@ class ItemType(BASE):
                             backref='item_types')
     
     
-class AssetType(BASE):
+class AssetType(Base):
     __tablename__='asset_types'
     id = Column(String(50), primary_key=True) 
 
 
-class Country(BASE):
+class Country(Base):
     __tablename__='countries'
     iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
@@ -183,7 +201,7 @@ class Country(BASE):
         uselist=False,
         lazy='joined')
     
-class City(BASE):
+class City(Base):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False, unique=True)
@@ -203,14 +221,14 @@ class City(BASE):
         """Return all cities within a given radius (in meters) of this city."""
         return City.query.filter(func.ST_Distance_Sphere(City.geom, self.geom) < radius).all()
 
-class LandCoverClass(BASE):
+class LandCoverClass(Base):
     __tablename__='land_cover_classes'
     featureclass = Column(String(50), primary_key=True)
     
     rivers_lakes = relationship('RiverLake', backref='land_cover_classes')
     urban_areas = relationship('UrbanArea', backref='land_cover_classes')
 
-class UrbanArea(BASE):
+class UrbanArea(Base):
     __tablename__='urban_areas'
     id = Column(Integer, primary_key=True)
     area_sqkm = Column(Float)
@@ -220,7 +238,7 @@ class UrbanArea(BASE):
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True),
                     nullable=False)
    
-class RiverLake(BASE):
+class RiverLake(Base):
     __tablename__='rivers_lakes'
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
@@ -238,7 +256,7 @@ class RiverLake(BASE):
         uselist=False,
         lazy='joined')
 
-def create_tables():
-    BASE.metadata.drop_all(ENGINE)
-    BASE.metadata.create_all(ENGINE)
 
+
+if __name__=='__main__':
+    create_tables(engine, Base)

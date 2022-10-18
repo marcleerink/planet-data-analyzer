@@ -2,11 +2,10 @@ import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
 
-from modules.app.query import get_distinct_satellite_names
+from modules.app.query import query_distinct_satellite_names
 
 def display_sat_name_filter(session):
-    satellites = get_distinct_satellite_names(session)
-    sat_name_list = [sat.name for sat in satellites]
+    sat_name_list = query_distinct_satellite_names(session)
     return st.sidebar.radio('Satellite Providers',sat_name_list)
 
 def display_time_filter():
