@@ -1,7 +1,7 @@
 import requests
 from retrying import retry
 from modules.config import LOGGER
-
+from modules.utils import api_json_writer
 
 SEARCH_URL = "https://api.planet.com/data/v1/quick-search"
 ITEM_TYPES = 'https://api.planet.com/data/v1/item-types'
@@ -58,35 +58,37 @@ def _paginate(session, url):
         return response.json()
     else:
         handle_exception(response)
-    
+
+
+def get_features(session, response):
+    page = response.json()
+    features = page["features"]
+    while page['_links'].get('_next'):
+        LOGGER.info("...Paging results...")
+        page_url = page['_links'].get('_next')
+        page = _paginate(session, page_url)
+        features += page["features"]
+    return features
 
 @retry(
     wait_exponential_multiplier=1000,
     wait_exponential_max=10000,
     retry_on_exception=_retry_if_rate_limit_error,
     stop_max_attempt_number=5)
-def search(session, search_request):
-    """Created a search filter using the input payload and makes calls to the Data API quick-search endpoints returning
-    all features in API response"""
-
-    # Search API request
-    response = session.post(SEARCH_URL, json=search_request, params={"strict": "true"})
-
+def get_response(session, search_request):
+    """
+    Makes calls to the Data API quick-search endpoints returning the response
+    """
+    response = session.post(SEARCH_URL, json=search_request)
     if response.status_code == 200:
-        page = response.json()
-        features = page["features"]
-        while page['_links'].get('_next'):
-            LOGGER.info("...Paging results...")
-            page_url = page['_links'].get('_next')
-            page = _paginate(session, page_url)
-            features += page["features"]
-        return features
+        return response
     else:
         handle_exception(response)
 
-def search_requester(item_types, start_date, end_date, cc, geometry):
-    # Create search payload with geometry and TOI   
-
+def create_payload(item_types, start_date, end_date, cc, geometry):
+    """
+    Create search payload with geometry, cloud filter and TOI
+    """
     date_range_filter = {
         "type": "DateRangeFilter",
         "field_name": "acquired",
@@ -120,21 +122,27 @@ def search_requester(item_types, start_date, end_date, cc, geometry):
     }
     return search_request
 
-def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
-    """Searches for all items in AOI,TOI"""
+def get_planet_api_session(api_key):
     session = requests.Session()
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
+    return session
+
+def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
+    """Searches for all items in AOI,TOI"""
+    session = get_planet_api_session(api_key)
 
     # get all item_types if none provided
     item_types = get_item_types(session) if not item_types else item_types
 
     LOGGER.info(f'Searching for item types:{item_types}')
 
-    # create search request with filters
-    search_request = search_requester(item_types, start_date, end_date, cc, geometry)
+    # create search request payload with filters
+    search_request = create_payload(item_types, start_date, end_date, cc, geometry)
 
     # Search for items
-    items = search(session, search_request)
+    response = get_response(session, search_request)
+    items = get_features(session, response)
+
     LOGGER.info("Total items found: {}".format(len(items)))
 
     return items

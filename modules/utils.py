@@ -19,6 +19,11 @@ def api_response_to_clean_df(response):
 
     return df
 
+def api_json_writer(response, filepath):
+    json_o = json.dumps(response, indent=4)
+    with open(filepath, "w") as outfile:
+        outfile.write(json_o)
+
 def df_cleaner(df):
     # replace NaN values with None (this also converts empty values which have a type to None)
     return df.replace({None : None})

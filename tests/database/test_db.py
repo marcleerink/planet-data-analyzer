@@ -16,7 +16,7 @@ from modules.app.query import query_distinct_satellite_names, query_countries_wi
 
 @pytest.fixture(scope='session')
 def setup_test_db():
-    engine = create_engine(POSTGIS_URL, echo=True)
+    engine = create_engine(POSTGIS_URL, echo=False)
     if not database_exists(engine.url):
         create_database(url=engine.url)
         conn = psycopg2.connect(dbname=os.environ['DB_NAME'], 
