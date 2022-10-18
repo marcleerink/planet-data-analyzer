@@ -31,7 +31,7 @@ def setup_test_db():
         conn.close()
 
     Base.metadata.create_all(bind=engine)
-    yield
+    yield Base
     Base.metadata.drop_all(bind=engine)
 
 
@@ -51,9 +51,6 @@ def test_satellite_create(session):
     session.commit()
     assert session.query(Satellite).one()
     return satellite
-
-def test_query_distinc_satellite_names(session):
-    assert query_distinct_satellite_names(session) == ['Planetscope']
 
 @pytest.mark.run(order=2)
 def test_item_type_create(session):
@@ -80,26 +77,6 @@ def test_sat_image_create(session):
     assert session.query(SatImage).one()
     return sat_image
 
-def test_query_lat_lon_sat_images(session):
-    sat_images = [test_sat_image_create(session)]
-    lat_lon = query_lat_lon_sat_images(sat_images)
-    assert lat_lon == [[-8.333333333333334, -2.6666666666666665]]
-
-sat_names_input_output = [
-    ('Planetscope', 1),
-    ('Skysat', 0),
-    ('Esa', 0),
-    ('Usgs', 0),
-]
-
-@pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
-def test_query_sat_images_with_filter(session, sat_names, expected_output):
-    cloud_cover = 0.7
-    start_date = datetime.utcnow() - timedelta(days=7)
-    end_date = datetime.utcnow()
-    sat_images = query_sat_images_with_filter(session, sat_names, cloud_cover, start_date, end_date)
-    
-    assert len(sat_images) == expected_output
     
 @pytest.mark.run(order=4)
 def test_asset_type_create(session):
@@ -121,14 +98,38 @@ def test_country_create(session):
     assert session.query(Country).one()
     return country
 
-
-
-
-
 def delete_instance(session, instance_id, model, model_primary):
     session.query(model).filter(model_primary == instance_id).delete()
     result = session.query(model).one_or_none()
     assert result is None
+
+
+def test_query_distinc_satellite_names(session):
+    assert query_distinct_satellite_names(session) == ['Planetscope']
+
+
+def test_query_lat_lon_sat_images(session):
+    sat_images = [test_sat_image_create(session)]
+    lat_lon = query_lat_lon_sat_images(sat_images)
+    assert lat_lon == [[-8.333333333333334, -2.6666666666666665]]
+
+sat_names_input_output = [
+    ('Planetscope', 1),
+    ('Skysat', 0),
+    ('Esa', 0),
+    ('Usgs', 0),
+]
+
+@pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
+def test_query_sat_images_with_filter(session, sat_names, expected_output):
+    cloud_cover = 0.7
+    start_date = datetime.utcnow() - timedelta(days=7)
+    end_date = datetime.utcnow()
+    sat_images = query_sat_images_with_filter(session, sat_names, cloud_cover, start_date, end_date)
+    
+    assert len(sat_images) == expected_output
+
+
 
     
 

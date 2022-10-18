@@ -86,8 +86,8 @@ def image_info_map(images, images_geojson, df_images):
     style_function=tooltip_style_func(),
     highlight_function = tooltip_highlight_func(),
     tooltip=folium.GeoJsonTooltip(
-        fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 'pixel_res', 'item_type_id', 'urban_area', 'time_acquired'],
-        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' ,'Urban Area', 'Time Acquired: ']
+        fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 'pixel_res', 'item_type_id', 'time_acquired'],
+        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' , 'Time Acquired: ']
         )).add_to(map)
     
     st_folium(map, height= 500, width=700)

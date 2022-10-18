@@ -36,7 +36,7 @@ def create_images_geojson(_images):
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,
                     "item_type_id" : i.item_type_id,
-                    "urban_area" : i.urban_area,
+                    
                     "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)

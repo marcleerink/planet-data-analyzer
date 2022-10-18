@@ -1,4 +1,3 @@
-from urllib import response
 from modules.importer.api_importer import handle_exception, RateLimitException, search_requester
 
 

@@ -16,11 +16,11 @@ import psycopg2
 import os
 
 Base = declarative_base()
-engine = create_engine(POSTGIS_URL, echo=True)
+engine = create_engine(POSTGIS_URL, echo=False)
 
-@st.experimental_singleton
+
 def get_db_session():
-    engine = create_engine(POSTGIS_URL, echo=True)
+    engine = create_engine(POSTGIS_URL, echo=False)
     Session = sessionmaker(bind=engine)
     return Session()
 
@@ -90,9 +90,9 @@ class SatImage(Base):
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
     
-    urban_area = relationship(
-                    'UrbanArea',
-                    primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(UrbanArea.geom)).as_comparison(1,2)',
+    land_cover_class = relationship(
+                    'LandCoverClass',
+                    primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
                     backref='sat_image',
                     viewonly=True,
                     uselist=False,
@@ -192,14 +192,6 @@ class Country(Base):
         viewonly=True,
         uselist=False,
         lazy='joined')
-
-    urban_areas = relationship(
-        'UrbanArea',
-        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(UrbanArea.geom)).as_comparison(1,2)',
-        backref='countries',
-        viewonly=True,
-        uselist=False,
-        lazy='joined')
     
 class City(Base):
     __tablename__='cities'
@@ -223,38 +215,10 @@ class City(Base):
 
 class LandCoverClass(Base):
     __tablename__='land_cover_classes'
+    id = Column(Integer, primary_key=True)
     featureclass = Column(String(50), primary_key=True)
-    
-    rivers_lakes = relationship('RiverLake', backref='land_cover_classes')
-    urban_areas = relationship('UrbanArea', backref='land_cover_classes')
-
-class UrbanArea(Base):
-    __tablename__='urban_areas'
-    id = Column(Integer, primary_key=True)
-    area_sqkm = Column(Float)
-    featureclass = Column(String(50), 
-                    ForeignKey('land_cover_classes.featureclass'),
-                    nullable=False)
-    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True),
-                    nullable=False)
-   
-class RiverLake(Base):
-    __tablename__='rivers_lakes'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50))
-    featureclass = Column(String(50), 
-                    ForeignKey('land_cover_classes.featureclass'), 
-                    nullable=False)
-    geom = Column(MultiGeomFromSingle(geometry_type='MultiLineString', srid=4326, spatial_index=True),
+    geom = Column(Geometry(srid=4326, spatial_index=True),
                             nullable=False)
-
-    cities = relationship(
-        'City',
-        primaryjoin='func.ST_Within(foreign(RiverLake.geom), remote(City.geom)).as_comparison(1,2)',
-        backref='rivers_lakes',
-        viewonly=True,
-        uselist=False,
-        lazy='joined')
 
 
 
