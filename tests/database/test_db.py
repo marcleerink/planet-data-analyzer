@@ -1,3 +1,4 @@
+from urllib.parse import quote_from_bytes
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -14,7 +15,7 @@ from modules.database.db import Satellite, SatImage, AssetType, ItemType, Countr
 from modules.app.query import query_distinct_satellite_names, query_countries_with_filters,\
     query_distinct_satellite_names, query_sat_images_with_filter, query_lat_lon_sat_images, query_sat_images_with_filter
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def setup_test_db():
     engine = create_engine(POSTGIS_URL, echo=False)
     if not database_exists(engine.url):
@@ -35,35 +36,26 @@ def setup_test_db():
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def session(setup_test_db):
     session = get_db_session()
     yield session
     session.close()
     session.rollback()
 
-@pytest.mark.run(order=1)
-def test_satellite_create(session):
-    satellite = Satellite(id='s145', 
-                        name='Planetscope', 
-                        pixel_res=3.15)
-    session.add(satellite)
-    session.commit()
-    assert session.query(Satellite).one()
-    return satellite
-
-@pytest.mark.run(order=2)
-def test_item_type_create(session):
-    item_type = ItemType(id = 'PSScene',
+@pytest.fixture()
+def satellite():
+    return Satellite(id='s145', 
+                    name='Planetscope', 
+                    pixel_res=3.15)
+@pytest.fixture()
+def item_type():
+    return ItemType(id = 'PSScene',
                         sat_id = 's145')
-    session.add(item_type)
-    session.commit()
-    assert session.query(ItemType).one()
-    return item_type
 
-@pytest.mark.run(order=3)
-def test_sat_image_create(session):
-    sat_image = SatImage(id = 'ss20221002', 
+@pytest.fixture()
+def sat_image():
+    return SatImage(id = 'ss20221002', 
                         clear_confidence_percent = 95,
                         cloud_cover = 0.65,
                         pixel_res = 3.15,
@@ -72,45 +64,103 @@ def test_sat_image_create(session):
                         geom = 'POLYGON ((19 -25, 0 0, -27 0, 19 -25))',
                         sat_id = 's145',
                         item_type_id = 'PSScene')
-    session.add(sat_image)
-    session.commit()
-    assert session.query(SatImage).one()
-    return sat_image
 
-    
-@pytest.mark.run(order=4)
-def test_asset_type_create(session):
-    asset_type = AssetType(id='analytic')
-    session.add(asset_type)
-    session.commit()
-    assert session.query(AssetType).one()
-    return asset_type
-    
+@pytest.fixture()
+def asset_type():
+    return AssetType(id='analytic')
 
-def test_country_create(session):
-    gdf = gpd.read_file('data/germany.geojson')
-    country = Country(iso = gdf['ISO2'][0],
+@pytest.fixture()
+def country():
+    gdf = gpd.read_file('tests/resources/germany.geojson')
+    return Country(iso = gdf['ISO2'][0],
                     name = gdf['NAME_ENGLI'][0],
                     geom = from_shape(gdf['geometry'][0], srid=4326))
-                    
+
+@pytest.fixture()
+def setup_models(session,satellite, item_type, sat_image, asset_type, country):
+    session.add(satellite)
+    session.add(item_type)
+    session.add(sat_image)
+    session.add(asset_type)
     session.add(country)
     session.commit()
-    assert session.query(Country).one()
-    return country
+    return session
 
-def delete_instance(session, instance_id, model, model_primary):
-    session.query(model).filter(model_primary == instance_id).delete()
-    result = session.query(model).one_or_none()
-    assert result is None
+def test_satellite_create(session, setup_models):
+    #act
+    query = session.query(Satellite).one()
 
-
-def test_query_distinc_satellite_names(session):
-    assert query_distinct_satellite_names(session) == ['Planetscope']
+    #assert
+    assert query
+    
 
 
-def test_query_lat_lon_sat_images(session):
-    sat_images = [test_sat_image_create(session)]
+def test_item_type_create(session, setup_models):
+    #act
+    query=session.query(ItemType).one()
+
+    #assert
+    assert query
+
+    
+
+
+def test_sat_image_create(session, setup_models):
+    #act
+    query = session.query(SatImage).one()
+
+    #assert
+    assert query
+
+    
+
+    
+
+def test_asset_type_create(session, setup_models):
+    #act
+    query = session.query(AssetType).one()
+
+    #assert
+    assert query
+    
+    
+
+def test_country_create(session, setup_models):
+    #act
+    query = session.query(Country).one()
+
+    #assert
+    assert query
+    
+
+# def delete_instance(session, instance_id, model, model_primary):
+#     #arrange
+#     session.query(model).filter(model_primary == instance_id).delete()
+
+#     #act
+#     result = session.query(model).one_or_none()
+
+#     #assert
+#     assert result is None
+
+
+def test_query_distinc_satellite_names(session, setup_models):
+    #act
+    query = query_distinct_satellite_names(session)
+    
+    #assert
+    assert query == ['Planetscope']
+
+
+
+def test_query_lat_lon_sat_images(session, setup_models):
+    #arrange
+    sat_images = session.query(SatImage).all()
+
+    #act
     lat_lon = query_lat_lon_sat_images(sat_images)
+
+    #assert
     assert lat_lon == [[-8.333333333333334, -2.6666666666666665]]
 
 sat_names_input_output = [
@@ -121,12 +171,16 @@ sat_names_input_output = [
 ]
 
 @pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
-def test_query_sat_images_with_filter(session, sat_names, expected_output):
+def test_query_sat_images_with_filter(session, sat_names, setup_models, expected_output):
+    #arrange
     cloud_cover = 0.7
     start_date = datetime.utcnow() - timedelta(days=7)
     end_date = datetime.utcnow()
+    
+    #act
     sat_images = query_sat_images_with_filter(session, sat_names, cloud_cover, start_date, end_date)
     
+    #assert
     assert len(sat_images) == expected_output
 
 
