@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def arguments():
+def arguments(argv=None):
     parser = argparse.ArgumentParser(description="Search all satellite imagery in AOI and TOI")
     parser.add_argument(
         '--api_key', 
@@ -43,8 +43,8 @@ def arguments():
         required=False,
         default=1.0,
         help="Cloud cover value to be used for filtering. Defaults to 1.0")
-    
-    return parser.parse_args()
+
+    return parser.parse_args(argv)
 
 def args_validate(args):
     if pd.to_datetime(args.end_date) <= pd.to_datetime(args.start_date):
@@ -69,6 +69,4 @@ def args_bundler(args):
 def parser():
     args = arguments()
     args = args_validate(args)
-    args_bundle = args_bundler(args)
-
-    return args_bundle
+    return args_bundler(args)

@@ -131,17 +131,6 @@ def test_country_create(session, setup_models):
 
     #assert
     assert query
-    
-
-# def delete_instance(session, instance_id, model, model_primary):
-#     #arrange
-#     session.query(model).filter(model_primary == instance_id).delete()
-
-#     #act
-#     result = session.query(model).one_or_none()
-
-#     #assert
-#     assert result is None
 
 
 def test_query_distinc_satellite_names(session, setup_models):

@@ -14,7 +14,7 @@ def get_data_countries():
     gdf_countries = gdf_countries.rename(columns={'iso_a2' : 'iso'})
     return gdf_countries[['iso', 'name', 'geom']]
 
-def export_countries_table(session, gdf_countries):
+def import_countries_table(session, gdf_countries):
     for r in gdf_countries.itertuples():
         country = Country(
                         iso = r.iso,
@@ -73,21 +73,21 @@ def get_asset_types_data(gdf):
     asset_types_df = gdf['assets']
     return pd.DataFrame(set(asset_types_df.explode().to_list()), columns=['id'])
 
-def export_asset_types_table(session, asset_types_df):
+def import_asset_types_table(session, asset_types_df):
     for i in asset_types_df['id']:
         asset_type = AssetType(id = i)
         session.add(asset_type)
         session.commit()
     
 
-def export_item_types_table(session, r):
+def import_item_types_table(session, r):
     item_types = ItemType(id = r.item_type_id,
                         sat_id = r.sat_id
                         )
     session.add(item_types)
     session.commit()
 
-def export_satellites_table(session, r):
+def import_satellites_table(session, r):
     satellites = Satellite(
                 id = r.sat_id,
                 name = r.satellite,
@@ -96,7 +96,7 @@ def export_satellites_table(session, r):
     session.add(satellites)
     session.commit()
 
-def export_sat_images_table(session, r):
+def import_sat_images_table(session, r):
     sat_image = SatImage(
                 id = r.id, 
                 clear_confidence_percent = r.clear_confidence_percent,
@@ -112,20 +112,20 @@ def export_sat_images_table(session, r):
     session.commit()
 
 
-def postgis_exporter(gdf):
+def postgis_importer(gdf):
     session = get_db_session()
 
-    export_countries_table(session, get_data_countries())
+    import_countries_table(session, get_data_countries())
     export_cities_table(session, get_data_cities())
 
     gdf_land_cover_class = concat_land_cover_class_data()
     export_land_cover_class_table(session, gdf_land_cover_class)
     
     for r in gdf.itertuples():
-        export_satellites_table(session, r)
-        export_item_types_table(session, r)
-        export_sat_images_table(session, r)
+        import_satellites_table(session, r)
+        import_item_types_table(session, r)
+        import_sat_images_table(session, r)
     
-    export_asset_types_table(session, get_asset_types_data(gdf))
+    import_asset_types_table(session, get_asset_types_data(gdf))
 
   

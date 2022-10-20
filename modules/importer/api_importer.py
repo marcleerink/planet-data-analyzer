@@ -1,17 +1,18 @@
 import requests
 from retrying import retry
 from modules.config import LOGGER
-from modules.utils import api_json_writer
+from modules.importer.utils import api_json_writer
 
 SEARCH_URL = "https://api.planet.com/data/v1/quick-search"
 ITEM_TYPES = 'https://api.planet.com/data/v1/item-types'
-ASSET_TYPES = 'https://api.planet.com/data/v1/asset-types'
 
 
 class RateLimitException(Exception):
     pass
 
 def handle_exception(response):
+    if response.status_code == 200:
+        return
     while response.status_code == 429:
         LOGGER.debug("We got 429 error, retrying!")
         raise RateLimitException("Rate limit error")
@@ -27,24 +28,15 @@ def _retry_if_rate_limit_error(exception):
     return isinstance(exception, RateLimitException)
 
 def get_item_types(session):
+    """gets all available item types from Planets Data API"""
     response = session.get(ITEM_TYPES)
     
     if response.status_code == 200:
         items = response.json()
         item_types = items['item_types']
+        return [item['id'] for item in item_types]
     else:
         handle_exception(response)
-    return [item['id'] for item in item_types]
-
-def get_asset_types(session):
-    response = session.get(ASSET_TYPES)
-    
-    if response.status_code == 200:
-        assets = response.json()
-        asset_types = assets['asset_types']
-    else:
-        handle_exception(response)
-    return [asset['id'] for asset in asset_types]
 
 @retry(
     wait_exponential_multiplier=1000,
@@ -59,7 +51,11 @@ def _paginate(session, url):
     else:
         handle_exception(response)
 
-
+@retry(
+    wait_exponential_multiplier=1000,
+    wait_exponential_max=10000,
+    retry_on_exception=_retry_if_rate_limit_error,
+    stop_max_attempt_number=5)
 def get_features(session, response):
     page = response.json()
     features = page["features"]
@@ -127,8 +123,11 @@ def get_planet_api_session(api_key):
     session.auth = requests.auth.HTTPBasicAuth(api_key, '')
     return session
 
-def searcher(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
-    """Searches for all items in AOI,TOI"""
+def api_importer(api_key=None, item_types=None, start_date=None, end_date=None, cc=None, geometry=None):
+    """
+    Imports items from Planets Data API for all items in AOI,TOI, below provided cloud cover threshold
+    If item types are provided only searches for those, otherwise searches all item_types
+    """
     session = get_planet_api_session(api_key)
 
     # get all item_types if none provided

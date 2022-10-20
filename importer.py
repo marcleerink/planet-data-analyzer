@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-from modules.importer import arg_parser, to_postgis, data_wrangler, api_importer
-from modules import utils
+from modules.importer import arg_parser, postgis_importer, data_wrangler, api_importer
+from modules.importer import utils
 from modules.config import LOGGER
 
 def importer(args):
@@ -15,7 +15,7 @@ def importer(args):
     
     LOGGER.info(f"The TOI is: {args.get('start_date')}/{args.get('end_date')}...")
     LOGGER.info("Requesting metadata from Planets Data API...")
-    items_list = api_importer.searcher(args.get('api_key'),
+    items_list = api_importer.api_importer(args.get('api_key'),
                                 args.get('item_types'), 
                                 args.get('start_date'), 
                                 args.get('end_date'), 
@@ -29,7 +29,7 @@ def importer(args):
     gdf = data_wrangler.wrangler(df)
     
     LOGGER.info('Exporting to postgis tables')
-    to_postgis.postgis_exporter(gdf)
+    postgis_importer.postgis_importer(gdf)
 
 if __name__ == "__main__":
     args_bundle = arg_parser.parser()
