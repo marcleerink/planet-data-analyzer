@@ -40,15 +40,13 @@ def payload():
         [[[12.463552, 52.169746], [12.463552, 52.862511], [14.305487, 52.862511], [14.305487, 52.169746], [12.463552, 52.169746]]]}}]}}
 
 @pytest.fixture()
+def fake_api_key():
+    return "PLAKfef2608cfa784a2baae1ed95ce314nn1"
+    
+@pytest.fixture()
 def fake_response():
     with open('tests/resources/data_api_response.json', 'r') as f:
         return json.loads(f.read())
-
-@pytest.fixture()
-def mock_session():
-     with mock.patch('modules.importer.api_importer.requests.Session') as mock_session:
-        mock_session.return_value.status_code = 200
-        return mock_session
    
 
 @pytest.fixture()

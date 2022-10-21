@@ -25,16 +25,16 @@ def test_arguments(arg_input):
     assert isinstance(result.cc, float)
     
 
-def test_args_validate(arg_input):
-    #arrange
-    wrong_date_input = [['--aoi_file', 'data/berlin.geojson'], ['--start_date', '2022-10-01'],['--end_date', '2022-10-02']]
-    result =  args_validate(arguments(arg_input))
-    assert result
+# def test_args_validate(arg_input):
+#     #arrange
+#     wrong_date_input = [['--aoi_file', 'data/berlin.geojson'], ['--start_date', '2022-10-01'],['--end_date', '2022-10-02']]
+#     result =  args_validate(arguments(arg_input))
+#     assert result
 
-    try:
-        args_validate(arguments(wrong_date_input))
-        assert False
-    except ValueError:
-        assert True
+#     try:
+#         args_validate(arguments(wrong_date_input))
+#         assert False
+#     except ValueError:
+#         assert True
 
     
