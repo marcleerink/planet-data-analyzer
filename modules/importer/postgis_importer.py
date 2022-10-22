@@ -1,10 +1,8 @@
 
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import LineString, MultiLineString, Polygon, MultiPolygon
 from modules.database.db import AssetType, ItemType, SatImage, Satellite,\
                                  Country, City, LandCoverClass, get_db_session
-from shapely import wkt
 from geoalchemy2.shape import from_shape
 
 def get_data_countries():
@@ -113,10 +111,16 @@ def import_sat_images_table(session, r):
 
 
 def postgis_importer(gdf):
+    """
+    Import data into postgis. Only fill static tables (countries, cities) if table is empty
+    All inserts are set to ON CONFLICT DO NOTHING to skip over duplicate rows efficiently
+    """
     session = get_db_session()
-
-    import_countries_table(session, get_data_countries())
-    export_cities_table(session, get_data_cities())
+    
+    if session.query(Country).first() is not None:
+        import_countries_table(session, get_data_countries())
+    if session.query(City).first() is not None:
+        export_cities_table(session, get_data_cities())
 
     gdf_land_cover_class = concat_land_cover_class_data()
     export_land_cover_class_table(session, gdf_land_cover_class)
