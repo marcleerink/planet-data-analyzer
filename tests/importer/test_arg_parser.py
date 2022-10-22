@@ -1,40 +1,101 @@
+from re import L
 import pytest
 import sys
 from modules.importer.arg_parser import arguments, args_validate, args_bundler
 import argparse
 from datetime import datetime, timedelta
-
+import os
+from modules.config import LOGGER
 
 @pytest.fixture()
 def arg_input():
     return ['--aoi_file', 'data/berlin.geojson']
 
+@pytest.fixture()
+def fake_args(arg_input):
+    parser = argparse.ArgumentParser(description="Search all satellite imagery in AOI and TOI")
+    parser.add_argument(
+        '--api_key', 
+        type=str, 
+        required=False,
+        help="Optional. Planet's API key")
+
+    yesterday= datetime.utcnow() - timedelta(days=1)
+    parser.add_argument(
+        "--start_date",
+        type=str,
+        required=False,
+        default = yesterday.strftime("%Y-%m-%d"))
+
+    parser.add_argument(
+        "--end_date",
+        type=str,
+        required=False,
+        default=datetime.utcnow().strftime("%Y-%m-%d"))
+
+    parser.add_argument(
+        '--aoi_file', 
+        type=str, 
+        required=True)
+
+    parser.add_argument(
+        "--cc", 
+        type=float, 
+        required=False,
+        default=1.0)
+
+    return parser.parse_args(arg_input)
+
 def test_arguments(arg_input):
+    #arrange
+    yesterday= datetime.utcnow() - timedelta(days=1)
+
     #act
     result = arguments(arg_input)
+
     try:
         arguments()
         assert False
     except SystemExit:
         assert True
-     
-    #assert
-    assert result.aoi_file == 'data/berlin.geojson'
-    assert isinstance(result.start_date , str)
-    assert isinstance(result.end_date, str)
-    assert isinstance(result.cc, float)
     
+    assert result.aoi_file == 'data/berlin.geojson'
+    assert result.start_date == yesterday.strftime("%Y-%m-%d")
+    assert result.end_date == datetime.utcnow().strftime("%Y-%m-%d")
+    assert result.cc == 1.0
 
-# def test_args_validate(arg_input):
-#     #arrange
-#     wrong_date_input = [['--aoi_file', 'data/berlin.geojson'], ['--start_date', '2022-10-01'],['--end_date', '2022-10-02']]
-#     result =  args_validate(arguments(arg_input))
-#     assert result
 
-#     try:
-#         args_validate(arguments(wrong_date_input))
-#         assert False
-#     except ValueError:
-#         assert True
+def test_args_validate_wrong_date(fake_args):
+    #arrange
+    fake_args.start_date='2022-10-02'
+    fake_args.end_date='2022-10-01'
+    
+    try:
+        args_validate(fake_args)
+        assert False
+    except ValueError:
+        assert True
 
+def test_args_validate_success(fake_args):
+    """Check if args_validate lets through valid dates.
+    Check if args_validate gets API key from environment if none provided in args"""
+    #arrange
+    fake_args.start_date='2022-10-01'
+    fake_args.end_date='2022-10-02'
+    
+    #act
+    result = args_validate(fake_args)
+
+    #assert
+    assert result.start_date == '2022-10-01'
+    assert result.end_date == '2022-10-02'
+    assert 'PLAK' in result.api_key
+
+def test_args_bundler(fake_args):
+    # arrange
+    fake_args.aoi_file = 'data/berlin.geojson'
+    #act
+    result = args_bundler(fake_args)
+    #assert
+    assert result[0]['aoi_file'] == 'data/berlin.geojson'
     

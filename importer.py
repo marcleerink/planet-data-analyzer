@@ -22,11 +22,8 @@ def importer(args):
                                 args.get('cc'),
                                 geometry)
 
-    # converts api response to cleaned dataframe
-    df = utils.api_response_to_clean_df(items_list)
-
     # convert to gdf and wrangle data
-    gdf = data_wrangler.wrangler(df)
+    gdf = data_wrangler.wrangler(items_list)
     
     LOGGER.info('Exporting to postgis tables')
     postgis_importer.postgis_importer(gdf)

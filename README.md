@@ -11,7 +11,7 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 * When is the highest denistity of overlap?
 
 Futher down the road:
-* What is the percentage coverage of each land cover class for each image.
+* What is the percentage of coverage of each land cover class for each image.
 
 ## Dependencies
 
