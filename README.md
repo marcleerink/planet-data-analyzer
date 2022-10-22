@@ -37,6 +37,9 @@ You can create an account and access the Data API for free.
 The database should first be setup.
 Run the modules/database/db.py file to create a Postgres database with the PostGIS extension installed. 
 This will also create all necessary tables.
+```
+python -m modules.database.db
+```
 
 ### Run the importer.py
 Secondly, the importer.py file should be run.
