@@ -58,13 +58,16 @@ def _paginate(url):
     retry_on_exception=_retry_if_rate_limit_error,
     stop_max_attempt_number=5)
 def get_features(response):
-    page = response.json()
-    features = page["features"]
-    while page['_links'].get('_next'):
-        LOGGER.info("...Paging results...")
-        page_url = page['_links'].get('_next')
-        page = _paginate(page_url)
-        features += page["features"]
+    if response.status_code == 200:
+        page = response.json()
+        features = page["features"]
+        while page['_links'].get('_next'):
+            LOGGER.info("...Paging results...")
+            page_url = page['_links'].get('_next')
+            page = _paginate(page_url)
+            features += page["features"]
+    else:
+        handle_exception(response)
     return features
 
 @retry(

@@ -58,24 +58,17 @@ def mock_response_200(fake_response):
     return session.post(SEARCH_URL)
 
 @pytest.fixture()
-def mock_response_300():
+def mock_response_300(fake_response):
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount('https://', adapter)
-    adapter.register_uri('POST', SEARCH_URL, status_code=300)
+    adapter.register_uri('POST', SEARCH_URL, json=fake_response, status_code=300)
     return session.post(SEARCH_URL)
 
 @pytest.fixture()
-def mock_response_429():
+def mock_response_429(fake_response):
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount('https://', adapter)
-    adapter.register_uri('POST', SEARCH_URL, status_code=429)
+    adapter.register_uri('POST', SEARCH_URL, json=fake_response, status_code=429)
     return session.post(SEARCH_URL)
-    
-
-@pytest.fixture()
-def planet_session():
-    session = requests.Session()
-    session.auth = requests.auth.HTTPBasicAuth(os.environ['PL_API_KEY'], '')
-    return session

@@ -47,71 +47,111 @@ def test_handle_exceptions(mock_response_429, mock_response_200, mock_response_3
     
     assert handle_exception(mock_response_200) == None
 
-def test_get_features(mock_response_200, fake_response):
-    result = get_features(mock_response_200)
-    LOGGER.info(result)
-    assert isinstance(result, list)
-    assert len(result) > 1
-    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
-    
+@pytest.fixture()
+def mock_response_401(fake_response):
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount('https://', adapter)
+    adapter.register_uri('POST', SEARCH_URL, json=fake_response, status_code=401)
+    return session.post(SEARCH_URL)
 
-def test_api_importer(item_types, start_date, end_date, cc, geometry, fake_api_key):
+
+def test_get_features_success(fake_response, mock_response_200):
     #arrange
     
-    result = api_importer(api_key= fake_api_key,
+    #act
+    result = get_features(mock_response_200)
+    #assert
+    assert isinstance(result, list)
+    assert len(result) > 1
+    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
+
+
+def test_get_features_exception(mock_response_429, fake_response):
+    #act
+    try:
+        result = get_features(mock_response_429)
+        assert False
+    except RateLimitException:
+        assert True
+    
+
+def test_api_importer_succes(item_types, start_date, end_date, cc, geometry, fake_api_key, mock_response_200):
+    #arrange
+    with mock_response_200:
+        #act
+        result = api_importer(api_key= fake_api_key,
                         item_types=item_types,
                         start_date=start_date, 
                         end_date=end_date,
                         cc=cc,
                         geometry=geometry)
-    assert result
+    #assert
+    assert isinstance(result, list)
+    assert len(result) > 1
+    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
+
+def test_api_importer_exception(item_types, start_date, end_date, cc, geometry, fake_api_key, mock_response_429):
+    #arrange
+    with mock_response_429:
+        #act
+        result = api_importer(api_key= fake_api_key,
+                        item_types=item_types,
+                        start_date=start_date, 
+                        end_date=end_date,
+                        cc=cc,
+                        geometry=geometry)
+    #assert
+    assert isinstance(result, list)
+    assert len(result) > 1
+    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
 
 """INTEGRATION"""
-def test_handle_exceptions_integration(payload):
-    #act
-    result = handle_exception(get_response(payload))
-    #assert
-    assert result == None
+# def test_handle_exceptions_integration(payload):
+#     #act
+#     result = handle_exception(get_response(payload))
+#     #assert
+#     assert result == None
 
-def test_get_response_integration(payload):
-    #act 
-    result = get_response(payload)
-    #assert
-    assert result.status_code == 200
+# def test_get_response_integration(payload):
+#     #act 
+#     result = get_response(payload)
+#     #assert
+#     assert result.status_code == 200
 
 
-def test_get_item_types_integration():
-    #act
-    result = get_item_types()
+# def test_get_item_types_integration():
+#     #act
+#     result = get_item_types()
 
-    #assert
-    assert isinstance(result, list)
-    assert len(result) > 1
-    assert any('PS' in item for item in result)
+#     #assert
+#     assert isinstance(result, list)
+#     assert len(result) > 1
+#     assert any('PS' in item for item in result)
 
-def test_get_features_integration(payload):
-    #act
-    result = get_features(get_response(payload))
+# def test_get_features_integration(payload):
+#     #act
+#     result = get_features(get_response(payload))
     
-    #assert
-    assert isinstance(result, list)
-    assert len(result) > 1
-    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
+#     #assert
+#     assert isinstance(result, list)
+#     assert len(result) > 1
+#     assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
 
-def test_api_importer_integration(item_types, start_date, end_date, cc, geometry):
-    #act
-    result = api_importer(api_key= os.environ['PL_API_KEY'],
-                        item_types=item_types,
-                        start_date=start_date, 
-                        end_date=end_date,
-                        cc=cc,
-                        geometry=geometry)
+# def test_api_importer_integration(item_types, start_date, end_date, cc, geometry):
+#     #act
+#     result = api_importer(api_key= os.environ['PL_API_KEY'],
+#                         item_types=item_types,
+#                         start_date=start_date, 
+#                         end_date=end_date,
+#                         cc=cc,
+#                         geometry=geometry)
 
-    #assert
-    assert isinstance(result, list)
-    assert len(result) > 1
-    assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
-    assert all(item['properties']['cloud_cover'] < cc for item in result)
+#     #assert
+#     assert isinstance(result, list)
+#     assert len(result) > 1
+#     assert all('https://api.planet.com/data/v1' in item['_links']['_self'] for item in result)
+#     assert all(item['properties']['cloud_cover'] < cc for item in result)
 
 
     
