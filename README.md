@@ -6,7 +6,12 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 
 ### Research questions
 * Which areas in Germany are most captured by Planet's satellites?
-* What is the percentage of 
+* What is the overlap of area coverage for the different satellite constelations for a choses point in time.
+      * Where is the highest density of overlap?
+      * When is the highest denistity of overlap?
+
+Futher down the road:
+* What is the percentage coverage of each land cover class for each image.
 
 ## Dependencies
 
