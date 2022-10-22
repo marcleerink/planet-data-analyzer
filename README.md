@@ -7,8 +7,8 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 ### Research questions
 * Which areas in Germany are most captured by Planet's satellites?
 * What is the overlap of area coverage for the different satellite constelations for a choses point in time.
-      - Where is the highest density of overlap?
-      - When is the highest denistity of overlap?
+* Where is the highest density of overlap?
+* When is the highest denistity of overlap?
 
 Futher down the road:
 * What is the percentage coverage of each land cover class for each image.
@@ -20,20 +20,27 @@ Futher down the road:
 
       pip3 install -r requirements.txt
 
-* Postgres with [PostGIS plugin installed](https://postgis.net/install/) and an active database.
+* .env file containing:
+```DB_NAME=YOUR_DB_NAME```
+```DB_PW=YOUR_DB_PASS```
+```DB_USER=YOUR_DB_USER```
+```DB_HOST=YOUR_DB_HOST```
+```DB_PORT=YOUR DB_PORT```
 
-* .env file containing the Postgres connection url: 
-```POSTGIS_URL='postgresql://USERNAME:PASSWORD@localhost:5432/DATABASE_NAME'```
 
 * [Planet API Key](https://www.planet.com/account/#/user-settings) 
 You can create an account and access the Data API for free.
 
 ## Usage
 
-* The importer.py file should first be run.
-* The importer script accepts an API Key set as environmental variable (PL_API_KEY) or as an argument. 
+### Setup the database
+The database should first be setup.
+Run the modules/database/db.py file to create a Postgres database with the PostGIS extension installed. 
+This will also create all necessary tables.
 
 ### Run the importer.py
+Secondly, the importer.py file should be run.
+
 #### Arguments 
 * --aoi_file -  Path to geojson file containing AOIs
 * --api_key - Planet's API key
