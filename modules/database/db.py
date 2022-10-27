@@ -56,7 +56,7 @@ class MultiGeomFromSingle(TypeDecorator):
         return func.ST_Multi(self.impl.bind_expression(bindvalue))
 
 class CentroidFromPolygon(TypeDecorator):
-    '''Insert the centroid points on each Polygon insert'''
+    '''Calculate and insert the centroid points on each Polygon on insert'''
     impl = Geometry
     cache_ok = True
 
@@ -83,7 +83,6 @@ class SatImage(Base):
     id = Column(String(100), primary_key=True)
     clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
-    pixel_res = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))

@@ -15,7 +15,7 @@ def create_images_df(_images):
     return pd.DataFrame({
         'id': [image.id for image in _images],
         'cloud_cover' : [image.cloud_cover for image in _images],
-        'pixel_res' : [image.pixel_res for image in _images],
+        'pixel_res' : [image.satellites.pixel_res for image in _images],
         'time_acquired': [image.time_acquired.strftime("%Y-%m-%d") for image in _images],
         'sat_name' : [image.satellites.name for image in _images]})
 
@@ -31,7 +31,7 @@ def create_images_geojson(_images):
                 properties={
                     "id" : i.id,
                     "cloud_cover" : i.cloud_cover,
-                    "pixel_res" : i.pixel_res,
+                    "pixel_res" : i.satellites.pixel_res,
                     "time_acquired" : i.time_acquired.strftime("%Y-%m-%d"),
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,

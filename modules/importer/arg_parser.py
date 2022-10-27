@@ -47,7 +47,7 @@ def arguments(argv=None):
     return parser.parse_args(argv)
 
 def args_validate(args):
-    if pd.to_datetime(args.end_date) <= pd.to_datetime(args.start_date):
+    if pd.to_datetime(args.end_date) < pd.to_datetime(args.start_date):
         raise ValueError('The end date can not be before the start date')
 
     if not args.api_key:

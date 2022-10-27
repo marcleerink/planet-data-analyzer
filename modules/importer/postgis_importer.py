@@ -99,7 +99,6 @@ def import_sat_images_table(session, r):
                 id = r.id, 
                 clear_confidence_percent = r.clear_confidence_percent,
                 cloud_cover = r.cloud_cover,
-                pixel_res = r.pixel_res,
                 time_acquired = r.time_acquired,
                 centroid = from_shape(r.geom, srid=4326),
                 geom = from_shape(r.geom, srid=4326),

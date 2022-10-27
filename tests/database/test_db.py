@@ -58,7 +58,6 @@ def sat_image():
     return SatImage(id = 'ss20221002', 
                         clear_confidence_percent = 95,
                         cloud_cover = 0.65,
-                        pixel_res = 3.15,
                         time_acquired = datetime.utcnow(),
                         centroid = 'POLYGON ((19 -25, 0 0, -27 0, 19 -25))',
                         geom = 'POLYGON ((19 -25, 0 0, -27 0, 19 -25))',
@@ -93,17 +92,12 @@ def test_satellite_create(session, setup_models):
     #assert
     assert query
     
-
-
 def test_item_type_create(session, setup_models):
     #act
     query=session.query(ItemType).one()
 
     #assert
     assert query
-
-    
-
 
 def test_sat_image_create(session, setup_models):
     #act
@@ -112,10 +106,6 @@ def test_sat_image_create(session, setup_models):
     #assert
     assert query
 
-    
-
-    
-
 def test_asset_type_create(session, setup_models):
     #act
     query = session.query(AssetType).one()
@@ -123,8 +113,6 @@ def test_asset_type_create(session, setup_models):
     #assert
     assert query
     
-    
-
 def test_country_create(session, setup_models):
     #act
     query = session.query(Country).one()
@@ -132,15 +120,12 @@ def test_country_create(session, setup_models):
     #assert
     assert query
 
-
 def test_query_distinc_satellite_names(session, setup_models):
     #act
     query = query_distinct_satellite_names(session)
     
     #assert
     assert query == ['Planetscope']
-
-
 
 def test_query_lat_lon_sat_images(session, setup_models):
     #arrange
@@ -171,8 +156,3 @@ def test_query_sat_images_with_filter(session, sat_names, setup_models, expected
     
     #assert
     assert len(sat_images) == expected_output
-
-
-
-    
-

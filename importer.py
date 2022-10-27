@@ -6,24 +6,20 @@ from modules.importer import utils
 from modules.config import LOGGER
 
 def importer(args):
-    '''imports satellite imagery metadata for the given AOI, TOI.
+    '''imports satellite imagery metadata for the given AOI, TOI and cloud cover.
      Exports all non-exisisting metadata to tables in PostGIS.
      '''
-
-    # import geometry from file
-    geometry = utils.geojson_import(args.get('aoi_file'))
     
-    LOGGER.info(f"The TOI is: {args.get('start_date')}/{args.get('end_date')}...")
+    LOGGER.info(f"The TOI is: {args['start_date']}/{args['end_date']}...")
     LOGGER.info("Requesting metadata from Planets Data API...")
-    items_list = api_importer.api_importer(args.get('api_key'),
-                                args.get('item_types'), 
-                                args.get('start_date'), 
-                                args.get('end_date'), 
-                                args.get('cc'),
-                                geometry)
+    features_list = api_importer.api_importer(args)
 
+    if len(features_list) == 0:
+        LOGGER.warning("No features found for AOI TOI and CC filter")
+        return
+        
     # convert to gdf and wrangle data
-    gdf = data_wrangler.wrangler(items_list)
+    gdf = data_wrangler.wrangler(features_list)
     
     LOGGER.info('Exporting to postgis tables')
     postgis_importer.postgis_importer(gdf)
