@@ -3,6 +3,7 @@ from pathlib import Path
 
 from modules.importer import arg_parser, postgis_importer, data_wrangler, api_importer
 from modules.importer import utils
+from modules.importer import features
 from modules.config import LOGGER
 
 def importer(args):
@@ -19,10 +20,11 @@ def importer(args):
         return
         
     # convert to gdf and wrangle data
-    gdf = data_wrangler.wrangler(features_list)
+    clean_features_list = features.postgis_import(features_list)
+    # gdf = data_wrangler.wrangler(clean_features_list)
     
-    LOGGER.info('Exporting to postgis tables')
-    postgis_importer.postgis_importer(gdf)
+    # LOGGER.info('Exporting to postgis tables')
+    # postgis_importer.postgis_importer(gdf)
 
 if __name__ == "__main__":
     args_bundle = arg_parser.parser()

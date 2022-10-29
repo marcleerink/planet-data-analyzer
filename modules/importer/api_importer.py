@@ -3,15 +3,13 @@ import requests
 import os
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+import datetime
+from shapely.geometry import shape
+
 from modules.importer import utils
 from modules.config import LOGGER
 
-def _get_client(client):
-    if client is None:
-        client = DataAPIClient()
-    return client
-
-class DataAPIClient(object):
+class DataAPIClient:
     """Base client for working with the Planet Data API"""
 
     base_url = "https://api.planet.com/data/v1"
@@ -52,10 +50,7 @@ class DataAPIClient(object):
     def _item(self, endpoint, **params):
         return self._get(self._url(endpoint), **params)
 
-    def _paginate(self, url):
-        """Navigates through the pages of an API response"""
-        return self._get(url)
-
+    
     def _query(self, endpoint, key, json_query):
         """Post and then get for pagination."""
 
@@ -72,11 +67,8 @@ class DataAPIClient(object):
         return features
     
     def _payload(self, item_types, start_date, end_date, cc, geometry):
-        """
-        Create search payload with geometry, cloud filter and TOI
-        """
+        """Create search payload with geometry, cloud filter and TOI """
 
-        
         date_range_filter = {
             "type": "DateRangeFilter",
             "field_name": "acquired",
@@ -112,10 +104,12 @@ class DataAPIClient(object):
 
     def get_item_types(self, key='id'):
         """
-        gets all available item type ids from Planets Data API
+        Gall available item type ids from Planets Data API
 
         :param str key
             Key to return results for. Defaults to 'id'.
+
+        returns list of item type ids
         """
         
         endpoint = 'item-types'
@@ -160,6 +154,7 @@ class DataAPIClient(object):
                         json_query=payload,
                         key=key)
 
+
 def api_importer(args):
     """
     Imports features from Planets Data API for all features in AOI,TOI, below provided cloud cover threshold
@@ -172,7 +167,8 @@ def api_importer(args):
                                 end_date=args.get('end_date'), 
                                 cc=args.get('cc'),
                                 geometry=geometry)
-
+    
+    
     LOGGER.info("Total items found: {}".format(len(features)))
     
     return features
