@@ -47,9 +47,9 @@ Secondly, the importer.py file should be run.
 #### Arguments 
 * --aoi_file -  Path to geojson file containing AOIs
 * --api_key - Planet's API key
-* --start_date - Optional. Start date of the time interval to create a report for, in ISO (YYYY-MM-DD) format.(gte), Defaults to yesterday.
+* --start_date - Optional. Start date of the time interval, in ISO (YYYY-MM-DD) format.(gte), Defaults to yesterday.
 * --end_date - Optional. End date of the time interval in ISO (YYYY-MM-DD) format.(lte). Defaults to today.
-* --cc - Optional. Cloud cover value to be used for filtering. Defaults to 1.0"
+* --cc - Optional. Cloud cover value to be used for filtering (0.0 - 1.0). Defaults to 1.0"
 
 To run the importer from your command line with only the required arguments, you need to pass the following arguments:
 

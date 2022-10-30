@@ -1,12 +1,26 @@
 from modules.importer import arg_parser, utils
 from modules.importer.clients import data, geojson_xyz
 from modules.config import LOGGER
+from modules.database import db
 from concurrent.futures import ThreadPoolExecutor
 
 def data_api_importer(args):
     """
-    Imports features from Planets Data API for all features in AOI,TOI, below provided cloud cover threshold
+    Imports features from Planets Data API in AOI,TOI, below provided cloud cover threshold
     If item types are provided only searches for those, otherwise searches all available item_types
+
+    :param object args
+        ArgumentParser object containing:
+        str aoi_file
+            Path to geojson file containing AOIs
+        str api_key
+            Planet's API key
+        str start_date
+            Start date of the time interval in ISO (YYYY-MM-DD) format (gte).
+        str end_date
+            End date of the time interval in ISO (YYYY-MM-DD) format (lte).
+        float cc
+            Cloud cover value (0.0 - 1.0)
     """
 
     client = data.DataAPIClient()
@@ -44,7 +58,6 @@ def city_table_import():
     features = client.get_cities()
     
     def to_postgis(feature):
-        print(feature.name)
         feature.to_city_model()
 
     LOGGER.info('Exporting cities to postgis tables')
@@ -53,18 +66,32 @@ def city_table_import():
 
 
 def importer(args):
-    '''imports satellite imagery metadata for the given AOI, TOI and cloud cover.
-     Exports all non-exisisting metadata to tables in PostGIS.
+    '''Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
+     Imports all non-exisisting metadata to tables in PostGIS.
 
-     :param object args
-        ArgumentParser object containing 
+    :param object args 
+        ArgumentParser object containing:
+            str aoi_file
+                Path to geojson file containing AOIs
+            str api_key
+                Planet's API key
+            str start_date
+                Start date of the time interval in ISO (YYYY-MM-DD) format (gte).
+            str end_date
+                End date of the time interval in ISO (YYYY-MM-DD) format (lte).
+            float cc
+                Cloud cover value (0.0 - 1.0)
      '''
+    session = db.get_db_session()
     
-    country_table_import()
-    city_table_import()
+    if session.query(db.Country).first():
+        country_table_import()
+    if session.query(db.City).first():
+        city_table_import()
 
     data_api_importer(args)
     
+    LOGGER.info('All features imported!')
     
 if __name__ == "__main__":
     args = arg_parser.parser()

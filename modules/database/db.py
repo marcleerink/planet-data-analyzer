@@ -16,16 +16,14 @@ import psycopg2
 import os
 
 Base = declarative_base()
-engine = create_engine(POSTGIS_URL, echo=False)
 
-
-def get_db_session():
-    engine = create_engine(POSTGIS_URL, echo=False, pool_size=4, max_overflow=4)
+def get_db_session(echo=None):
+    engine = create_engine(POSTGIS_URL, echo=echo, pool_size=4, max_overflow=4)
     Session = sessionmaker(bind=engine)
     return Session()
 
-def sql_alch_commit(self,model):
-        session = self._sql_alch_session()
+def sql_alch_commit(model):
+        session = get_db_session()
         session.add(model)
         session.commit()
 
@@ -230,4 +228,5 @@ class LandCoverClass(Base):
 
 
 if __name__=='__main__':
+    engine = create_engine(POSTGIS_URL, echo=True)
     create_tables(engine, Base)
