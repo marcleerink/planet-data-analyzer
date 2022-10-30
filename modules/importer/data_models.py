@@ -5,12 +5,19 @@ from modules.config import POSTGIS_URL
 from sqlalchemy.orm import sessionmaker
 from geoalchemy2.shape import from_shape
 
-from modules.database.db import AssetType, ItemType, SatImage, Satellite, get_db_session
+from modules.database.db import AssetType, ItemType, LandCoverClass, SatImage, Satellite
 
-class Feature:
-    """Represents a single feature imported from Planets Data API"""
-    def __init__(self, dictionary):
-        for key, value in dictionary.items():
+class ImageDataFeature:
+    """
+    Represents a image feature its metadata. 
+    Imported from Planets Data API.
+    """
+    def __init__(self, image_feature):
+        """
+        :param dict image_feature:
+            A dictionary containing metadata of a image from the Data API.
+        """
+        for key, value in image_feature.items():
             setattr(self, key, value)
         self.id = self.id
         self.sat_id = self.properties["satellite_id"]
@@ -26,29 +33,7 @@ class Feature:
             if "clear_confidence_percent" in self.properties else 0
         self.geom = shape(self.geometry)
         
-        self.quality_category = self.properties["quality_category"] if "quality_category" in self.properties \
-            else "Standard"
-        if "ground_control" in self.properties:
-            self.ground_control = self.properties["ground_control"]
-        elif "ground_control_lock" in self.properties:
-            self.ground_control = self.properties["ground_control_lock"] == 1
-        else:
-            self.ground_control = True
-        self.instrument = self.properties["instrument"] if "instrument" in self.properties else self.type
         
-        self.clear_percent = self.properties["clear_percent"] if "clear_percent" in self.properties else 0
-        
-        self.cloud_percent = self.properties["cloud_percent"] if "cloud_percent" in self.properties else 0
-        self.heavy_haze_percent = self.properties["heavy_haze_percent"] \
-            if "heavy_haze_percent" in self.properties else 0
-        self.light_haze_percent = self.properties["light_haze_percent"] \
-            if "light_haze_percent" in self.properties else 0
-        self.shadow_percent = self.properties["shadow_percent"] if "shadow_percent" in self.properties else 0
-        self.snow_ice_percent = self.properties["snow_ice_percent"] if "snow_ice_percent" in self.properties else 0
-        self.visible_confidence_percent = self.properties["visible_confidence_percent"] \
-            if "visible_confidence_percent" in self.properties else 0
-        self.visible_percent = self.properties["visible_percent"] if "visible_percent" in self.properties else 0
-
     def to_dict(self):
         return vars(self)
     
@@ -65,7 +50,8 @@ class Feature:
     def to_satellite_model(self):
         satellite = Satellite(
             id = self.sat_id,
-            name = self.satellite)
+            name = self.satellite,
+            pixel_res = self.pixel_res)
         self._sql_alch_commit(satellite)
 
     def to_item_type_model(self):
@@ -90,20 +76,48 @@ class Feature:
     def to_asset_type_model(self):
         for id in self.asset_types:
             asset_type = AssetType(
-                id = id
-            )
+                id = id)
             self._sql_alch_commit(asset_type)
 
 
+class LandCoverClassFeature:
+    """
+    Represents a landcoverclass feature its metadata.
+    Imported from Planets Data API.
+    """
+    def __init__(self, land_cover_feature):
+        """
+        :param dict land_cover_feature:
+            A dictionary containing metadata of a land cover class feature.
+        """
+        for key, value in land_cover_feature.items():
+            setattr(self, key, value)
+        self.id = self.id
+        self.featureclass = self.featureclass
+        self.geom = shape(self.geom)
 
-def postgis_import(features_list):
-    for i in features_list:
-        
-        feature= Feature(i)
-        
-        feature.to_satellite_model()
-        feature.to_item_type_model()
-        feature.to_sat_image_model()
-        feature.to_asset_type_model()
+    def to_dict(self):
+        return vars(self)
+
+    def _sql_alch_session(self):
+        engine = create_engine(POSTGIS_URL, echo=False)
+        Session = sessionmaker(bind=engine)
+        return Session()
+
+    def _sql_alch_commit(self,model):
+        session = self._sql_alch_session()
+        session.add(model)
+        session.commit()
+
+    def to_land_cover_model(self):
+        land_cover_class = LandCoverClass(
+                id = self.id, 
+                featureclass = self.featureclass,
+                geom = from_shape(self.geom, srid=4326),
+                )
+        self._sql_alch_commit(land_cover_class)
+
+
+
 
 

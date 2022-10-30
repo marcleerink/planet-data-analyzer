@@ -24,6 +24,11 @@ def get_db_session():
     Session = sessionmaker(bind=engine)
     return Session()
 
+def sql_alch_commit(self,model):
+        session = self._sql_alch_session()
+        session.add(model)
+        session.commit()
+
 session = get_db_session()
 
 def create_tables(engine, Base):
@@ -56,12 +61,12 @@ class MultiGeomFromSingle(TypeDecorator):
         return func.ST_Multi(self.impl.bind_expression(bindvalue))
 
 class CentroidFromPolygon(TypeDecorator):
-    '''Calculate and insert the centroid points on each Polygon on insert'''
+    '''Calculate and insert the centroid points of each Polygon on insert'''
     impl = Geometry
     cache_ok = True
 
     def bind_expression(self, bindvalue):
-        return func.ST_Centroid(self.impl.bind_expression(bindvalue))
+        return func.ST_Transform(func.ST_Centroid(func.ST_Transform(self.impl.bind_expression(bindvalue),3035)), 4326)
 
 class Satellite(Base):
     __tablename__='satellites'
@@ -84,7 +89,7 @@ class SatImage(Base):
     clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
-    geom = Column(Geometry(geometry_type='Polygon', srid=4326, spatial_index=True), nullable=False)
+    geom = Column(MultiGeomFromSingle(geometry_type='MultiPolygon', srid=4326, spatial_index=True), nullable=False)
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
@@ -96,7 +101,6 @@ class SatImage(Base):
                     viewonly=True,
                     uselist=True,
                     lazy='joined')
-
     
     @hybrid_property
     def check_wkb(wkb, x, y):
@@ -111,9 +115,11 @@ class SatImage(Base):
     @hybrid_property
     def srid(self):
         return session.scalar(self.geom.ST_SRID())
+
     @hybrid_property
     def lon(self):
         return session.scalar(self.centroid.ST_X())
+
     @hybrid_property   
     def lat(self):
         return session.scalar(self.centroid.ST_Y())

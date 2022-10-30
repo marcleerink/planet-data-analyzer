@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 from modules.database.db import AssetType, ItemType, SatImage, Satellite,\
                                  Country, City, LandCoverClass, get_db_session
+from modules.importer.data_models import ImageDataFeature
 from geoalchemy2.shape import from_shape
 
 def get_data_countries():
@@ -66,54 +67,26 @@ def get_data_urban_areas():
     gdf_urban_areas = gdf_urban_areas[['featureclass', 'geom']]
     return gdf_urban_areas.dropna(subset=['geom', 'featureclass'])
 
-   
-def get_asset_types_data(gdf):
-    asset_types_df = gdf['assets']
-    return pd.DataFrame(set(asset_types_df.explode().to_list()), columns=['id'])
 
-def import_asset_types_table(session, asset_types_df):
-    for i in asset_types_df['id']:
-        asset_type = AssetType(id = i)
-        session.add(asset_type)
-        session.commit()
+def postgis_image_data_import(features_list):
     
+    for i in features_list:
+        image_data= ImageDataFeature(i)
+        image_data.to_satellite_model()
+        image_data.to_item_type_model()
+        image_data.to_sat_image_model()
+        image_data.to_asset_type_model()
 
-def import_item_types_table(session, r):
-    item_types = ItemType(id = r.item_type_id,
-                        sat_id = r.sat_id
-                        )
-    session.add(item_types)
-    session.commit()
-
-def import_satellites_table(session, r):
-    satellites = Satellite(
-                id = r.sat_id,
-                name = r.satellite,
-                pixel_res = r.pixel_res
-                )
-    session.add(satellites)
-    session.commit()
-
-def import_sat_images_table(session, r):
-    sat_image = SatImage(
-                id = r.id, 
-                clear_confidence_percent = r.clear_confidence_percent,
-                cloud_cover = r.cloud_cover,
-                time_acquired = r.time_acquired,
-                centroid = from_shape(r.geom, srid=4326),
-                geom = from_shape(r.geom, srid=4326),
-                sat_id = r.sat_id,
-                item_type_id = r.item_type_id
-                )
-    session.add(sat_image)
-    session.commit()
-
-
-def postgis_importer(gdf):
+def postgis_importer(features_list):
     """
     Import data into postgis. Only fill static tables (countries, cities) if table is empty
     All inserts are set to ON CONFLICT DO NOTHING to skip over duplicate rows efficiently
+
+    :param list features_list
+        List containing the features from Planets Data API.
     """
+    postgis_image_data_import(features_list)
+    
     session = get_db_session()
     
     if session.query(Country).first() is not None:
@@ -124,11 +97,5 @@ def postgis_importer(gdf):
     gdf_land_cover_class = concat_land_cover_class_data()
     export_land_cover_class_table(session, gdf_land_cover_class)
     
-    for r in gdf.itertuples():
-        import_satellites_table(session, r)
-        import_item_types_table(session, r)
-        import_sat_images_table(session, r)
-    
-    import_asset_types_table(session, get_asset_types_data(gdf))
 
   

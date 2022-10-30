@@ -3,7 +3,7 @@ from pathlib import Path
 
 from modules.importer import arg_parser, postgis_importer, data_wrangler, api_importer
 from modules.importer import utils
-from modules.importer import features
+from modules.importer import data_models
 from modules.config import LOGGER
 
 def importer(args):
@@ -16,15 +16,12 @@ def importer(args):
     features_list = api_importer.api_importer(args)
 
     if len(features_list) == 0:
-        LOGGER.warning("No features found for AOI TOI and CC filter")
+        LOGGER.warning("No images found within AOI, TOI and CC filter")
         return
         
-    # convert to gdf and wrangle data
-    clean_features_list = features.postgis_import(features_list)
-    # gdf = data_wrangler.wrangler(clean_features_list)
+    LOGGER.info('Exporting to postgis tables')
+    postgis_importer.postgis_importer(features_list)
     
-    # LOGGER.info('Exporting to postgis tables')
-    # postgis_importer.postgis_importer(gdf)
 
 if __name__ == "__main__":
     args_bundle = arg_parser.parser()
