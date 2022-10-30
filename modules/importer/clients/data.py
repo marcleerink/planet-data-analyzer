@@ -4,17 +4,22 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-
+from concurrent.futures import ThreadPoolExecutor
 from modules.config import LOGGER
-from modules.config import POSTGIS_URL
-from modules.database.db import AssetType, ItemType, LandCoverClass, SatImage, Satellite, City, Country
+
+from modules.database import db
+
+def _get_client(client):
+    if client is None:
+        client = DataAPIClient()
+    return client
 
 class DataAPIClient:
-    """Base client for working with the Planet Data API"""
-
+    """
+    Base client for working with the Planet Data API.
+    https://developers.planet.com/docs/apis/data/
+    """
+    
     base_url = "https://api.planet.com/data/v1"
     
     def __init__(self, api_key=None):
@@ -53,21 +58,6 @@ class DataAPIClient:
     def _item(self, endpoint, **params):
         return self._get(self._url(endpoint), **params)
 
-    def _query(self, endpoint, key, json_query):
-        """Post and then get for pagination."""
-
-        url = self._url(endpoint)
-        page = self._post(url, json_query)
-        features = page[key]
-
-        while page['_links'].get('_next'):
-            LOGGER.info("...Paging results...")
-            page_url = page['_links'].get('_next')
-            page = self._get(page_url)
-            features += page["features"]
-            
-        return features
-    
     def _payload(self, item_types, start_date, end_date, cc, geometry):
         """Create search payload with geometry, cloud filter and TOI """
 
@@ -104,21 +94,36 @@ class DataAPIClient:
         }
         return search_request
 
-    def get_item_types(self, key='id'):
+    def _query(self, endpoint, key, json_query):
+        """Post and then get for pagination."""
+
+        url = self._url(endpoint)
+        page = self._post(url, json_query)
+        features = page[key]
+
+        while page['_links'].get('_next'):
+            LOGGER.info("...Paging results...")
+            page_url = page['_links'].get('_next')
+            page = self._get(page_url)
+            features += page["features"]
+            
+        return features
+
+    def get_item_types(self, key=None):
         """
-        Gall available item type ids from Planets Data API
+        Gall available item types from Planets Data API
 
         :param str key
-            Key to return results for. Defaults to 'id'.
+            Key to return results for.
 
-        returns list of item type ids
+        returns list of item type
         """
         
         endpoint = 'item-types'
         items = self._item(endpoint=endpoint)
         item_types = items['item_types']
         return [item[key] for item in item_types]
-
+        
     def get_features(self, start_date=None, end_date=None, 
                     cc=None, geometry=None, item_types=None):
         """
@@ -139,11 +144,12 @@ class DataAPIClient:
             Item types to filter results by. Gets all available item_types if none provided.
       
         """
-
+        
         endpoint = 'quick-search'
         key = 'features'
         if not item_types:
-            item_types= self.get_item_types()
+            item_types = self.get_item_types(key='id')
+            
 
         payload = self._payload(start_date=start_date,
                                 end_date=end_date,
@@ -151,62 +157,30 @@ class DataAPIClient:
                                 geometry=geometry,
                                 item_types=item_types)
         
-        for feature in self._query(endpoint=endpoint, 
-                                    json_query=payload,
-                                    key=key):
+        features = self._query(endpoint=endpoint, 
+                                json_query=payload,
+                                key=key)
+        LOGGER.info('Found {} features'.format(len(features)))
+        for feature in features:
             yield ImageDataFeature(feature)
 
-class GeojsonXYZClient:
-    """
-    Base client for working with the geojson-xyz API
-    http://geojson.xyz/
-    """
-    base_url = "https://d2ad6b4ur7yvpq.cloudfront.net/"
 
-    def __init__(self):
-        retries = Retry(total=5, backoff_factor=0.2, status_forcelist=[429, 503])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-
-    def _url(self, endpoint):
-        return '{}/{}'.format(self.base_url, endpoint)
-
-    def _get(self, url, **params):
-        rv = self.session.get(url, params=params)
-        rv.raise_for_status()
-        return rv.json()
-
-    def _item(self, endpoint, **params):
-        return self._get(self._url(endpoint), **params)
-
-    def get_countries(self):
-        endpoint = "naturalearth-3.3.0/ne_50m_admin_0_countries.geojson"
-        return self._item(endpoint=endpoint)
-
-    def get_cities(self):
-        endpoint = "naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
-        return self._item(endpoint=endpoint)
-
-    def get_rivers_lakes(self):
-        endpoint = "naturalearth-3.3.0/ne_50m_rivers_lake_centerlines.geojson"
-        return self._item(endpoint=endpoint)
-
-    def get_urban_areas(self):
-        endpoint = "naturalearth-3.3.0/ne_50m_urban_areas.geojson"
-        return self._item(endpoint=endpoint)
-        
 class ImageDataFeature:
     """
     Represents a image feature its metadata. 
     Imported from Planets Data API.
     """
-    def __init__(self, image_feature):
+    def __init__(self, image_feature, client=None):
         """
         :param dict image_feature:
             A dictionary containing metadata of a image from the Data API.
+        :param DataAPIClient client:
+            A specific client instance to use. Will be created if not specified.
         """
+        self.client = _get_client(client)
+
         for key, value in image_feature.items():
             setattr(self, key, value)
-        self.id = self.id
         self.sat_id = self.properties["satellite_id"]
         self.time_acquired = self.properties["acquired"]
         self.published = self.properties["published"]
@@ -223,32 +197,22 @@ class ImageDataFeature:
         
     def to_dict(self):
         return vars(self)
-    
-    def _sql_alch_session(self):
-        engine = create_engine(POSTGIS_URL, echo=False)
-        Session = sessionmaker(bind=engine)
-        return Session()
-
-    def _sql_alch_commit(self,model):
-        session = self._sql_alch_session()
-        session.add(model)
-        session.commit()
 
     def to_satellite_model(self):
-        satellite = Satellite(
+        satellite = db.Satellite(
             id = self.sat_id,
             name = self.satellite,
             pixel_res = self.pixel_res)
-        self._sql_alch_commit(satellite)
+        db.sql_alch_commit(satellite)
 
     def to_item_type_model(self):
-        item_type = ItemType(
+        item_type = db.ItemType(
             id = self.item_type_id,
             sat_id = self.sat_id)
-        self._sql_alch_commit(item_type)
+        db.sql_alch_commit(item_type)
     
     def to_sat_image_model(self):
-        sat_image = SatImage(
+        sat_image = db.SatImage(
                 id = self.id, 
                 clear_confidence_percent = self.clear_confidence_percent,
                 cloud_cover = self.cloud_cover,
@@ -258,15 +222,15 @@ class ImageDataFeature:
                 sat_id = self.sat_id,
                 item_type_id = self.item_type_id
                 )
-        self._sql_alch_commit(sat_image)
+        db.sql_alch_commit(sat_image)
     
     def to_asset_type_model(self):
         for id in self.asset_types:
-            asset_type = AssetType(
+            asset_type = db.AssetType(
                 id = id)
-            self._sql_alch_commit(asset_type)
-
-
+            db.sql_alch_commit(asset_type)
+    
+   
 class LandCoverClassFeature:
     """
     Represents a landcoverclass feature its metadata.
@@ -276,6 +240,7 @@ class LandCoverClassFeature:
         """
         :param dict land_cover_feature:
             A dictionary containing metadata of a land cover class feature.
+        
         """
         for key, value in land_cover_feature.items():
             setattr(self, key, value)
@@ -286,93 +251,18 @@ class LandCoverClassFeature:
     def to_dict(self):
         return vars(self)
 
-    def _sql_alch_session(self):
-        engine = create_engine(POSTGIS_URL, echo=False)
-        Session = sessionmaker(bind=engine)
-        return Session()
-
     def _sql_alch_commit(self,model):
-        session = self._sql_alch_session()
+        session = db.get_db_session()
         session.add(model)
         session.commit()
 
     def to_land_cover_model(self):
-        land_cover_class = LandCoverClass(
+        land_cover_class = db.LandCoverClass(
                 id = self.id, 
                 featureclass = self.featureclass,
                 geom = from_shape(self.geom, srid=4326),
                 )
         self._sql_alch_commit(land_cover_class)
 
-class CountryFeature:
-    """
-    Represents a country feature its metadata.
-    Imported from GeojsonXYZ API
-    """
-    def __init__(self, country_feature):
-        """
-        :param dict land_cover_feature:
-            A dictionary containing metadata of a country feature.
-        """
-        for key, value in country_feature.items():
-            setattr(self, key, value)
-        self.name = self.properties['name']
-        self.geom = shape(self.geom)
-
-    def to_dict(self):
-        return vars(self)
-
-    def _sql_alch_session(self):
-        engine = create_engine(POSTGIS_URL, echo=False)
-        Session = sessionmaker(bind=engine)
-        return Session()
-
-    def _sql_alch_commit(self,model):
-        session = self._sql_alch_session()
-        session.add(model)
-        session.commit()
-
-    def to_country_model(self):
-        city = Country(
-                iso = self.properties["iso_a2"],
-                name = self.properties["name"],
-                geom = from_shape(self.geometry, srid=4326),
-                )
-        self._sql_alch_commit(city)
-
-class CityFeature:
-    """
-    Represents a city feature its metadata.
-    Imported from GeojsonXYZ API
-    """
-    def __init__(self, city_feature):
-        """
-        :param dict land_cover_feature:
-            A dictionary containing metadata of a city feature.
-        """
-        for key, value in city_feature.items():
-            setattr(self, key, value)
-        self.name = self.properties['name']
-        self.geom = shape(self.geometry)
-
-    def to_dict(self):
-        return vars(self)
-
-    def _sql_alch_session(self):
-        engine = create_engine(POSTGIS_URL, echo=False)
-        Session = sessionmaker(bind=engine)
-        return Session()
-
-    def _sql_alch_commit(self,model):
-        session = self._sql_alch_session()
-        session.add(model)
-        session.commit()
-
-    def to_city_model(self):
-        city = City(
-                name = self.name,
-                geom = from_shape(self.geom, srid=4326),
-                )
-        self._sql_alch_commit(city)
 
     

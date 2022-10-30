@@ -58,15 +58,7 @@ def args_validate(args):
     
     return args
 
-
-def args_bundler(args):
-    args_bundle = []
-    bundle = vars(args).copy()
-    args_bundle.append(bundle)
-    return args_bundle
-       
-
 def parser():
     args = arguments()
-    args = args_validate(args)
-    return args_bundler(args)
+    return args_validate(args)
+   

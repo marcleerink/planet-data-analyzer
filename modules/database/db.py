@@ -20,7 +20,7 @@ engine = create_engine(POSTGIS_URL, echo=False)
 
 
 def get_db_session():
-    engine = create_engine(POSTGIS_URL, echo=False)
+    engine = create_engine(POSTGIS_URL, echo=False, pool_size=4, max_overflow=4)
     Session = sessionmaker(bind=engine)
     return Session()
 
@@ -58,7 +58,8 @@ class MultiGeomFromSingle(TypeDecorator):
     cache_ok = True
 
     def bind_expression(self, bindvalue):
-        return func.ST_Multi(self.impl.bind_expression(bindvalue))
+        return self.impl.bind_expression(bindvalue).ST_Multi()
+        # return func.ST_Multi(self.impl.bind_expression(bindvalue))
 
 class CentroidFromPolygon(TypeDecorator):
     '''Calculate and insert the centroid points of each Polygon on insert'''
@@ -66,7 +67,8 @@ class CentroidFromPolygon(TypeDecorator):
     cache_ok = True
 
     def bind_expression(self, bindvalue):
-        return func.ST_Transform(func.ST_Centroid(func.ST_Transform(self.impl.bind_expression(bindvalue),3035)), 4326)
+        return self.impl.bind_expression(bindvalue).ST_Transform(3035).ST_Centroid().ST_Transform(4326)
+        # return func.ST_Transform(func.ST_Centroid(func.ST_Transform(self.impl.bind_expression(bindvalue),3035)), 4326)
 
 class Satellite(Base):
     __tablename__='satellites'
@@ -89,7 +91,7 @@ class SatImage(Base):
     clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
-    geom = Column(MultiGeomFromSingle(geometry_type='MultiPolygon', srid=4326, spatial_index=True), nullable=False)
+    geom = Column(Geometry(srid=4326, spatial_index=True), nullable=False)
     centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
