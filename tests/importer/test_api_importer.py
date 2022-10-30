@@ -10,7 +10,7 @@ import requests
 import requests_mock
 from tests.importer.fixtures import fake_response, geometry, cc, item_types, start_date, end_date,\
     payload, fake_api_key, payload, mock_response_429, mock_response_200, mock_response_300
-from modules.importer.api_importer import get_item_types, handle_exception,  create_payload,\
+from modules.importer.clients import get_item_types, handle_exception,  create_payload,\
      get_features, get_response, SEARCH_URL, api_importer, ITEM_TYPES, _paginate, RateLimitException
 
 from modules.config import LOGGER

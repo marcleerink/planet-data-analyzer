@@ -1,4 +1,3 @@
-from typing_extensions import assert_type
 from shapely.geometry import shape
 from sqlalchemy import create_engine
 from modules.config import POSTGIS_URL
