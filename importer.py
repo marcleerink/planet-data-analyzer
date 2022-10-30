@@ -66,8 +66,10 @@ def city_table_import():
 
 
 def importer(args):
-    '''Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
-     Imports all non-exisisting metadata to tables in PostGIS.
+    '''
+    Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
+    Only imports static land cover class metadata (cities/countries/rivers_lakes) if not done before.
+    Imports all non-exisisting metadata to tables in PostGIS.
 
     :param object args 
         ArgumentParser object containing:
@@ -82,15 +84,15 @@ def importer(args):
             float cc
                 Cloud cover value (0.0 - 1.0)
      '''
-    session = db.get_db_session()
-    
-    if session.query(db.Country).first():
+    session = db.get_db_session(echo=True)
+
+    if not session.query(db.Country.iso).first():
         country_table_import()
-    if session.query(db.City).first():
+    if not session.query(db.City.id).first():
         city_table_import()
 
     data_api_importer(args)
-    
+
     LOGGER.info('All features imported!')
     
 if __name__ == "__main__":

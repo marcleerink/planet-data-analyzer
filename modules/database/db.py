@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, func
+    DateTime, ForeignKey, func, Identity
 from geoalchemy2 import Geometry
 from sqlalchemy.types import TypeDecorator
 from geoalchemy2.shape import from_shape, to_shape
@@ -18,16 +18,16 @@ import os
 Base = declarative_base()
 
 def get_db_session(echo=None):
-    engine = create_engine(POSTGIS_URL, echo=echo, pool_size=4, max_overflow=4)
+    engine = create_engine(POSTGIS_URL, echo=echo)
     Session = sessionmaker(bind=engine)
     return Session()
+    
+session = get_db_session()
 
-def sql_alch_commit(model):
-        session = get_db_session()
+def sql_alch_commit(model, echo=None):
+        session = get_db_session(echo=echo)
         session.add(model)
         session.commit()
-
-session = get_db_session()
 
 def create_tables(engine, Base):
     if not database_exists(engine.url):
@@ -51,13 +51,13 @@ def prefix_inserts(insert, compiler, **kw):
     return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
 
 class MultiGeomFromSingle(TypeDecorator):
-    '''Converts single geometries to multi geometries(multipolygon/multilinestring'''
+    '''Converts single geometries to multi geometries(MultiPolygon/MultiLinestring'''
     impl = Geometry
     cache_ok = True
 
     def bind_expression(self, bindvalue):
         return self.impl.bind_expression(bindvalue).ST_Multi()
-        # return func.ST_Multi(self.impl.bind_expression(bindvalue))
+        
 
 class CentroidFromPolygon(TypeDecorator):
     '''Calculate and insert the centroid points of each Polygon on insert'''
@@ -65,8 +65,9 @@ class CentroidFromPolygon(TypeDecorator):
     cache_ok = True
 
     def bind_expression(self, bindvalue):
-        return self.impl.bind_expression(bindvalue).ST_Transform(3035).ST_Centroid().ST_Transform(4326)
-        # return func.ST_Transform(func.ST_Centroid(func.ST_Transform(self.impl.bind_expression(bindvalue),3035)), 4326)
+        return self.impl.bind_expression(bindvalue).ST_Transform(3035)\
+                                                    .ST_Centroid()\
+                                                    .ST_Transform(4326)
 
 class Satellite(Base):
     __tablename__='satellites'
