@@ -12,7 +12,7 @@ def _get_client(client):
         client = GeojsonXYZClient()
     return client
 
-class GeojsonXYZClient:
+class GeojsonXYZClient(object):
     """
     Base client for working with the geojson-xyz API
     http://geojson.xyz/
@@ -39,16 +39,19 @@ class GeojsonXYZClient:
 
     def get_cities(self):
         endpoint = "naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
-        features = gpd.read_file(self._url(endpoint)).reset_index(names='id').to_dict(orient='records')
-        print(features)
+        features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
+                                                    .to_dict(orient='records')
+                              
         for f in features:
             yield CityFeature(f)
 
     def get_rivers_lakes(self):
         endpoint = "naturalearth-3.3.0/ne_50m_rivers_lake_centerlines.geojson"
-        features = gpd.read_file(self._url(endpoint)).to_dict(orient='records')
+        features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
+                                                    .to_dict(orient='records')
+
         for f in features:
-            yield RiverLakeFeature(f)
+            yield LandCoverClassFeature(f)
 
     def get_urban_areas(self):
         endpoint = "naturalearth-3.3.0/ne_50m_urban_areas.geojson"
@@ -109,3 +112,28 @@ class CityFeature:
                 geom = from_shape(self.geom, srid=4326),
                 )
         db.sql_alch_commit(city)
+
+class LandCoverClassFeature:
+    """
+    Represents a landcoverclass feature its metadata.
+    Imported from Planets Data API.
+    """
+    def __init__(self, land_cover_feature):
+        """
+        :param dict land_cover_feature:
+            A dictionary containing metadata of a land cover class feature.
+        
+        """
+        for key, value in land_cover_feature.items():
+            setattr(self, key, value)
+        self.id = self.id
+        self.featureclass = self.featureclass
+        self.geom = shape(self.geometry)
+
+    def to_land_cover_model(self):
+        land_cover_class = db.LandCoverClass(
+                id = self.id, 
+                featureclass = self.featureclass,
+                geom = from_shape(self.geom, srid=4326),
+                )
+        db.sql_alch_commit(land_cover_class)

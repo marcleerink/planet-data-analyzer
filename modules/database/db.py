@@ -17,14 +17,14 @@ import os
 
 Base = declarative_base()
 
-def get_db_session(echo=None):
-    engine = create_engine(POSTGIS_URL, echo=echo)
+def get_db_session(echo=False):
+    engine = create_engine(POSTGIS_URL, echo=echo, pool_size=16, max_overflow=4)
     Session = sessionmaker(bind=engine)
     return Session()
     
 session = get_db_session()
 
-def sql_alch_commit(model, echo=None):
+def sql_alch_commit(model, echo=False):
         session = get_db_session(echo=echo)
         session.add(model)
         session.commit()

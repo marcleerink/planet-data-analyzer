@@ -1,8 +1,14 @@
-from modules.importer import arg_parser, utils
+from modules.importer import arg_parser
 from modules.importer.clients import data, geojson_xyz
 from modules.config import LOGGER
 from modules.database import db
 from concurrent.futures import ThreadPoolExecutor
+import json
+
+def geojson_import(aoi_file):
+    with open(aoi_file) as f:
+        geometry = json.load(f)
+    return geometry['features'][0]['geometry']
 
 def data_api_importer(args):
     """
@@ -23,8 +29,8 @@ def data_api_importer(args):
             Cloud cover value (0.0 - 1.0)
     """
 
-    client = data.DataAPIClient()
-    geometry = utils.geojson_import(args.aoi_file)
+    client = data.DataAPIClient(api_key=args.api_key)
+    geometry = geojson_import(args.aoi_file)
 
     features = client.get_features(start_date=args.start_date,
                                 end_date=args.end_date, 
@@ -37,9 +43,11 @@ def data_api_importer(args):
         feature.to_sat_image_model()
         feature.to_asset_type_model()    
         
+        
     LOGGER.info('Exporting images to postgis tables')
     with ThreadPoolExecutor(16) as executor:
         executor.map(to_postgis, features)
+
                     
 
 def country_table_import():
@@ -64,7 +72,17 @@ def city_table_import():
     with ThreadPoolExecutor(16) as executor:
         executor.map(to_postgis, features)
 
+def river_lake_import():
+    client = geojson_xyz.GeojsonXYZClient()
+    features = client.get_rivers_lakes()
+    
+    LOGGER.info('Exporting rivers/lakes to postgis tables')
+    with ThreadPoolExecutor(16) as executor:
+        executor.map(land_cover_to_postgis, features)
 
+def land_cover_to_postgis(feature):
+    feature.to_land_cover_model()
+    
 def importer(args):
     '''
     Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
@@ -84,16 +102,19 @@ def importer(args):
             float cc
                 Cloud cover value (0.0 - 1.0)
      '''
-    session = db.get_db_session(echo=True)
+    session = db.get_db_session()
 
     if not session.query(db.Country.iso).first():
         country_table_import()
     if not session.query(db.City.id).first():
         city_table_import()
 
+    if not session.query(db.LandCoverClass.id).first():
+        river_lake_import()
+
     data_api_importer(args)
 
-    LOGGER.info('All features imported!')
+    LOGGER.info('Total of {} sat_images in db'.format(session.query(db.SatImage).count()))
     
 if __name__ == "__main__":
     args = arg_parser.parser()
