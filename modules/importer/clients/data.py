@@ -105,7 +105,6 @@ class DataAPIClient(object):
         features = page[key]
 
         while page['_links'].get('_next'):
-            LOGGER.info("...Paging results...")
             page_url = page['_links'].get('_next')
             page = self._get(page_url)
             features += page["features"]
@@ -163,7 +162,7 @@ class DataAPIClient(object):
         features = self._query(endpoint=endpoint, 
                                 json_query=payload,
                                 key=key)
-        LOGGER.info('Found {} features'.format(len(features)))
+
         for feature in features:
             yield ImageDataFeature(feature)
 

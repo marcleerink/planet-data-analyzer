@@ -5,6 +5,7 @@ from modules.database import db
 from concurrent.futures import ThreadPoolExecutor
 import json
 
+
 def geojson_import(aoi_file):
     with open(aoi_file) as f:
         geometry = json.load(f)
@@ -28,23 +29,21 @@ def data_api_importer(args):
         float cc
             Cloud cover value (0.0 - 1.0)
     """
-
+    
     client = data.DataAPIClient(api_key=args.api_key)
     geometry = geojson_import(args.aoi_file)
 
     features = client.get_features(start_date=args.start_date,
                                 end_date=args.end_date, 
                                 cc=args.cc,
-                                geometry=geometry)
+                                geometry=geometry)  
 
     def to_postgis(feature):
         feature.to_satellite_model()
         feature.to_item_type_model()
         feature.to_sat_image_model()
         feature.to_asset_type_model()    
-        
-        
-    LOGGER.info('Exporting images to postgis tables')
+     
     with ThreadPoolExecutor(16) as executor:
         executor.map(to_postgis, features)
 
@@ -53,30 +52,27 @@ def data_api_importer(args):
 def country_table_import():
     client = geojson_xyz.GeojsonXYZClient()
     features = client.get_countries()
-    
+
     def to_postgis(feature):
         feature.to_country_model()
 
-    LOGGER.info('Exporting countries to postgis tables')
     with ThreadPoolExecutor(16) as executor:
         executor.map(to_postgis, features)
 
 def city_table_import():
     client = geojson_xyz.GeojsonXYZClient()
     features = client.get_cities()
-    
+
     def to_postgis(feature):
         feature.to_city_model()
 
-    LOGGER.info('Exporting cities to postgis tables')
     with ThreadPoolExecutor(16) as executor:
         executor.map(to_postgis, features)
 
 def river_lake_import():
     client = geojson_xyz.GeojsonXYZClient()
     features = client.get_rivers_lakes()
-    
-    LOGGER.info('Exporting rivers/lakes to postgis tables')
+
     with ThreadPoolExecutor(16) as executor:
         executor.map(land_cover_to_postgis, features)
 
@@ -113,8 +109,15 @@ def importer(args):
         river_lake_import()
 
     data_api_importer(args)
-
-    LOGGER.info('Total of {} sat_images in db'.format(session.query(db.SatImage).count()))
+    
+    LOGGER.info('Total of {} countries in db'.format(session.query(db.Country).count()))
+    LOGGER.info('Total of {} cities in db'.format(session.query(db.City).count()))
+    LOGGER.info('Total of {} landcoverclasses in db'.format(session.query(db.LandCoverClass).count()))
+    LOGGER.info('Total of {} satellites in db'.format(session.query(db.Satellite).count()))
+    LOGGER.info('Total of {} item types in db'.format(session.query(db.ItemType).count()))
+    LOGGER.info('Total of {} sat images in db'.format(session.query(db.SatImage).count()))
+    LOGGER.info('Total of {} asset types in db'.format(session.query(db.AssetType).count()))
+    
     
 if __name__ == "__main__":
     args = arg_parser.parser()

@@ -33,6 +33,7 @@ class GeojsonXYZClient(object):
     def get_countries(self):
         endpoint = "naturalearth-3.3.0/ne_50m_admin_0_countries.geojson"
         features = gpd.read_file(self._url(endpoint)).to_dict(orient='records')
+    
         for f in features:
             yield CountryFeature(f)
        
@@ -41,7 +42,7 @@ class GeojsonXYZClient(object):
         endpoint = "naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
         features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
                                                     .to_dict(orient='records')
-                              
+                    
         for f in features:
             yield CityFeature(f)
 
@@ -55,7 +56,11 @@ class GeojsonXYZClient(object):
 
     def get_urban_areas(self):
         endpoint = "naturalearth-3.3.0/ne_50m_urban_areas.geojson"
-        return self._item(endpoint=endpoint)
+        features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
+                                                    .to_dict(orient='records')
+
+        for f in features:
+            yield LandCoverClassFeature(f)
 
 class CountryFeature:
     """

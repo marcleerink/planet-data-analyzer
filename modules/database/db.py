@@ -1,31 +1,33 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref, column_property
-from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, func, Identity
-from geoalchemy2 import Geometry
-from sqlalchemy.types import TypeDecorator
-from geoalchemy2.shape import from_shape, to_shape
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.expression import Insert
-from modules.config import POSTGIS_URL
-from sqlalchemy.ext.hybrid import hybrid_property
-from geojson import Feature, FeatureCollection, dumps
-import streamlit as st
-from sqlalchemy_utils import database_exists, create_database
 import psycopg2
 import os
 
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
+    DateTime, ForeignKey, func
+from sqlalchemy.types import TypeDecorator
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import Insert
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy_utils import database_exists, create_database
+
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+from geojson import Feature, FeatureCollection, dumps
+
+from modules.config import POSTGIS_URL
+
 Base = declarative_base()
 
-def get_db_session(echo=False):
-    engine = create_engine(POSTGIS_URL, echo=echo, pool_size=16, max_overflow=4)
+def get_db_session():
+    engine = create_engine(POSTGIS_URL, echo=False)
     Session = sessionmaker(bind=engine)
     return Session()
     
 session = get_db_session()
 
-def sql_alch_commit(model, echo=False):
-        session = get_db_session(echo=echo)
+def sql_alch_commit(model):
+        session = get_db_session()
         session.add(model)
         session.commit()
 
