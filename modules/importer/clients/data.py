@@ -210,7 +210,7 @@ class ImageDataFeature:
             name = self.satellite,
             pixel_res = self.pixel_res)
         db.sql_alch_commit(satellite)
-        return satellite
+
 
     def to_item_type_model(self):
         item_type = db.ItemType(

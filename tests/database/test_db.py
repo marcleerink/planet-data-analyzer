@@ -1,11 +1,10 @@
-from urllib.parse import quote_from_bytes
+
 import pytest
 from sqlalchemy import create_engine
 import os
 from datetime import datetime, timedelta
 from geoalchemy2.shape import from_shape
 from shapely.geometry import shape
-from shapely.geometry import Polygon, MultiPolygon
 import geopandas as gpd
 from sqlalchemy_utils import database_exists, create_database
 import psycopg2

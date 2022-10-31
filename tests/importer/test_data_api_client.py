@@ -4,9 +4,10 @@ from unittest import mock
 import json
 from shapely.geometry import shape
 import pandas as pd
+from modules.database.db import ItemType, Satellite
 from modules.importer.clients.data import DataAPIClient, ImageDataFeature
 from tests.resources import fake_feature
-from tests.database.test_db import session
+from tests.database.test_db import db_session, setup_test_db
 
 @pytest.fixture()
 def item_types():
@@ -92,15 +93,23 @@ def test_ImageDataFeature():
     assert image_feature.cloud_cover == float(feature["properties"]["cloud_cover"])
     assert image_feature.geom == shape(feature["geometry"])
     
-def test_to_sattellite_model(session):
-    """test if metadata from a feature is imported to db correctly"""
-    feature = fake_feature.feature
+# def test_to_sattellite_model(setup_test_db, db_session):
+#     """test if metadata from a feature is imported to db correctly"""
+#     feature = fake_feature.feature
+#     image_feature = ImageDataFeature(feature)
 
-    image_feature = ImageDataFeature(feature)
+#     image_feature.to_satellite_model()
 
-    satellite = image_feature.to_satellite_model()
+#     satellites = db_session.query(Satellite).all()
+#     for sat in satellites:
+#         assert sat.id == str(feature["properties"]["satellite_id"])
 
-    assert satellite
+# def test_to_item_type_model(setup_test_db, db_session):
+#     feature = fake_feature.feature
+#     image_feature = ImageDataFeature(feature)
 
+#     image_feature.to_item_type_model()
 
-    
+#     item_types = db_session.query(ItemType).all()
+#     for item in item_types:
+#         assert item.id == str(feature["properties"]["item_type"])
