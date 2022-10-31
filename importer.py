@@ -43,9 +43,11 @@ def data_api_importer(args):
         feature.to_item_type_model()
         feature.to_sat_image_model()
         feature.to_asset_type_model()    
-     
-    with ThreadPoolExecutor(16) as executor:
-        executor.map(to_postgis, features)
+    
+    for feature in features:
+        to_postgis(feature)
+    # with ThreadPoolExecutor(16) as executor:
+    #     executor.map(to_postgis, features)
 
                     
 

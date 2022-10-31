@@ -124,10 +124,13 @@ class DataAPIClient(object):
         endpoint = 'item-types'
         items = self._item(endpoint=endpoint)
         item_types = items['item_types']
-        return [item[key] for item in item_types]
+        if key:
+            return [item[key] for item in item_types]
+        else:
+            return [item for item in item_types]
         
-    def get_features(self, start_date=None, end_date=None, 
-                    cc=None, geometry=None, item_types=None):
+    def get_features(self, start_date, end_date, 
+                    cc, geometry, item_types=None):
         """
         Gets all features from quick search end-point with specified filters.
         Yields ``ImageDataFeature`` instances.
@@ -162,7 +165,7 @@ class DataAPIClient(object):
         features = self._query(endpoint=endpoint, 
                                 json_query=payload,
                                 key=key)
-
+        LOGGER.info('Found {} image features'.format(len(features)))
         for feature in features:
             yield ImageDataFeature(feature)
 

@@ -182,7 +182,7 @@ class Country(Base):
     __tablename__='countries'
     iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
-    geom = Column(MultiGeomFromSingle(geometry_type='MultiPolygon', srid=4326, spatial_index=True), 
+    geom = Column(Geometry(srid=4326, spatial_index=True), 
                             nullable=False)
     
     sat_images = relationship(
