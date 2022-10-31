@@ -1,19 +1,21 @@
 from urllib.parse import quote_from_bytes
 import pytest
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import os
 from datetime import datetime, timedelta
 from geoalchemy2.shape import from_shape
+from shapely.geometry import shape
+from shapely.geometry import Polygon, MultiPolygon
 import geopandas as gpd
 from sqlalchemy_utils import database_exists, create_database
 import psycopg2
-
 
 from modules.config import POSTGIS_URL, LOGGER
 from modules.database.db import Satellite, SatImage, AssetType, ItemType, Country, City, get_db_session, Base
 from modules.app.query import query_distinct_satellite_names, query_countries_with_filters,\
     query_distinct_satellite_names, query_sat_images_with_filter, query_lat_lon_sat_images, query_sat_images_with_filter
+
+from tests.resources import fake_feature
 
 @pytest.fixture()
 def setup_test_db():
@@ -37,11 +39,11 @@ def setup_test_db():
 
 
 @pytest.fixture()
-def session(setup_test_db):
-    session = get_db_session()
-    yield session
-    session.close()
-    session.rollback()
+def db_session(setup_test_db):
+    db_session = get_db_session()
+    yield db_session
+    db_session.close()
+    db_session.rollback()
 
 @pytest.fixture()
 def satellite():
@@ -54,13 +56,17 @@ def item_type():
                         sat_id = 's145')
 
 @pytest.fixture()
-def sat_image():
+def geom_shape():
+    return shape(fake_feature.feature['geometry'])
+
+@pytest.fixture()
+def sat_image(geom_shape):
     return SatImage(id = 'ss20221002', 
                         clear_confidence_percent = 95,
                         cloud_cover = 0.65,
                         time_acquired = datetime.utcnow(),
-                        centroid = 'POLYGON ((19 -25, 0 0, -27 0, 19 -25))',
-                        geom = 'POLYGON ((19 -25, 0 0, -27 0, 19 -25))',
+                        centroid = from_shape(geom_shape, srid=4326),
+                        geom = from_shape(geom_shape, srid=4326),
                         sat_id = 's145',
                         item_type_id = 'PSScene')
 
@@ -76,66 +82,66 @@ def country():
                     geom = from_shape(gdf['geometry'][0], srid=4326))
 
 @pytest.fixture()
-def setup_models(session,satellite, item_type, sat_image, asset_type, country):
-    session.add(satellite)
-    session.add(item_type)
-    session.add(sat_image)
-    session.add(asset_type)
-    session.add(country)
-    session.commit()
-    return session
+def setup_models(db_session,satellite, item_type, sat_image, asset_type, country):
+    db_session.add(satellite)
+    db_session.add(item_type)
+    db_session.add(sat_image)
+    db_session.add(asset_type)
+    db_session.add(country)
+    db_session.commit()
+    return db_session
 
-def test_satellite_create(session, setup_models):
+def test_satellite_create(db_session, setup_models):
     #act
-    query = session.query(Satellite).one()
+    query = db_session.query(Satellite).one()
 
     #assert
     assert query
     
-def test_item_type_create(session, setup_models):
+def test_item_type_create(db_session, setup_models):
     #act
-    query=session.query(ItemType).one()
+    query=db_session.query(ItemType).one()
 
     #assert
     assert query
 
-def test_sat_image_create(session, setup_models):
+def test_sat_image_create(db_session, setup_models):
     #act
-    query = session.query(SatImage).one()
+    query = db_session.query(SatImage).one()
 
     #assert
     assert query
 
-def test_asset_type_create(session, setup_models):
+def test_asset_type_create(db_session, setup_models):
     #act
-    query = session.query(AssetType).one()
+    query = db_session.query(AssetType).one()
 
     #assert
     assert query
     
-def test_country_create(session, setup_models):
+def test_country_create(db_session, setup_models):
     #act
-    query = session.query(Country).one()
+    query = db_session.query(Country).one()
 
     #assert
     assert query
 
-def test_query_distinc_satellite_names(session, setup_models):
+def test_query_distinc_satellite_names(db_session, setup_models):
     #act
-    query = query_distinct_satellite_names(session)
+    query = query_distinct_satellite_names(db_session)
     
     #assert
     assert query == ['Planetscope']
 
-def test_query_lat_lon_sat_images(session, setup_models):
+def test_query_lat_lon_sat_images(db_session, setup_models, geom_shape):
     #arrange
-    sat_images = session.query(SatImage).all()
+    sat_images = db_session.query(SatImage).all()
 
     #act
     lat_lon = query_lat_lon_sat_images(sat_images)
 
     #assert
-    assert lat_lon == [[-8.333333333333334, -2.6666666666666665]]
+    assert lat_lon == [[55.474220203855445, 8.804454520157185]]
 
 sat_names_input_output = [
     ('Planetscope', 1),
@@ -145,14 +151,14 @@ sat_names_input_output = [
 ]
 
 @pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
-def test_query_sat_images_with_filter(session, sat_names, setup_models, expected_output):
+def test_query_sat_images_with_filter(db_session, sat_names, setup_models, expected_output):
     #arrange
     cloud_cover = 0.7
     start_date = datetime.utcnow() - timedelta(days=7)
     end_date = datetime.utcnow()
     
     #act
-    sat_images = query_sat_images_with_filter(session, sat_names, cloud_cover, start_date, end_date)
+    sat_images = query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date)
     
     #assert
     assert len(sat_images) == expected_output

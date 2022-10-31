@@ -165,6 +165,7 @@ class DataAPIClient(object):
         features = self._query(endpoint=endpoint, 
                                 json_query=payload,
                                 key=key)
+        print(type(features[0]))
         LOGGER.info('Found {} image features'.format(len(features)))
         for feature in features:
             yield ImageDataFeature(feature)
@@ -186,16 +187,16 @@ class ImageDataFeature:
 
         for key, value in image_feature.items():
             setattr(self, key, value)
-        self.id = self.id
-        self.sat_id = self.properties["satellite_id"]
-        self.time_acquired = self.properties["acquired"]
-        self.satellite = self.properties["provider"].title()
-        self.pixel_res = self.properties["pixel_resolution"]
-        self.item_type_id = self.properties["item_type"]
-        self.asset_types = self.assets
-        self.cloud_cover = self.properties["cloud_cover"] \
-            if "cloud_cover" in self.properties else 0
-        self.clear_confidence_percent = self.properties["clear_confidence_percent"] \
+        self.id = str(self.id)
+        self.sat_id = str(self.properties["satellite_id"])
+        self.time_acquired = str(self.properties["acquired"])
+        self.satellite = str(self.properties["provider"]).title()
+        self.pixel_res = float(self.properties["pixel_resolution"])
+        self.item_type_id = str(self.properties["item_type"])
+        self.asset_types = list(self.assets)
+        self.cloud_cover = float(self.properties["cloud_cover"]) \
+            if "cloud_cover" in self.properties else 0.0
+        self.clear_confidence_percent = int(self.properties["clear_confidence_percent"]) \
             if "clear_confidence_percent" in self.properties else 0
         self.geom = shape(self.geometry)
         
@@ -209,6 +210,7 @@ class ImageDataFeature:
             name = self.satellite,
             pixel_res = self.pixel_res)
         db.sql_alch_commit(satellite)
+        return satellite
 
     def to_item_type_model(self):
         item_type = db.ItemType(
