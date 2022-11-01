@@ -128,13 +128,13 @@ def test_get_features(geometry, item_types):
     cc = 0.1
 
     client = DataAPIClient()
-    image_features = client.get_features(start_date=start_date,
+    image_feature = next(client.get_features(start_date=start_date,
                                 end_date=end_date,
                                 cc=cc,
                                 geometry=geometry,
-                                item_types=item_types)
+                                item_types=item_types))
                                 
-    image_feature = image_features[0]
+    
     assert isinstance(image_feature.id, str)
     assert isinstance(image_feature.sat_id, str)
     assert isinstance(image_feature.item_type_id, str)
@@ -157,12 +157,12 @@ def test_get_features_filter(geometry, item_types):
     dt_start_date = pd.to_datetime(start_date)
     
     client = DataAPIClient()
-    image_features_list = client.get_features(start_date=start_date,
+    image_features_list = list(client.get_features(start_date=start_date,
                                 end_date=end_date,
                                 cc=cc,
                                 geometry=geometry,
-                                item_types=item_types)
-    
+                                item_types=item_types))
+
     assert len(image_features_list) >= 1
     assert all(feature.cloud_cover <= cc for feature in image_features_list)
     assert all(pd.to_datetime(feature.time_acquired).tz_localize(None) <= dt_end_date for feature in image_features_list)
