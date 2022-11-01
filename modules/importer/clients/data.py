@@ -136,6 +136,7 @@ class DataAPIClient(object):
                     cc, geometry, item_types=None):
         """
         Gets all features from quick search end-point with specified filters.
+        If no item_types provided, searches for all item_types
         Filters for unique features based on id.
         Yields ``ImageDataFeature`` instances.
 
@@ -157,8 +158,22 @@ class DataAPIClient(object):
         endpoint = 'quick-search'
         key = 'features'
         if not item_types:
-            item_types = self.get_item_types(key='id')
-            
+            item_types = [
+                'Landsat8L1G', 
+                'MOD09GA', 
+                'MOD09GQ', 
+                'MYD09GA', 
+                'MYD09GQ', 
+                'PSOrthoTile', 
+                'PSScene',
+                'REOrthoTile', 
+                'REScene', 
+                'Sentinel1', 
+                'Sentinel2L1C', 
+                'SkySatCollect', 
+                'SkySatScene', 
+                'SkySatVideo']
+        
 
         payload = self._payload(start_date=start_date,
                                 end_date=end_date,
