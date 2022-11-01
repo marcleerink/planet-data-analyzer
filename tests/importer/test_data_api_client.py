@@ -8,7 +8,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor
 from modules.database import db
 from modules.importer.clients.data import DataAPIClient, ImageDataFeature
-from tests.database.test_db import db_session, setup_test_db
+from tests.database.test_db import asset_type, db_session, setup_test_db
 from tests.resources import fake_feature
 
 
@@ -110,7 +110,7 @@ UNIT
 #     assert feature_generator == item_descriptions
 
 def test_ImageDataFeature():
-    """test if all metadata from a feature is stored correctly"""
+    """test if all metadata from a feature is converted correctly"""
     feature = fake_feature.feature
 
     image_feature = ImageDataFeature(feature)
@@ -124,6 +124,36 @@ def test_ImageDataFeature():
     assert image_feature.asset_types == list(feature["assets"])
     assert image_feature.cloud_cover == float(feature["properties"]["cloud_cover"])
     assert image_feature.geom == shape(feature["geometry"])
+
+def test_ImageDataFeature_list(fake_response_list):
+    """test if all metadata from multiple features is converted correctly"""
+    
+    # get ImageDataFeatures list
+    fake_features_list = [ImageDataFeature(f) for f in fake_response_list]
+
+    fake_id_list = [i.id for i in fake_features_list]
+    fake_sat_id_list = [i.sat_id for i in fake_features_list]
+    fake_time_list = [i.time_acquired for i in fake_features_list]
+    fake_sat_list = [i.satellite for i in fake_features_list]
+    fake_pixel_list = [i.pixel_res for i in fake_features_list]
+    fake_item_type_list = [i.item_type_id for i in fake_features_list]
+    fake_asset_list = [i.asset_types for i in fake_features_list]
+    fake_cloud_list = [i.cloud_cover for i in fake_features_list]
+    fake_geom_list = [i.geom for i in fake_features_list]
+    
+    
+    # assert fake_feature_list has same data as fake_response_list
+    assert len(fake_response_list) == len(fake_features_list)
+    assert fake_id_list == [str(i["id"]) for i in fake_response_list]
+    assert fake_sat_id_list == [str(i["properties"]["satellite_id"]) for i in fake_response_list]
+    assert fake_time_list == [pd.to_datetime(i["properties"]["acquired"]) for i in fake_response_list]
+    assert fake_sat_list == [str(i["properties"]["provider"].title()) for i in fake_response_list]
+    assert fake_pixel_list == [float(i["properties"]["pixel_resolution"]) for i in fake_response_list]
+    assert fake_item_type_list == [str(i["properties"]["item_type"]) for i in fake_response_list]
+    assert fake_asset_list == [list(i["assets"]) for i in fake_response_list]
+    assert fake_cloud_list == [float(i["properties"]["cloud_cover"]) for i in fake_response_list]
+    assert fake_geom_list == [shape(i["geometry"]) for i in fake_response_list]
+
 
 """
 INTEGRATION
@@ -187,37 +217,41 @@ def test_get_features_filter(geometry, item_types):
     assert all(pd.to_datetime(feature.time_acquired).tz_localize(None) >= dt_start_date for feature in image_features_list)
     assert all('PS' in feature.item_type_id for feature in image_features_list)
     
-def test_to_postgis(fake_response_list, setup_test_db, db_session):
-    """test if all metadata from a feature is imported to different tables in db correctly"""
+def test_to_postgis_in_parallel(fake_response_list, setup_test_db, db_session):
+    """
+    Test if all metadata from a feature is imported to tables in db correctly with mutlithreading.
+    """
 
+    # get ImageDataFeatures list
     fake_features_list = [ImageDataFeature(f) for f in fake_response_list]
     
-    
+    # get unique values based on pkeys for each table/model.
     fake_sat_list = set([f.sat_id for f in fake_features_list])
     fake_item_type_list = set([f.item_type_id for f in fake_features_list])
     fake_image_list = set([f.id for f in fake_features_list])
-    fake_asset_type_list = [f.asset_types for f in fake_features_list]
+    fake_asset_type_list = [sublist.asset_types for sublist in fake_features_list]
     fake_asset_type_list = set([i for sublist in fake_asset_type_list for i in sublist])
     
-    for feature in fake_features_list:
+    
+    def to_postgis(feature):
         feature.to_satellite_model()
         feature.to_item_type_model()
         feature.to_sat_image_model()
         feature.to_asset_type_model()
 
+    with ThreadPoolExecutor(4) as executor:
+        executor.map(to_postgis, fake_features_list)
 
-    
-    satellites_in_db = db_session.query(db.Satellite.id).all()
-    item_types_in_db = db_session.query(db.ItemType.id).all()
-    sat_images_in_db = db_session.query(db.SatImage.id).all()
-    asset_types_in_db = db_session.query(db.AssetType.id).all()
+    satellites_in_db = db_session.query(db.Satellite)
+    item_types_in_db = db_session.query(db.ItemType)
+    sat_images_in_db = db_session.query(db.SatImage)
+    asset_types_in_db = db_session.query(db.AssetType)
 
-    assert len(fake_sat_list) == len(satellites_in_db)
-    assert len(fake_item_type_list) == len(item_types_in_db)
-
-    assert len(fake_image_list) == len(sat_images_in_db)
-    assert len(fake_features_list) == len(satellites_in_db)
-    assert len(fake_asset_type_list) == len(asset_types_in_db)
+    # assert that tables in db have same data as fake_features_list
+    assert sorted(fake_sat_list) == sorted([i.id for i in satellites_in_db])
+    assert sorted(fake_item_type_list) == sorted([i.id for i in item_types_in_db])
+    assert sorted(fake_image_list) == sorted([i.id for i in sat_images_in_db])
+    assert sorted(fake_asset_type_list) == sorted(i.id for i in asset_types_in_db)
     
 
     

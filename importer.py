@@ -4,26 +4,6 @@ from modules.config import LOGGER
 from modules.database import db
 from concurrent.futures import ThreadPoolExecutor
 import json
-import multiprocessing.pool
-
-class ReportProcess(multiprocessing.Process):
-    @property
-    def daemon(self):
-        return False
-
-    @daemon.setter
-    def daemon(self, value):
-        pass
-
-
-class ReportContext(type(multiprocessing.get_context())):
-    Process = ReportProcess
-
-
-class ReportPool(multiprocessing.pool.Pool):
-    def __init__(self, *args, **kwargs):
-        kwargs['context'] = ReportContext()
-        super(ReportPool, self).__init__(*args, **kwargs)
 
 def geojson_import(aoi_file):
     with open(aoi_file) as f:
@@ -32,7 +12,7 @@ def geojson_import(aoi_file):
 
 def data_api_importer(args):
     """
-    Imports features from Planets Data API in AOI,TOI, below provided cloud cover threshold
+    Imports features from Planets Data API in AOI,TOI, below provided cloud cover threshold.
     If item types are provided only searches for those, otherwise searches all available item_types
 
     :param object args
