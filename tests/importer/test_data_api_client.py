@@ -1,17 +1,16 @@
 from datetime import datetime
-from email.mime import image
 import pytest
-from unittest import mock
 import json
 from shapely.geometry import shape
 import pandas as pd
-from modules.importer.clients.data import DataAPIClient, ImageDataFeature
-from tests.resources import fake_feature
-import respx
-import httpx
-from http import HTTPStatus
 import requests
-import requests_mock
+
+from concurrent.futures import ThreadPoolExecutor
+from modules.database import db
+from modules.importer.clients.data import DataAPIClient, ImageDataFeature
+from tests.database.test_db import db_session, setup_test_db
+from tests.resources import fake_feature
+
 
 TEST_URL = 'http://www.MockNotRealURL.com/api/path'
 TEST_SEARCHES_URL = f'{TEST_URL}/searches'
@@ -67,45 +66,64 @@ def item_descriptions():
 
     return items
 
+@pytest.fixture
+def fake_response_list():
+    with open('tests/resources/fake_response.json') as f:
+        return json.load(f)
 
 """
 UNIT
 """
 
 
-def test_data_client_basic(item_descriptions,
-                            geometry,
-                            item_types,
-                            mock_session):
-    quick_search_url = f'{TEST_URL}/quick-search'
-    next_page_url = f'{TEST_URL}/blob/?page_marker=IAmATest'
+# def test_data_client_basic(item_descriptions,
+#                             geometry,
+#                             item_types,
+#                             mock_session):
+#     quick_search_url = f'{TEST_URL}/quick-search'
+#     next_page_url = f'{TEST_URL}/blob/?page_marker=IAmATest'
 
-    start_date = '2022-10-01'
-    end_date = '2022-10-02'
-    cc = 0.1
+#     start_date = '2022-10-01'
+#     end_date = '2022-10-02'
+#     cc = 0.1
 
-    item1, item2, item3 = item_descriptions
-    page1_response = {
-        "_links": {
-            "_next": next_page_url
-        }, "features": [item1, item2]
-    }
+#     item1, item2, item3 = item_descriptions
+#     page1_response = {
+#         "_links": {
+#             "_next": next_page_url
+#         }, "features": [item1, item2]
+#     }
     
-    client = DataAPIClient(session=mock_session)
-    client.base_url = TEST_URL
+#     client = DataAPIClient(session=mock_session)
+#     client.base_url = TEST_URL
 
-    feature_generator = client.get_features(start_date=start_date,
-                                        end_date=end_date,
-                                        cc=cc,
-                                        geometry=geometry,
-                                        item_types=item_types)
+#     feature_generator = client.get_features(start_date=start_date,
+#                                         end_date=end_date,
+#                                         cc=cc,
+#                                         geometry=geometry,
+#                                         item_types=item_types)
                             
     
-    for i in feature_generator:
-        assert i.id == '20220125_075509_67_1061'
+#     for i in feature_generator:
+#         assert i.id == '20220125_075509_67_1061'
 
-    assert feature_generator == item_descriptions
+#     assert feature_generator == item_descriptions
 
+def test_ImageDataFeature():
+    """test if all metadata from a feature is stored correctly"""
+    feature = fake_feature.feature
+
+    image_feature = ImageDataFeature(feature)
+    
+    assert image_feature.id == str(feature["id"])
+    assert image_feature.sat_id == str(feature["properties"]["satellite_id"])
+    assert image_feature.time_acquired == pd.to_datetime(feature["properties"]["acquired"])
+    assert image_feature.satellite == str(feature["properties"]["provider"].title())
+    assert image_feature.pixel_res == float(feature["properties"]["pixel_resolution"])
+    assert image_feature.item_type_id == str(feature["properties"]["item_type"])
+    assert image_feature.asset_types == list(feature["assets"])
+    assert image_feature.cloud_cover == float(feature["properties"]["cloud_cover"])
+    assert image_feature.geom == shape(feature["geometry"])
 
 """
 INTEGRATION
@@ -168,40 +186,40 @@ def test_get_features_filter(geometry, item_types):
     assert all(pd.to_datetime(feature.time_acquired).tz_localize(None) <= dt_end_date for feature in image_features_list)
     assert all(pd.to_datetime(feature.time_acquired).tz_localize(None) >= dt_start_date for feature in image_features_list)
     assert all('PS' in feature.item_type_id for feature in image_features_list)
-
-def test_ImageDataFeature():
-    """test if all metadata from a feature is stored correctly"""
-    feature = fake_feature.feature
-
-    image_feature = ImageDataFeature(feature)
     
-    assert image_feature.id == str(feature["id"])
-    assert image_feature.sat_id == str(feature["properties"]["satellite_id"])
-    assert image_feature.time_acquired == pd.to_datetime(feature["properties"]["acquired"])
-    assert image_feature.satellite == str(feature["properties"]["provider"].title())
-    assert image_feature.pixel_res == float(feature["properties"]["pixel_resolution"])
-    assert image_feature.item_type_id == str(feature["properties"]["item_type"])
-    assert image_feature.asset_types == list(feature["assets"])
-    assert image_feature.cloud_cover == float(feature["properties"]["cloud_cover"])
-    assert image_feature.geom == shape(feature["geometry"])
+def test_to_postgis(fake_response_list, setup_test_db, db_session):
+    """test if all metadata from a feature is imported to different tables in db correctly"""
+
+    fake_features_list = [ImageDataFeature(f) for f in fake_response_list]
     
-# def test_to_sattellite_model(setup_test_db, db_session):
-#     """test if metadata from a feature is imported to db correctly"""
-#     feature = fake_feature.feature
-#     image_feature = ImageDataFeature(feature)
+    
+    fake_sat_list = set([f.sat_id for f in fake_features_list])
+    fake_item_type_list = set([f.item_type_id for f in fake_features_list])
+    fake_image_list = set([f.id for f in fake_features_list])
+    fake_asset_type_list = [f.asset_types for f in fake_features_list]
+    fake_asset_type_list = set([i for sublist in fake_asset_type_list for i in sublist])
+    
+    for feature in fake_features_list:
+        feature.to_satellite_model()
+        feature.to_item_type_model()
+        feature.to_sat_image_model()
+        feature.to_asset_type_model()
 
-#     image_feature.to_satellite_model()
 
-#     satellites = db_session.query(Satellite).all()
-#     for sat in satellites:
-#         assert sat.id == str(feature["properties"]["satellite_id"])
+    
+    satellites_in_db = db_session.query(db.Satellite.id).all()
+    item_types_in_db = db_session.query(db.ItemType.id).all()
+    sat_images_in_db = db_session.query(db.SatImage.id).all()
+    asset_types_in_db = db_session.query(db.AssetType.id).all()
 
-# def test_to_item_type_model(setup_test_db, db_session):
-#     feature = fake_feature.feature
-#     image_feature = ImageDataFeature(feature)
+    assert len(fake_sat_list) == len(satellites_in_db)
+    assert len(fake_item_type_list) == len(item_types_in_db)
 
-#     image_feature.to_item_type_model()
+    assert len(fake_image_list) == len(sat_images_in_db)
+    assert len(fake_features_list) == len(satellites_in_db)
+    assert len(fake_asset_type_list) == len(asset_types_in_db)
+    
 
-#     item_types = db_session.query(ItemType).all()
-#     for item in item_types:
-#         assert item.id == str(feature["properties"]["item_type"])
+    
+
+
