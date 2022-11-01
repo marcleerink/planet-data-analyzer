@@ -79,21 +79,6 @@ def fake_response_list():
 
 #     assert feature_generator == item_descriptions
 
-def test_ImageDataFeature():
-    """test if all metadata from a feature is converted correctly"""
-    feature = fake_feature.feature
-
-    image_feature = ImageDataFeature(feature)
-    
-    assert image_feature.id == str(feature["id"])
-    assert image_feature.sat_id == str(feature["properties"]["satellite_id"])
-    assert image_feature.time_acquired == pd.to_datetime(feature["properties"]["acquired"])
-    assert image_feature.satellite == str(feature["properties"]["provider"].title())
-    assert image_feature.pixel_res == float(feature["properties"]["pixel_resolution"])
-    assert image_feature.item_type_id == str(feature["properties"]["item_type"])
-    assert image_feature.asset_types == list(feature["assets"])
-    assert image_feature.cloud_cover == float(feature["properties"]["cloud_cover"])
-    assert image_feature.geom == shape(feature["geometry"])
 
 def test_ImageDataFeature_list(fake_response_list):
     """test if all metadata from multiple features is converted correctly"""

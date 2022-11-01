@@ -1,9 +1,13 @@
+from concurrent.futures import ThreadPoolExecutor
+import json
+from itertools import chain
+
 from modules.importer import arg_parser
 from modules.importer.clients import data, geojson_xyz
 from modules.config import LOGGER
 from modules.database import db
-from concurrent.futures import ThreadPoolExecutor
-import json
+
+
 
 def geojson_import(aoi_file):
     with open(aoi_file) as f:
@@ -67,15 +71,17 @@ def city_table_import():
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
-def river_lake_import():
+def land_cover_import():
     client = geojson_xyz.GeojsonXYZClient()
-    features = client.get_rivers_lakes()
+    features = client.get_land_cover_classes()
+
+    def to_postgis(feature):
+        feature.to_land_cover_model()
 
     with ThreadPoolExecutor(4) as executor:
-        executor.map(land_cover_to_postgis, features)
+        executor.map(to_postgis, features)
 
-def land_cover_to_postgis(feature):
-    feature.to_land_cover_model()
+
     
 def importer(args):
     '''
@@ -104,7 +110,7 @@ def importer(args):
         city_table_import()
 
     if not session.query(db.LandCoverClass.id).first():
-        river_lake_import()
+        land_cover_import()
 
     data_api_importer(args)
     

@@ -1,5 +1,5 @@
 from modules.database import db
-import json
+import pandas as pd
 import geopandas as gpd
 from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
@@ -49,21 +49,29 @@ class GeojsonXYZClient(object):
 
     def get_rivers_lakes(self):
         endpoint = "naturalearth-3.3.0/ne_50m_rivers_lake_centerlines.geojson"
-        features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
-                                                    .to_dict(orient='records')
-
-        LOGGER.info('{} river/lakes found'.format(len(features)))   
-        for f in features:
-            yield LandCoverClassFeature(f)
+        return gpd.read_file(self._url(endpoint))
 
     def get_urban_areas(self):
         endpoint = "naturalearth-3.3.0/ne_50m_urban_areas.geojson"
-        features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
-                                                    .to_dict(orient='records')
+        return gpd.read_file(self._url(endpoint))
+                                                    
         
-        LOGGER.info('{} urban_areas found'.format(len(features)))  
+
+    def get_land_cover_classes(self):
+        gdf_urban = self.get_urban_areas()
+        gdf_river = self.get_rivers_lakes()
+
+        gdf_list = [gdf_urban, 
+                    gdf_river]
+
+        features = pd.concat(gdf_list, axis=0, ignore_index=True).reset_index(names='id')\
+                                                                .to_dict(orient='records')
+        LOGGER.info('{} land cover class features found'.format(len(features))) 
         for f in features:
             yield LandCoverClassFeature(f)
+        
+        
+        
 
 class CountryFeature:
     """
@@ -81,8 +89,8 @@ class CountryFeature:
 
         for key, value in country_feature.items():
             setattr(self, key, value)
-        self.iso = self.adm0_a3
-        self.name = self.name
+        self.iso = str(self.adm0_a3)
+        self.name = str(self.name)
         self.geom = shape(self.geometry)
 
     def to_country_model(self):
@@ -109,8 +117,8 @@ class CityFeature:
 
         for key, value in city_feature.items():
             setattr(self, key, value)
-        self.id = self.id
-        self.name = self.name
+        self.id = int(self.id)
+        self.name = str(self.name)
         self.geom = shape(self.geometry)
 
     def to_city_model(self):
@@ -134,13 +142,13 @@ class LandCoverClassFeature:
         """
         for key, value in land_cover_feature.items():
             setattr(self, key, value)
-        self.id = self.id
-        self.featureclass = self.featureclass
+        self.id = int(self.id)
+        self.featureclass = str(self.featureclass)
         self.geom = shape(self.geometry)
 
     def to_land_cover_model(self):
         land_cover_class = db.LandCoverClass(
-                id = self.id, 
+                id = self.id,
                 featureclass = self.featureclass,
                 geom = from_shape(self.geom, srid=4326),
                 )

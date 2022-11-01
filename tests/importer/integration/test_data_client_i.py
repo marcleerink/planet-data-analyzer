@@ -22,9 +22,7 @@ def item_types():
             'MYD09GA', 
             'MYD09GQ', 
             'PSOrthoTile', 
-            'PSScene', 
-            'PSScene3Band', 
-            'PSScene4Band', 
+            'PSScene',
             'REOrthoTile', 
             'REScene', 
             'Sentinel1', 
@@ -80,7 +78,7 @@ def test_get_features_filter_i(geometry, item_types):
     start_date = '2022-10-03'
     end_date = '2022-10-05'
     cc = 0.1
-    item_types = ['PSScene', 'PSScene3Band', 'PSScene4Band', 'PSOrthoTile']
+    item_types = ['PSScene', 'PSOrthoTile']
 
     dt_end_date = pd.to_datetime(end_date)
     dt_start_date = pd.to_datetime(start_date)
@@ -100,7 +98,7 @@ def test_get_features_filter_i(geometry, item_types):
     
 def test_to_postgis_in_parallel_i(fake_response_list, setup_test_db, db_session):
     """
-    Test if all metadata from a feature is imported to tables in db correctly with mutlithreading.
+    Test if all metadata from a feature is imported to tables in db correctly when done in parallel.
     """
 
     # get ImageDataFeatures list
