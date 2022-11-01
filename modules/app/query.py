@@ -1,13 +1,9 @@
 from sqlalchemy import func, select
-import streamlit as st
-from modules.database.db import SatImage, Satellite, City, Country
-from sqlalchemy.orm.query import Query
-from sqlalchemy.sql.compiler import StrSQLCompiler
-from modules.config import LOGGER
-import geopandas as gpd
 import pandas as pd
 from geoalchemy2.shape import to_shape
 from geojson import Feature, FeatureCollection, dumps
+
+from modules.database.db import SatImage, Satellite, City, Country
 
 
 def create_images_df(_images):

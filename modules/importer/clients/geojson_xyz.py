@@ -55,8 +55,6 @@ class GeojsonXYZClient(object):
         endpoint = "naturalearth-3.3.0/ne_50m_urban_areas.geojson"
         return gpd.read_file(self._url(endpoint))
                                                     
-        
-
     def get_land_cover_classes(self):
         gdf_urban = self.get_urban_areas()
         gdf_river = self.get_rivers_lakes()
@@ -69,8 +67,6 @@ class GeojsonXYZClient(object):
         LOGGER.info('{} land cover class features found'.format(len(features))) 
         for f in features:
             yield LandCoverClassFeature(f)
-        
-        
         
 
 class CountryFeature:

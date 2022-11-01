@@ -7,13 +7,46 @@ from modules.importer.clients import data, geojson_xyz
 from modules.config import LOGGER
 from modules.database import db
 
+def importer(args):
+    '''
+    Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
+    Only imports static land cover class metadata (cities/countries/rivers_lakes) if not done before.
+    Imports all non-exisisting metadata to tables in PostGIS.
 
+    :param object args 
+        ArgumentParser object containing:
+            str aoi_file
+                Path to geojson file containing AOIs
+            str api_key
+                Planet's API key
+            str start_date
+                Start date of the time interval in ISO (YYYY-MM-DD) format (gte).
+            str end_date
+                End date of the time interval in ISO (YYYY-MM-DD) format (lte).
+            float cc
+                Cloud cover value (0.0 - 1.0)
+     '''
+    session = db.get_db_session()
 
-def geojson_import(aoi_file):
-    with open(aoi_file) as f:
-        geometry = json.load(f)
-    return geometry['features'][0]['geometry']
+    if not session.query(db.Country.iso).first():
+        country_table_import()
+    if not session.query(db.City.id).first():
+        city_table_import()
 
+    if not session.query(db.LandCoverClass.id).first():
+        land_cover_import()
+
+    data_api_importer(args)
+    
+    LOGGER.info('Total of {} countries in db'.format(session.query(db.Country).count()))
+    LOGGER.info('Total of {} cities in db'.format(session.query(db.City).count()))
+    LOGGER.info('Total of {} landcoverclasses in db'.format(session.query(db.LandCoverClass).count()))
+    LOGGER.info('Total of {} satellites in db'.format(session.query(db.Satellite).count()))
+    LOGGER.info('Total of {} item types in db'.format(session.query(db.ItemType).count()))
+    LOGGER.info('Total of {} sat images in db'.format(session.query(db.SatImage).count()))
+    LOGGER.info('Total of {} asset types in db'.format(session.query(db.AssetType).count()))
+
+    return 1
 def data_api_importer(args):
     """
     Imports features from Planets Data API in AOI,TOI, below provided cloud cover threshold.
@@ -81,48 +114,12 @@ def land_cover_import():
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
-
+def geojson_import(aoi_file):
+    with open(aoi_file) as f:
+        geometry = json.load(f)
+    return geometry['features'][0]['geometry']
     
-def importer(args):
-    '''
-    Imports satellite imagery metadata for the given AOI, TOI and cloud cover.
-    Only imports static land cover class metadata (cities/countries/rivers_lakes) if not done before.
-    Imports all non-exisisting metadata to tables in PostGIS.
 
-    :param object args 
-        ArgumentParser object containing:
-            str aoi_file
-                Path to geojson file containing AOIs
-            str api_key
-                Planet's API key
-            str start_date
-                Start date of the time interval in ISO (YYYY-MM-DD) format (gte).
-            str end_date
-                End date of the time interval in ISO (YYYY-MM-DD) format (lte).
-            float cc
-                Cloud cover value (0.0 - 1.0)
-     '''
-    session = db.get_db_session()
-
-    if not session.query(db.Country.iso).first():
-        country_table_import()
-    if not session.query(db.City.id).first():
-        city_table_import()
-
-    if not session.query(db.LandCoverClass.id).first():
-        land_cover_import()
-
-    data_api_importer(args)
-    
-    LOGGER.info('Total of {} countries in db'.format(session.query(db.Country).count()))
-    LOGGER.info('Total of {} cities in db'.format(session.query(db.City).count()))
-    LOGGER.info('Total of {} landcoverclasses in db'.format(session.query(db.LandCoverClass).count()))
-    LOGGER.info('Total of {} satellites in db'.format(session.query(db.Satellite).count()))
-    LOGGER.info('Total of {} item types in db'.format(session.query(db.ItemType).count()))
-    LOGGER.info('Total of {} sat images in db'.format(session.query(db.SatImage).count()))
-    LOGGER.info('Total of {} asset types in db'.format(session.query(db.AssetType).count()))
-    
-    
 if __name__ == "__main__":
     args = arg_parser.parser()
     importer(args)

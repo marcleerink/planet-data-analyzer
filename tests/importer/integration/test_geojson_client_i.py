@@ -93,10 +93,9 @@ def test_get_urban_areas():
 
     assert len(urban_area_gdf.index) > 2000
 
-
 def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, setup_test_db, db_session):
     """
-    Test if all data from geojson xyz is imported to tables in db correctly with in parallel.
+    Test if all data from geojson xyz is imported to tables in db correctly when done in parallel.
     """
     
     # get ImageDataFeatures list
