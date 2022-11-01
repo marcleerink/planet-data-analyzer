@@ -136,7 +136,7 @@ class DataAPIClient(object):
                     cc, geometry, item_types=None):
         """
         Gets all features from quick search end-point with specified filters.
-        Filters for unique features.
+        Filters for unique features based on id.
         Yields ``ImageDataFeature`` instances.
 
         :param str start_date
@@ -170,6 +170,10 @@ class DataAPIClient(object):
                                 json_query=payload,
                                 key=key)
         
+        # for testing, please ignore
+        # with open('tests/resources/fake_response.json', 'w') as f:
+        #     json.dump(features, f)
+
         features_unique = list({v['id']:v for v in features}.values())
 
         LOGGER.info('Found {} unique image features'.format(len(features_unique)))

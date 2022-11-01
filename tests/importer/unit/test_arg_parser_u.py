@@ -1,11 +1,7 @@
-from re import L
 import pytest
-import sys
-from modules.importer.arg_parser import arguments, args_validate, args_bundler
+from modules.importer.arg_parser import arguments, args_validate
 import argparse
 from datetime import datetime, timedelta
-import os
-from modules.config import LOGGER
 
 @pytest.fixture()
 def arg_input():
@@ -77,11 +73,14 @@ def test_args_validate_wrong_date(fake_args):
         assert True
 
 def test_args_validate_success(fake_args):
-    """Check if args_validate lets through valid dates.
-    Check if args_validate gets API key from environment if none provided in args"""
+    """
+    Check if args_validate lets through valid dates and aoi.
+    Check if args_validate gets API key from environment if none provided in args
+    """
     #arrange
     fake_args.start_date='2022-10-01'
     fake_args.end_date='2022-10-02'
+    
     
     #act
     result = args_validate(fake_args)
@@ -89,13 +88,6 @@ def test_args_validate_success(fake_args):
     #assert
     assert result.start_date == '2022-10-01'
     assert result.end_date == '2022-10-02'
-    assert 'PLAK' in result.api_key
+    assert result.api_key is not None
 
-def test_args_bundler(fake_args):
-    # arrange
-    fake_args.aoi_file = 'data/berlin.geojson'
-    #act
-    result = args_bundler(fake_args)
-    #assert
-    assert result[0]['aoi_file'] == 'data/berlin.geojson'
     
