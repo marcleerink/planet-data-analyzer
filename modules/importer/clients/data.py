@@ -4,7 +4,8 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
-from concurrent.futures import ThreadPoolExecutor
+import json
+import pandas as pd
 from modules.config import LOGGER
 
 from modules.database import db
@@ -25,7 +26,7 @@ class DataAPIClient(object):
     
     base_url = "https://api.planet.com/data/v1"
     
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, session=None):
         """
         :param str api_key:
             Your Planet API key. If not specified, this will be read from the
@@ -38,9 +39,10 @@ class DataAPIClient(object):
         if self.api_key is None and 'internal' not in self.base_url:
             msg = 'You are not logged in! Please set the PL_API_KEY env var.'
             raise MissingAPIKeyException(msg)
-
-        self.session = requests.Session()
-        self.session.auth = (api_key, '')
+        if session is None:
+            session = requests.Session()
+            session.auth = (api_key, '')
+        self.session = session
 
         retries = Retry(total=5, backoff_factor=0.2, status_forcelist=[429, 503])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
@@ -124,6 +126,7 @@ class DataAPIClient(object):
         endpoint = 'item-types'
         items = self._item(endpoint=endpoint)
         item_types = items['item_types']
+
         if key:
             return [item[key] for item in item_types]
         else:
@@ -165,9 +168,14 @@ class DataAPIClient(object):
         features = self._query(endpoint=endpoint, 
                                 json_query=payload,
                                 key=key)
-        print(type(features[0]))
-        LOGGER.info('Found {} image features'.format(len(features)))
-        for feature in features:
+        with open('tests/resources/fake_response.json', 'w') as f:
+            json.dump(features, f)
+        
+        features_unique = list({v['id']:v for v in features}.values())
+
+        LOGGER.info('Found {} unique image features'.format(len(features_unique)))
+        # return [ImageDataFeature(f) for f in features_unique]
+        for feature in features_unique:
             yield ImageDataFeature(feature)
 
 
@@ -189,7 +197,7 @@ class ImageDataFeature:
             setattr(self, key, value)
         self.id = str(self.id)
         self.sat_id = str(self.properties["satellite_id"])
-        self.time_acquired = str(self.properties["acquired"])
+        self.time_acquired = pd.to_datetime(self.properties["acquired"])
         self.satellite = str(self.properties["provider"]).title()
         self.pixel_res = float(self.properties["pixel_resolution"])
         self.item_type_id = str(self.properties["item_type"])
@@ -210,7 +218,6 @@ class ImageDataFeature:
             name = self.satellite,
             pixel_res = self.pixel_res)
         db.sql_alch_commit(satellite)
-
 
     def to_item_type_model(self):
         item_type = db.ItemType(

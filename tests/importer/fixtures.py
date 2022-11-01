@@ -6,7 +6,6 @@ import mock
 import os
 
 from modules.config import LOGGER
-from modules.importer.clients import SEARCH_URL
 
 @pytest.fixture()
 def item_types():

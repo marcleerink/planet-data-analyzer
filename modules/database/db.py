@@ -204,7 +204,7 @@ class Country(Base):
 class City(Base):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False, unique=True)
+    name = Column(String(50), nullable=False)
     geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True), 
                             nullable=False,
                             unique=True)
@@ -224,7 +224,7 @@ class City(Base):
 class LandCoverClass(Base):
     __tablename__='land_cover_classes'
     id = Column(Integer, primary_key=True)
-    featureclass = Column(String(50), primary_key=True)
+    featureclass = Column(String(50))
     geom = Column(Geometry(srid=4326, spatial_index=True),
                             nullable=False)
 
