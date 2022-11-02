@@ -14,6 +14,11 @@ def fake_response_list():
     with open('tests/resources/fake_response.json') as f:
         return json.load(f)
 
+@pytest.fixture()
+def fake_response_small_aoi():
+    with open('tests/resources/fake_response_small_aoi.json') as f:
+        return json.load(f)
+
 @pytest.fixture
 def item_types():
     return ['Landsat8L1G', 
@@ -23,6 +28,8 @@ def item_types():
             'MYD09GQ', 
             'PSOrthoTile', 
             'PSScene',
+            'PSScene3Band',
+            'PSScene4Band',
             'REOrthoTile', 
             'REScene', 
             'Sentinel1', 
@@ -37,16 +44,14 @@ def geometry():
         geometry = json.load(f)
     return geometry['features'][0]['geometry']
 
-def test_get_item_types_i():
+def test_get_item_types_i(item_types):
     """test if filled list with item types is returned"""
     client = DataAPIClient()
     
     response = client.get_item_types(key='id')
-    assert isinstance(response, list)
-    assert len(response) > 1
-    assert any('PS' in item for item in response)
+    assert response == item_types
 
-def test_get_features_i(geometry, item_types):
+def test_get_features_i(geometry, fake_response_small_aoi):
     """
     test if image_features are retrieved from data client and generator is returned with correct data.
     """ 
@@ -55,25 +60,17 @@ def test_get_features_i(geometry, item_types):
     cc = 0.1
 
     client = DataAPIClient()
-    image_feature = next(client.get_features(start_date=start_date,
+    features = list(client.get_features(start_date=start_date,
                                 end_date=end_date,
                                 cc=cc,
-                                geometry=geometry,
-                                item_types=item_types))
+                                geometry=geometry))
                                 
     
-    assert isinstance(image_feature.id, str)
-    assert isinstance(image_feature.sat_id, str)
-    assert isinstance(image_feature.item_type_id, str)
-    assert isinstance(image_feature.time_acquired, datetime)
-    assert isinstance(image_feature.pixel_res, float)
-    assert isinstance(image_feature.asset_types, list)
-    assert isinstance(image_feature.cloud_cover, float)
-    assert isinstance(image_feature.clear_confidence_percent, int)
-    assert image_feature.geom.geom_type == 'Polygon' or image_feature.geom.geom_type == 'MultiPolygon'
+    assert len(features) == len(fake_response_small_aoi)
+    assert [i.id for i in features] == [str(i["id"]) for i in fake_response_small_aoi]
 
 
-def test_get_features_filter_i(geometry, item_types):
+def test_get_features_filter_i(geometry):
     """test if api response is filtered"""
     start_date = '2022-10-03'
     end_date = '2022-10-05'

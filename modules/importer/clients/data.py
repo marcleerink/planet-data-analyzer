@@ -4,10 +4,10 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
-import json
 import pandas as pd
-from modules.config import LOGGER
+import json
 
+from modules.config import LOGGER
 from modules.database import db
 
 class MissingAPIKeyException(BaseException):
@@ -26,7 +26,7 @@ class DataAPIClient(object):
     
     base_url = "https://api.planet.com/data/v1"
     
-    def __init__(self, api_key=None, session=None):
+    def __init__(self, api_key=None):
         """
         :param str api_key:
             Your Planet API key. If not specified, this will be read from the
@@ -39,9 +39,9 @@ class DataAPIClient(object):
         if self.api_key is None and 'internal' not in self.base_url:
             msg = 'You are not logged in! Please set the PL_API_KEY env var.'
             raise MissingAPIKeyException(msg)
-        if session is None:
-            session = requests.Session()
-            session.auth = (api_key, '')
+
+        session = requests.Session()
+        session.auth = (api_key, '')
         self.session = session
 
         retries = Retry(total=5, backoff_factor=0.2, status_forcelist=[429, 503])
@@ -105,11 +105,12 @@ class DataAPIClient(object):
         url = self._url(endpoint)
         page = self._post(url, json_query)
         features = page[key]
-
+        
         while page['_links'].get('_next'):
+            LOGGER.info('Paging results...')
             page_url = page['_links'].get('_next')
             page = self._get(page_url)
-            features += page["features"]
+            features += page[key]
             
         return features
 
@@ -185,8 +186,8 @@ class DataAPIClient(object):
                                 json_query=payload,
                                 key=key)
         
-        # for testing, please ignore
-        # with open('tests/resources/fake_response.json', 'w') as f:
+        # # for testing, please ignore
+        # with open('tests/resources/fake_response_small_aoi.json', 'w') as f:
         #     json.dump(features, f)
 
         features_unique = list({v['id']:v for v in features}.values())

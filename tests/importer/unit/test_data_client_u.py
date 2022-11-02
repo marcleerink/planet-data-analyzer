@@ -3,84 +3,152 @@ import pytest
 import json
 from shapely.geometry import shape
 import pandas as pd
-import requests
-import requests_mock
+import vcr
+from unittest import TestCase
+import logging
 
-from modules.importer.clients.data import ImageDataFeature
-from tests.resources import fake_feature
+from modules.importer.clients.data import ImageDataFeature, DataAPIClient
 
-TEST_URL = 'http://www.MockNotRealURL.com/api/path'
-TEST_SEARCHES_URL = f'{TEST_URL}/searches'
-TEST_STATS_URL = f'{TEST_URL}/stats'
-
-
-
-@pytest.fixture()
-def mock_session():
-    adapter = requests_mock.Adapter()
-    session = requests.Session()
-    session.auth = requests.auth.HTTPBasicAuth('dummy', '')
-    
-    session.mount('https://', adapter)
-    return session
-    # adapter.register_uri('POST', TEST_URL, json=fake_response, status_code=200)
-    # return session.post(TEST_URL)
-
-@pytest.fixture
-def item_descriptions():
-    item_ids = [
-        '20220125_075509_67_1061',
-        '20220125_075511_17_1061',
-        '20220125_075650_17_1061'
-    ]
-    items = []
-    for id in item_ids:
-        with open(f'tests/resources/data_item_{id}.json') as f:
-            items.append(json.load(f))
-
-    return items
 
 @pytest.fixture
 def fake_response_list():
     with open('tests/resources/fake_response.json') as f:
         return json.load(f)
 
+@pytest.fixture
+def fake_item_types():
+    return ['Landsat8L1G', 
+            'MOD09GA', 
+            'MOD09GQ', 
+            'MYD09GA', 
+            'MYD09GQ', 
+            'PSOrthoTile', 
+            'PSScene',
+            'REOrthoTile', 
+            'REScene', 
+            'Sentinel1', 
+            'Sentinel2L1C', 
+            'SkySatCollect', 
+            'SkySatScene', 
+            'SkySatVideo']
 
-# def test_data_client_basic(item_descriptions,
-#                             geometry,
-#                             item_types,
-#                             mock_session):
-#     quick_search_url = f'{TEST_URL}/quick-search'
-#     next_page_url = f'{TEST_URL}/blob/?page_marker=IAmATest'
+@pytest.fixture
+def fake_item_types_with_deprecated(fake_item_types):
+    return sorted(fake_item_types.append(['PSScene3Band',
+                                    'PSScene4Band']))
 
-#     start_date = '2022-10-01'
-#     end_date = '2022-10-02'
-#     cc = 0.1
+@pytest.fixture()
+def fake_response_small_aoi():
+    with open('tests/resources/fake_response_small_aoi.json') as f:
+        return json.load(f)
 
-#     item1, item2, item3 = item_descriptions
-#     page1_response = {
-#         "_links": {
-#             "_next": next_page_url
-#         }, "features": [item1, item2]
-#     }
+@pytest.fixture
+def geometry():
+    with open('tests/resources/small_aoi.geojson') as f:
+        geometry = json.load(f)
+    return geometry['features'][0]['geometry']
+
+@pytest.fixture
+def fake_payload(geometry, fake_item_types):
+    item_types = fake_item_types.append(['PSScene3Band',
+                                        'PSScene4Band'])
+        
+
+    date_range_filter = {
+            "type": "DateRangeFilter",
+            "field_name": "acquired",
+            "config": {
+                "gte": "2022-10-01T00:00:00.000Z",
+                "lte": "2022-10-02T00:00:00.000Z"
+            }
+        }
+
+    cloud_filter = {
+            "type": "RangeFilter",
+            "field_name": "cloud_cover",
+            "config": {
+                "lte": 0.1
+            }
+        }
+
+    geometry_filter = {
+            "type": "GeometryFilter",
+            "field_name": "geometry",
+            "config":geometry}
+
+    and_filter = {
+            "type": "AndFilter",
+            "config": [date_range_filter, cloud_filter, geometry_filter]
+        }
+
+    search_request = {
+            "item_types": item_types,
+            "filter": and_filter
+        }
+    return search_request
+
+
+def test__get():
     
-#     client = DataAPIClient(session=mock_session)
-#     client.base_url = TEST_URL
+    client = DataAPIClient()
 
-#     feature_generator = client.get_features(start_date=start_date,
-#                                         end_date=end_date,
-#                                         cc=cc,
-#                                         geometry=geometry,
-#                                         item_types=item_types)
-                            
+@vcr.use_cassette()
+def test__query_vcr(fake_payload, fake_response_small_aoi):
+    endpoint = 'quick-search'
+    key = 'features'
+    client = DataAPIClient(api_key='dummy')
+
+    response = client._query(endpoint=endpoint, 
+                            key=key, 
+                            json_query=fake_payload)
+
+    assert response == fake_response_small_aoi
+
+@vcr.use_cassette()
+def test__query_vcr_paginate(fake_payload, fake_response_small_aoi, caplog):
+    endpoint = 'quick-search'
+    key = 'features'
+    client = DataAPIClient(api_key='dummy')
+
+    with caplog.at_level(logging.DEBUG):
+        response = client._query(endpoint=endpoint, 
+                            key=key, 
+                            json_query=fake_payload)
+        assert 'Paging results...' in caplog.text
+
+
+@vcr.use_cassette()
+def test_get_items_vcr_u(fake_item_types):
+    """test if all item types are retrieved from data_api"""
+
+    fake_item_type_with_depracated = fake_item_types + ['PSScene3Band', 'PSScene4Band']
+
+    print(fake_item_types)
+    client = DataAPIClient(api_key='dummy')
+    item_types = client.get_item_types(key='id')
+
+    assert item_types == sorted(fake_item_type_with_depracated)
+
+@vcr.use_cassette()
+def test_get_features_vcr_u(geometry, fake_response_small_aoi):
+    """test if image_features are retrieved from data client correctly"""
+    start_date = '2022-10-01'
+    end_date = '2022-10-02'
+    cc = 0.1
+
+    client = DataAPIClient(api_key='dummy')
+    features = list(client.get_features(start_date=start_date,
+                                    end_date=end_date,
+                                    cc=cc,
+                                    geometry=geometry))
     
-#     for i in feature_generator:
-#         assert i.id == '20220125_075509_67_1061'
+    assert len(features) == len(fake_response_small_aoi)
+    assert [i.id for i in features] == [str(i["id"]) for i in fake_response_small_aoi]
+    
 
-#     assert feature_generator == item_descriptions
 
 
-def test_ImageDataFeature_list(fake_response_list):
+def test_ImageDataFeature(fake_response_list):
     """test if all metadata from multiple features is converted correctly"""
     
     # get ImageDataFeatures list
