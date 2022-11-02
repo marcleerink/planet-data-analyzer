@@ -33,7 +33,7 @@ class DataAPIClient(object):
             PL_API_KEY environment variable.
         """
         if api_key is None:
-            api_key = os.getenv('PL_API_KEY')
+            api_key = os.environ['PL_API_KEY']
         self.api_key = api_key
 
         if self.api_key is None and 'internal' not in self.base_url:
@@ -106,6 +106,10 @@ class DataAPIClient(object):
         page = self._post(url, json_query)
         features = page[key]
         
+        # # for testing, please ignore
+        # with open('tests/resources/fake_response_page.json', 'w') as f:
+        #     json.dump(page, f)
+
         while page['_links'].get('_next'):
             LOGGER.info('Paging results...')
             page_url = page['_links'].get('_next')

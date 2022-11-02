@@ -1,13 +1,18 @@
-from datetime import datetime
 import pytest
 import json
 from shapely.geometry import shape
 import pandas as pd
 import vcr
-from unittest import TestCase
-import logging
 
-from modules.importer.clients.data import ImageDataFeature, DataAPIClient
+import logging
+import requests
+
+from modules.importer.clients.data import ImageDataFeature, DataAPIClient, MissingAPIKeyException
+
+TEST_URL = "https://api.planet.com/data/v1"
+SEARCH_URL = TEST_URL + '/' + 'quick-search'
+ITEM_URL = TEST_URL + '/' + 'item-types'
+API_KEY= 'dummy'
 
 
 @pytest.fixture
@@ -34,12 +39,16 @@ def fake_item_types():
 
 @pytest.fixture
 def fake_item_types_with_deprecated(fake_item_types):
-    return sorted(fake_item_types.append(['PSScene3Band',
-                                    'PSScene4Band']))
+    return sorted(fake_item_types + ['PSScene3Band','PSScene4Band'])
 
 @pytest.fixture()
 def fake_response_small_aoi():
     with open('tests/resources/fake_response_small_aoi.json') as f:
+        return json.load(f)
+
+@pytest.fixture()
+def fake_page_small_aoi():
+    with open('tests/resources/fake_response_page.json') as f:
         return json.load(f)
 
 @pytest.fixture
@@ -50,10 +59,7 @@ def geometry():
 
 @pytest.fixture
 def fake_payload(geometry, fake_item_types):
-    item_types = fake_item_types.append(['PSScene3Band',
-                                        'PSScene4Band'])
-        
-
+    
     date_range_filter = {
             "type": "DateRangeFilter",
             "field_name": "acquired",
@@ -82,21 +88,58 @@ def fake_payload(geometry, fake_item_types):
         }
 
     search_request = {
-            "item_types": item_types,
+            "item_types": fake_item_types,
             "filter": and_filter
         }
     return search_request
 
 
-def test__get():
+@vcr.use_cassette()
+def test__get_vcr(fake_page_small_aoi):
+    url = fake_page_small_aoi['_links'].get('_self')
     
-    client = DataAPIClient()
+    client = DataAPIClient(api_key=API_KEY)
+
+    response = client._get(url)
+
+    assert response == fake_page_small_aoi
+
+@vcr.use_cassette()
+def test__get_vrc_exception(fake_page_small_aoi):
+    url = 'https://api.planet.com/data/v1/searches/bad-url12345'
+
+    client = DataAPIClient(api_key=API_KEY)
+    try:
+        response = client._get(url=url)
+        assert False
+
+    except requests.exceptions.HTTPError:
+        assert True
+
+@vcr.use_cassette()
+def test__get_auth_vcr_exception(fake_page_small_aoi):
+    url = fake_page_small_aoi['_links'].get('_self')
+    client = DataAPIClient(api_key=API_KEY)
+    
+    try: 
+        client._get(url)
+        assert False
+    except requests.exceptions.HTTPError:
+        assert True
+
+@vcr.use_cassette()
+def test__post_vcr(fake_page_small_aoi, fake_payload):
+    url = SEARCH_URL
+    client = DataAPIClient(api_key=API_KEY)
+    response = client._post(url, json_data=fake_payload)
+    
+    assert response['features'] == fake_page_small_aoi['features']
 
 @vcr.use_cassette()
 def test__query_vcr(fake_payload, fake_response_small_aoi):
     endpoint = 'quick-search'
     key = 'features'
-    client = DataAPIClient(api_key='dummy')
+    client = DataAPIClient(api_key=API_KEY)
 
     response = client._query(endpoint=endpoint, 
                             key=key, 
@@ -108,7 +151,7 @@ def test__query_vcr(fake_payload, fake_response_small_aoi):
 def test__query_vcr_paginate(fake_payload, fake_response_small_aoi, caplog):
     endpoint = 'quick-search'
     key = 'features'
-    client = DataAPIClient(api_key='dummy')
+    client = DataAPIClient(api_key=API_KEY)
 
     with caplog.at_level(logging.DEBUG):
         response = client._query(endpoint=endpoint, 
@@ -118,16 +161,12 @@ def test__query_vcr_paginate(fake_payload, fake_response_small_aoi, caplog):
 
 
 @vcr.use_cassette()
-def test_get_items_vcr_u(fake_item_types):
+def test_get_items_vcr_u(fake_item_types_with_deprecated):
     """test if all item types are retrieved from data_api"""
-
-    fake_item_type_with_depracated = fake_item_types + ['PSScene3Band', 'PSScene4Band']
-
-    print(fake_item_types)
-    client = DataAPIClient(api_key='dummy')
+    client = DataAPIClient(api_key=API_KEY)
     item_types = client.get_item_types(key='id')
 
-    assert item_types == sorted(fake_item_type_with_depracated)
+    assert item_types == fake_item_types_with_deprecated
 
 @vcr.use_cassette()
 def test_get_features_vcr_u(geometry, fake_response_small_aoi):
@@ -136,7 +175,7 @@ def test_get_features_vcr_u(geometry, fake_response_small_aoi):
     end_date = '2022-10-02'
     cc = 0.1
 
-    client = DataAPIClient(api_key='dummy')
+    client = DataAPIClient(api_key=API_KEY)
     features = list(client.get_features(start_date=start_date,
                                     end_date=end_date,
                                     cc=cc,

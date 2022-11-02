@@ -1,0 +1,44 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Basic ZHVtbXk6
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.28.1
+    method: GET
+    uri: https://api.planet.com/data/v1/searches/e63724e669f449eb8790e169fe4dcfca/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6IG51bGwsICJzb3J0X2xhc3RfaWQiOiBudWxsLCAic29ydF9wcmV2IjogZmFsc2UsICJxdWVyeV9wYXJhbXMiOiB7fX0%3D
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6pWyk0tLk5MT1WyUlAKyElNLE5VSM0rSS1SSFQoS8zJTFFwDPBUyE6t1FPSUVBK
+        LSrKLypWslKIjq0FBAAA//8JHRpaOgAAAA==
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 02 Nov 2022 13:20:36 GMT
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 edge, 1.1 google
+      Www-Authenticate:
+      - Basic realm="Please enter a valid API key."
+      X-Planet-Trace-Id:
+      - 0277e0c6-afeb-4d14-9cb4-62dfcc5d1fa7
+    status:
+      code: 401
+      message: Unauthorized
+version: 1
