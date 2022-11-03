@@ -10,7 +10,7 @@ def display_sat_name_filter(session):
 
 def display_time_filter():
     start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))
-    end_date = st.sidebar.date_input('End_date', datetime.utcnow())
+    end_date = st.sidebar.date_input('End Date', datetime.utcnow())
     
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)

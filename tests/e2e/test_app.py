@@ -3,29 +3,39 @@ import cv2
 import time
 import subprocess
 
+APP_URL = "http://localhost:8501"
 
-DEV_URL = "http://localhost:8501"
 
 class ComponentsTest(BaseCase):
-    def test_app_basic(self):
+    current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
+    reference_screenshot_path = "tests/resources/screenshots/reference-screenshot.png"
 
-        # open the app and take a screenshot
-        self.open(DEV_URL)
+    def test_app_screenshot_cv3_e(self):
 
-        time.sleep(10)  # give leaflet time to load from web
-        self.save_screenshot("tests/resources/screenshots/current-screenshot.png")
-       
-        self.check_window(name="first_test", level=2)
+        # Open the app and take a screenshot
+        self.open(APP_URL)
+        time.sleep(10)
+        self.save_screenshot(self.current_screenshot_path)
+
+        # Test that page has identical structure to baseline
+        self.check_window(name="current_test", level=2)
+        
+        # Check folium app-sepecific parts
+        # Main
         self.assert_text("Satellite Image Joins")
+        self.assert_text("Total Satellite Images")
 
-        # test screenshots look exactly the same
-        original = cv2.imread(
-            "tests/resources/screenshots/first-screenshot.png"
-        )
-        duplicate = cv2.imread("tests/resources/screenshots/current-screenshot.png")
+        # Filters
+        self.assert_text("Satellite Providers")
+        self.assert_text("Start Date")
+        self.assert_text("End Date")
 
-        assert original.shape == duplicate.shape
+        # Test screenshots look exactly the same
+        original = cv2.imread(self.current_screenshot_path)
+        reference = cv2.imread(self.reference_screenshot_path)
 
-        difference = cv2.subtract(original, duplicate)
+        assert original.shape == reference.shape
+
+        difference = cv2.subtract(original, reference)
         b, g, r = cv2.split(difference)
         assert cv2.countNonZero(b) == cv2.countNonZero(g) == cv2.countNonZero(r) == 0
