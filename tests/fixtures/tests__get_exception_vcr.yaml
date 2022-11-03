@@ -7,18 +7,18 @@ interactions:
       Accept-Encoding:
       - gzip, deflate
       Authorization:
-      - Basic ZHVtbXk6
+      - Basic UExBSzgyOTdlNGVjMzhlMzQ3NjFiMmJiM2RlODBkYTdjMTgwOg==
       Connection:
       - keep-alive
       User-Agent:
       - python-requests/2.28.1
     method: GET
-    uri: https://api.planet.com/data/v1/searches/e63724e669f449eb8790e169fe4dcfca/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6IG51bGwsICJzb3J0X2xhc3RfaWQiOiBudWxsLCAic29ydF9wcmV2IjogZmFsc2UsICJxdWVyeV9wYXJhbXMiOiB7fX0%3D
+    uri: https://api.planet.com/data/v1/searches/bad-url12345
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6pWyk0tLk5MT1WyUlAKyElNLE5VSM0rSS1SSFQoS8zJTFFwDPBUyE6t1FPSUVBK
-        LSrKLypWslKIjq0FBAAA//8JHRpaOgAAAA==
+        H4sIAAAAAAAA/wTAQQrDIBQE0KsMs+4JPEd3pQvpn6pglPgNBMS75y0mNY1YGfBZPOQekxjAdxaG
+        zks+ZXDF8csoButytD6hu/jk/r7Af1E1Bqy9nwAAAP//D0o/KFEAAAA=
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
@@ -27,18 +27,16 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 02 Nov 2022 20:31:43 GMT
+      - Wed, 02 Nov 2022 20:41:57 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
       - chunked
       Via:
       - 1.1 edge, 1.1 google
-      Www-Authenticate:
-      - Basic realm="Please enter a valid API key."
       X-Planet-Trace-Id:
-      - 04b2943d-3a8d-45ad-8c48-abd442c309b1
+      - 49b8c2b7-37e4-4b6a-b902-f228435d2155
     status:
-      code: 401
-      message: Unauthorized
+      code: 404
+      message: Not Found
 version: 1

@@ -7,7 +7,7 @@ import pandas as pd
 
 from modules.database import db
 from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature, CountryFeature, LandCoverClassFeature
-from tests.database.test_db_i import db_session, setup_test_db
+from tests.integration.database.test_db_i import db_session, setup_test_db
 
 @pytest.fixture
 def fake_cities():
@@ -45,11 +45,11 @@ def test_conn():
     response_river_lake = http.request(river_lake_url, 'HEAD')
     response_urban_area = http.request(urban_area_url, 'HEAD')
 
-    assert int(response_base[0]['status']) < 400
-    assert int(response_country[0]['status']) < 400
-    assert int(response_city[0]['status']) < 400
-    assert int(response_river_lake[0]['status']) < 400
-    assert int(response_urban_area[0]['status']) < 400
+    assert int(response_base[0]['status']) == 200
+    assert int(response_country[0]['status']) == 200
+    assert int(response_city[0]['status']) == 200
+    assert int(response_river_lake[0]['status']) == 200
+    assert int(response_urban_area[0]['status']) == 200
 
 def test_get_countries_i():
     """

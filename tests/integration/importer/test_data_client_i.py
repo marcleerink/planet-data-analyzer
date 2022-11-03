@@ -7,7 +7,13 @@ from concurrent.futures import ThreadPoolExecutor
 from modules.database import db
 from modules.importer.clients.data import DataAPIClient, ImageDataFeature
 
-from tests.database.test_db_i import asset_type, db_session, setup_test_db
+from tests.integration.database.test_db_i import asset_type, db_session, setup_test_db
+
+TEST_URL = "https://api.planet.com/data/v1"
+SEARCH_ENDPOINT = "quick-search"
+ITEM_ENDPOINT = "item-types"
+SEARCH_URL = "{}/{}".format(TEST_URL, SEARCH_ENDPOINT)
+ITEM_URL = "{}/{}".format(TEST_URL, ITEM_ENDPOINT)
 
 @pytest.fixture
 def fake_response_list():
@@ -44,6 +50,12 @@ def geometry():
         geometry = json.load(f)
     return geometry['features'][0]['geometry']
 
+def test_conn():
+    client = DataAPIClient()
+    response = client._get(SEARCH_URL)
+
+    assert response
+
 def test_get_item_types_i(item_types):
     """test if filled list with item types is returned"""
     client = DataAPIClient()
@@ -53,7 +65,8 @@ def test_get_item_types_i(item_types):
 
 def test_get_features_i(geometry, fake_response_small_aoi):
     """
-    test if image_features are retrieved from data client and generator is returned with correct data.
+    test if image_features are retrieved from data client and ImageDataFeature 
+    generator is returned with correct data.
     """ 
     start_date = '2022-10-01'
     end_date = '2022-10-02'

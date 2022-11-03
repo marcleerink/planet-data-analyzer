@@ -7,7 +7,7 @@ interactions:
       Accept-Encoding:
       - gzip, deflate
       Authorization:
-      - Basic UExBSzJjNmFkZjkxYzlmZDRlMzhhOTNmNTE1MzdjNjkwZGQ3Og==
+      - Basic ZHVtbXk6
       Connection:
       - keep-alive
       User-Agent:
@@ -17,8 +17,8 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/wTAQQrDIBQE0KsMs+4JPEd3pQvpn6pglPgNBMS75y0mNY1YGfBZPOQekxjAdxaG
-        zks+ZXDF8csoButytD6hu/jk/r7Af1E1Bqy9nwAAAP//D0o/KFEAAAA=
+        H4sIAAAAAAAA/6pWyk0tLk5MT1WyUlAKyElNLE5VSM0rSS1SSFQoS8zJTFFwDPBUyE6t1FPSUVBK
+        LSrKLypWslKIjq0FBAAA//8JHRpaOgAAAA==
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
@@ -27,16 +27,18 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 02 Nov 2022 13:20:58 GMT
+      - Wed, 02 Nov 2022 20:31:43 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
       - chunked
       Via:
       - 1.1 edge, 1.1 google
+      Www-Authenticate:
+      - Basic realm="Please enter a valid API key."
       X-Planet-Trace-Id:
-      - 88314207-01ab-46af-a2ff-1c3382579354
+      - c7d69b76-e2d8-4e31-be13-c103ab4e09ff
     status:
-      code: 404
-      message: Not Found
+      code: 401
+      message: Unauthorized
 version: 1

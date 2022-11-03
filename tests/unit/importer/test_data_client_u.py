@@ -7,12 +7,14 @@ import vcr
 import logging
 import requests
 
-from modules.importer.clients.data import ImageDataFeature, DataAPIClient, MissingAPIKeyException
+from modules.importer.clients.data import ImageDataFeature, DataAPIClient
 
 TEST_URL = "https://api.planet.com/data/v1"
-SEARCH_URL = TEST_URL + '/' + 'quick-search'
-ITEM_URL = TEST_URL + '/' + 'item-types'
-API_KEY= 'dummy'
+SEARCH_ENDPOINT = "quick-search"
+ITEM_ENDPOINT = "item-types"
+SEARCH_URL = "{}/{}".format(TEST_URL, SEARCH_ENDPOINT)
+ITEM_URL = "{}/{}".format(TEST_URL, ITEM_ENDPOINT)
+API_KEY= None
 
 
 @pytest.fixture
@@ -59,7 +61,6 @@ def geometry():
 
 @pytest.fixture
 def fake_payload(geometry, fake_item_types):
-    
     date_range_filter = {
             "type": "DateRangeFilter",
             "field_name": "acquired",
@@ -94,7 +95,7 @@ def fake_payload(geometry, fake_item_types):
     return search_request
 
 
-@vcr.use_cassette()
+@vcr.use_cassette('tests/fixtures/tests__get_vcr.yaml')
 def test__get_vcr(fake_page_small_aoi):
     url = fake_page_small_aoi['_links'].get('_self')
     
@@ -104,8 +105,8 @@ def test__get_vcr(fake_page_small_aoi):
 
     assert response == fake_page_small_aoi
 
-@vcr.use_cassette()
-def test__get_vrc_exception(fake_page_small_aoi):
+@vcr.use_cassette('tests/fixtures/tests__get_exception_vcr.yaml')
+def test__get_exception_vrc(fake_page_small_aoi):
     url = 'https://api.planet.com/data/v1/searches/bad-url12345'
 
     client = DataAPIClient(api_key=API_KEY)
@@ -116,10 +117,10 @@ def test__get_vrc_exception(fake_page_small_aoi):
     except requests.exceptions.HTTPError:
         assert True
 
-@vcr.use_cassette()
-def test__get_auth_vcr_exception(fake_page_small_aoi):
+@vcr.use_cassette('tests/fixtures/test__get_auth_exception_vcr.yaml')
+def test__get_auth_exception_vcr(fake_page_small_aoi):
     url = fake_page_small_aoi['_links'].get('_self')
-    client = DataAPIClient(api_key=API_KEY)
+    client = DataAPIClient(api_key='throw_auth_exception')
     
     try: 
         client._get(url)
@@ -127,7 +128,7 @@ def test__get_auth_vcr_exception(fake_page_small_aoi):
     except requests.exceptions.HTTPError:
         assert True
 
-@vcr.use_cassette()
+@vcr.use_cassette('tests/fixtures/test__post_vcr.yaml')
 def test__post_vcr(fake_page_small_aoi, fake_payload):
     url = SEARCH_URL
     client = DataAPIClient(api_key=API_KEY)
@@ -135,9 +136,9 @@ def test__post_vcr(fake_page_small_aoi, fake_payload):
     
     assert response['features'] == fake_page_small_aoi['features']
 
-@vcr.use_cassette()
+@vcr.use_cassette('tests/fixtures/test__query_vcr.yaml')
 def test__query_vcr(fake_payload, fake_response_small_aoi):
-    endpoint = 'quick-search'
+    endpoint = SEARCH_ENDPOINT
     key = 'features'
     client = DataAPIClient(api_key=API_KEY)
 
@@ -147,9 +148,9 @@ def test__query_vcr(fake_payload, fake_response_small_aoi):
 
     assert response == fake_response_small_aoi
 
-@vcr.use_cassette()
-def test__query_vcr_paginate(fake_payload, fake_response_small_aoi, caplog):
-    endpoint = 'quick-search'
+@vcr.use_cassette('tests/fixtures/test__query_paginate_vcr.yaml')
+def test__query_paginate_vcr(fake_payload, fake_response_small_aoi, caplog):
+    endpoint = SEARCH_ENDPOINT
     key = 'features'
     client = DataAPIClient(api_key=API_KEY)
 
@@ -160,16 +161,16 @@ def test__query_vcr_paginate(fake_payload, fake_response_small_aoi, caplog):
         assert 'Paging results...' in caplog.text
 
 
-@vcr.use_cassette()
-def test_get_items_vcr_u(fake_item_types_with_deprecated):
+@vcr.use_cassette('tests/fixtures/test_get_items_vcr.yaml')
+def test_get_items_vcr(fake_item_types_with_deprecated):
     """test if all item types are retrieved from data_api"""
     client = DataAPIClient(api_key=API_KEY)
     item_types = client.get_item_types(key='id')
 
     assert item_types == fake_item_types_with_deprecated
 
-@vcr.use_cassette()
-def test_get_features_vcr_u(geometry, fake_response_small_aoi):
+@vcr.use_cassette('tests/fixtures/test_get_features_vcr.yaml')
+def test_get_features_vcr(geometry, fake_response_small_aoi):
     """test if image_features are retrieved from data client correctly"""
     start_date = '2022-10-01'
     end_date = '2022-10-02'

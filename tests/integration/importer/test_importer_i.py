@@ -4,7 +4,7 @@ import os
 import json
 from importer import importer, data_api_importer
 from modules.database import db
-from tests.database.test_db_i import db_session, setup_test_db
+from tests.integration.database.test_db_i import db_session, setup_test_db
 
 
 

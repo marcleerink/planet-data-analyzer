@@ -16,7 +16,7 @@ interactions:
       Accept-Encoding:
       - gzip, deflate
       Authorization:
-      - Basic UExBSzJjNmFkZjkxYzlmZDRlMzhhOTNmNTE1MzdjNjkwZGQ3Og==
+      - Basic ZHVtbXk6
       Connection:
       - keep-alive
       Content-Length:
@@ -30,31 +30,8 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
-        3OOMLdr77X8BAAD//1n9qps9FgAA
+        H4sIAAAAAAAA/6pWyk0tLk5MT1WyUlAKyElNLE5VSM0rSS1SSFQoS8zJTFFwDPBUyE6t1FPSUVBK
+        LSrKLypWslKIjq0FBAAA//8JHRpaOgAAAA==
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
@@ -63,62 +40,18 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 02 Nov 2022 10:23:00 GMT
+      - Wed, 02 Nov 2022 20:31:44 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
       - chunked
       Via:
       - 1.1 edge, 1.1 google
+      Www-Authenticate:
+      - Basic realm="Please enter a valid API key."
       X-Planet-Trace-Id:
-      - 9a1cc9ca-f974-4dd5-b1e5-9b1f95ec61d6
+      - daf9dd79-c10f-427a-92a8-f4f210f69f84
     status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Authorization:
-      - Basic UExBSzJjNmFkZjkxYzlmZDRlMzhhOTNmNTE1MzdjNjkwZGQ3Og==
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.28.1
-    method: GET
-    uri: https://api.planet.com/data/v1/searches/cfb28f72f4884f969a90b85bb3c1814f/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6ICIyMDIyLTEwLTA2VDAzOjE0OjE0LjAwMDAwMFoiLCAic29ydF9sYXN0X2lkIjogIk1ZRDA5R0EuQTIwMjIyNzQuaDE4djAzLjA2MS4yMDIyMjc2MDMzNzUzIiwgInNvcnRfcHJldiI6IGZhbHNlLCAicXVlcnlfcGFyYW1zIjoge319
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAA/9SS0Y6iMBSGX8U02bvJAEVnxGSzYUCcEsHoKqKbjYHSSrFWYmGwTObdN3VufIW9
-        6EXbfPlO/v98ggNn4iTBZPAJDpRdZQMmA1A2TS0nhpHV7LnmmSDNM76cjSJrMuPDMiTJrrgk0sA0
-        h2P6CulwPB5S58XJHDMfj/LcxtbYGlLjSmTLG/nrUGdH8pOosNttC57acU3OG7ZgrorXrkRe2Od2
-        aKYwHKHqckTizdqdbzWGJd976OF/xTGM2IK9mVgkfO65DENHFYHTF7NAFR56QbORlc+6B+ZWYntF
-        s+1Sc22xvckHrsPnBGrn/hxIDDeauxXbRJHE6XZpWObp3fdKU/OH7YOnATgIctMpiZZzfZWE0/89
-        NA+pyEdqvp5287ULE9/tF9XU1GdeuV3ku10UXNgDK3dpbKaQn+7uk7Vf+e5oZU7b5Rp1UYVU3C/b
-        zJ8Oi8rt55ULo9/DuyOqMIz8qI/7TY9Yd0Qi/sBiRfF7yAumC9yX+Xv8PWeacCw4xbNA7bZWr13E
-        thzw9TQAlGRNeyV6d//8fRqARtVE9xB8v3sXzglu2EWAr38BAAD//5rqRy7nAgAA
-    headers:
-      Alt-Svc:
-      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json
-      Date:
-      - Wed, 02 Nov 2022 10:23:00 GMT
-      Strict-Transport-Security:
-      - max-age=15724800; includeSubDomains
-      Transfer-Encoding:
-      - chunked
-      Via:
-      - 1.1 edge, 1.1 google
-      X-Planet-Trace-Id:
-      - 406e68b5-ced8-495c-bb01-352e28182501
-    status:
-      code: 200
-      message: OK
+      code: 401
+      message: Unauthorized
 version: 1

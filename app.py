@@ -10,7 +10,7 @@ APP_TITLE = "Satellite Image Joins"
 APP_SUB_TITLE = 'Source: Planet'
 
 def main():
-    st.set_page_config(page_title=APP_TITLE, layout='wide')
+    st.set_page_config(page_title=APP_TITLE, layout='centered')
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
     
