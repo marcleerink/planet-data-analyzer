@@ -36,13 +36,12 @@ class DataAPIClient(object):
             api_key = os.environ['PL_API_KEY']
         self.api_key = api_key
 
-        if self.api_key is None and 'internal' not in self.base_url:
+        if self.api_key is None:
             msg = 'You are not logged in! Please set the PL_API_KEY env var.'
             raise MissingAPIKeyException(msg)
 
-        session = requests.Session()
-        session.auth = (api_key, '')
-        self.session = session
+        self.session = requests.Session()
+        self.session.auth = (api_key, '')
 
         retries = Retry(total=5, backoff_factor=0.2, status_forcelist=[429, 503])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))

@@ -46,7 +46,6 @@ def importer(args):
     LOGGER.info('Total of {} sat images in db'.format(session.query(db.SatImage).count()))
     LOGGER.info('Total of {} asset types in db'.format(session.query(db.AssetType).count()))
 
-    return 1
 def data_api_importer(args):
     """
     Imports features from Planets Data API in AOI,TOI, below provided cloud cover threshold.
@@ -80,7 +79,7 @@ def data_api_importer(args):
         feature.to_sat_image_model()
         feature.to_asset_type_model()
 
-    with ThreadPoolExecutor(4) as executor:
+    with ThreadPoolExecutor() as executor:
         executor.map(to_postgis, features)
 
 
@@ -91,7 +90,7 @@ def country_table_import():
     def to_postgis(feature):
         feature.to_country_model()
     
-    with ThreadPoolExecutor(4) as executor:
+    with ThreadPoolExecutor() as executor:
         executor.map(to_postgis, features)
 
 def city_table_import():
@@ -101,7 +100,7 @@ def city_table_import():
     def to_postgis(feature):
         feature.to_city_model()
 
-    with ThreadPoolExecutor(4) as executor:
+    with ThreadPoolExecutor() as executor:
         executor.map(to_postgis, features)
 
 def land_cover_import():
@@ -111,7 +110,7 @@ def land_cover_import():
     def to_postgis(feature):
         feature.to_land_cover_model()
 
-    with ThreadPoolExecutor(4) as executor:
+    with ThreadPoolExecutor() as executor:
         executor.map(to_postgis, features)
 
 def geojson_import(aoi_file):

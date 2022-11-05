@@ -5,12 +5,11 @@ import subprocess
 
 APP_URL = "http://localhost:8501"
 
-
 class ComponentsTest(BaseCase):
     current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
     reference_screenshot_path = "tests/resources/screenshots/reference-screenshot.png"
 
-    def test_app_screenshot_cv3_e(self):
+    def test_app_screenshot_e(self):
 
         # Open the app and take a screenshot
         self.open(APP_URL)

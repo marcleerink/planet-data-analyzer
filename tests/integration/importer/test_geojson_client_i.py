@@ -6,8 +6,9 @@ import geopandas as gpd
 import pandas as pd
 
 from modules.database import db
-from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature, CountryFeature, LandCoverClassFeature
-from tests.integration.database.test_db_i import db_session, setup_test_db
+from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature,\
+                                             CountryFeature, LandCoverClassFeature
+from tests.integration.database.test_db_i import db_session
 
 @pytest.fixture
 def fake_cities():
@@ -30,7 +31,7 @@ def fake_land_cover():
 
 
 def test_conn():
-    """test connection can be made to necessary geojson xyz urls"""
+    """test if connection can be made to necessary geojson xyz urls"""
     client = GeojsonXYZClient()
     http = httplib2.Http()
     base_url = client.base_url
@@ -51,49 +52,7 @@ def test_conn():
     assert int(response_river_lake[0]['status']) == 200
     assert int(response_urban_area[0]['status']) == 200
 
-def test_get_countries_i():
-    """
-    test if all country features are retrieved from geojsonxyz 
-    """
-    client = GeojsonXYZClient()
-
-    countries_list = list(client.get_countries())
-
-    assert len(countries_list) > 200
-  
-
-def test_get_cities_i():
-    """
-    test if all city features are retrieved from geojsonxyz 
-    """
-    client = GeojsonXYZClient()
-
-    cities_list = list(client.get_cities())
-
-    assert len(cities_list) > 1000
-    
-def test_get_rivers_lakes():
-    """
-    test if all river/lake features are retrieved from geojsonxyz 
-    """
-
-    client = GeojsonXYZClient()
-
-    river_lake_gdf = client.get_rivers_lakes()
-
-    assert len(river_lake_gdf.index) > 400
-
-def test_get_urban_areas():
-    """
-    test if all urban area features are retrieved from geojsonxyz 
-    """
-    client = GeojsonXYZClient()
-    
-    urban_area_gdf = client.get_urban_areas()
-
-    assert len(urban_area_gdf.index) > 2000
-
-def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, setup_test_db, db_session):
+def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, db_session):
     """
     Test if all data from geojson xyz is imported to tables in db correctly when done in parallel.
     """
@@ -112,7 +71,7 @@ def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, 
     def to_land_cover(f):
         f.to_land_cover_model()
 
-    with ThreadPoolExecutor(4) as executor:
+    with ThreadPoolExecutor() as executor:
         executor.map(to_country, fake_country_list)
         executor.map(to_city, fake_city_list)
         executor.map(to_land_cover, fake_land_cover_list)

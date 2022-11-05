@@ -16,7 +16,7 @@ from modules.app.query import query_distinct_satellite_names, query_countries_wi
 
 from tests.resources import fake_feature
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def setup_test_db():
     engine = create_engine(POSTGIS_URL, echo=False)
     if not database_exists(engine.url):

@@ -38,7 +38,6 @@ class GeojsonXYZClient(object):
         for f in features:
             yield CountryFeature(f)
        
-
     def get_cities(self):
         endpoint = "naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
         features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
@@ -85,6 +84,7 @@ class CountryFeature:
 
         for key, value in country_feature.items():
             setattr(self, key, value)
+
         self.iso = str(self.adm0_a3)
         self.name = str(self.name)
         self.geom = shape(self.geometry)
@@ -113,6 +113,7 @@ class CityFeature:
 
         for key, value in city_feature.items():
             setattr(self, key, value)
+
         self.id = int(self.id)
         self.name = str(self.name)
         self.geom = shape(self.geometry)
@@ -138,6 +139,7 @@ class LandCoverClassFeature:
         """
         for key, value in land_cover_feature.items():
             setattr(self, key, value)
+            
         self.id = int(self.id)
         self.featureclass = str(self.featureclass)
         self.geom = shape(self.geometry)

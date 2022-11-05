@@ -120,7 +120,7 @@ def test__get_exception_vrc(fake_page_small_aoi):
 @vcr.use_cassette('tests/fixtures/test__get_auth_exception_vcr.yaml')
 def test__get_auth_exception_vcr(fake_page_small_aoi):
     url = fake_page_small_aoi['_links'].get('_self')
-    client = DataAPIClient(api_key='throw_auth_exception')
+    client = DataAPIClient(api_key='auth_exception')
     
     try: 
         client._get(url)
@@ -184,8 +184,6 @@ def test_get_features_vcr(geometry, fake_response_small_aoi):
     
     assert len(features) == len(fake_response_small_aoi)
     assert [i.id for i in features] == [str(i["id"]) for i in fake_response_small_aoi]
-    
-
 
 
 def test_ImageDataFeature(fake_response_list):
