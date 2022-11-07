@@ -32,16 +32,25 @@ def main():
     
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
-    
+
     countries = query.query_countries_with_filters(session,
                                             sat_names,
                                             cloud_cover, 
                                             start_date, 
                                             end_date)
-
     countries_geojson = query.create_country_geojson(countries)
     df_countries = query.create_countries_df(countries)
-                                                                        
+
+
+    cities = query.query_cities_with_filters(_session=session,
+                                            sat_names=sat_names,
+                                            cloud_cover=cloud_cover,
+                                            start_date=start_date,
+                                            end_date=end_date)
+    
+    cities_geojson = query.create_cities_geojson(_cities=cities)
+    df_cities = query.create_cities_df(_cities=cities)
+
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
@@ -60,7 +69,10 @@ def main():
         maps.images_per_country_map(map=maps.create_basemap(zoom=4),
                                     countries_geojson=countries_geojson, 
                                     df_countries=df_countries)
-
+                                    
+        maps.images_per_city(map=maps.create_basemap(zoom=4),
+                            cities_geojson=cities_geojson,
+                            df_cities=df_cities)
 if __name__=='__main__':
     main()
 

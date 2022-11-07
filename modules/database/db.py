@@ -66,7 +66,7 @@ class MultiGeomFromSingle(TypeDecorator):
 
 class CentroidFromPolygon(TypeDecorator):
     '''
-    Calculate and insert the centroid points of each Polygon on insert.
+    Calculate the centroid points of each Polygon on insert.
     Reprojects to equal area proj CRS:3035.
     '''
     impl = Geometry
@@ -139,24 +139,22 @@ class SatImage(Base):
         return round((area_mm / 1000000), 3)
 
     @hybrid_property
-    def geojson(self):
-        json_lst=[]
-        geometry = to_shape(self.geom)
-        feature = Feature(
+    def geojson(self): 
+        return Feature(
                 id=self.id,
-                geometry=geometry,
+                geometry=to_shape(self.geom),
                 properties={
+                    "id" : self.id,
                     "cloud_cover" : self.cloud_cover,
-                    "pixel_res" : self.pixel_res,
+                    "pixel_res" : self.satellites.pixel_res,
                     "time_acquired" : self.time_acquired.strftime("%Y-%m-%d"),
                     "sat_id" : self.sat_id,
                     "sat_name" : self.satellites.name,
                     "item_type_id" : self.item_type_id,
                     "srid" : self.srid,
                     "area_sqkm": self.area_sqkm,
+                    "asset_types": self.item_types.assets,
                 })
-        json_lst.append(feature)
-        return dumps(FeatureCollection(json_lst))
 
 items_assets = Table(
     'items_assets',
@@ -206,6 +204,17 @@ class Country(Base):
         uselist=False,
         lazy='joined')
     
+    @hybrid_property
+    def geojson(self): 
+        return Feature(
+                id=self.iso,
+                geometry=to_shape(self.geom),
+                properties={
+                    "iso" : self.iso,
+                    "name" : self.name,
+                    "total_images" : self.sat_images.count()
+                })
+
 class City(Base):
     __tablename__='cities'
     id = Column(Integer, primary_key=True)
@@ -214,17 +223,19 @@ class City(Base):
                             nullable=False,
                             unique=True)
 
+    join_query = 'func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)'
     sat_images = relationship(
         'SatImage',
-        primaryjoin='func.ST_Intersects(func.ST_Buffer(foreign(City.geom),5), remote(SatImage.geom)).as_comparison(1,2)',
+        primaryjoin= join_query,
         backref='cities',
         viewonly=True,
         uselist=False,
         lazy='joined')
     
-    def get_cities_within_radius(self, radius):
-        """Return all cities within a given radius (in meters) of this city."""
-        return City.query.filter(func.ST_Distance_Sphere(City.geom, self.geom) < radius).all()
+    @hybrid_property
+    def buffer(self):
+        return self.geom.ST_Transform(3035).ST_Buffer(30000).ST_Transform(4326)
+
 
 class LandCoverClass(Base):
     __tablename__='land_cover_classes'

@@ -36,7 +36,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,
                     "item_type_id" : i.item_type_id,
-                    
+                    "asset_types" : i.item_types.assets,
                     "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)
@@ -64,6 +64,28 @@ def create_countries_df(_countries: List[Country]) -> pd.DataFrame:
         'iso': [c.iso for c in _countries],
         'name' : [c.name for c in _countries],
         'total_images' : [c.total_images for c in _countries]})
+
+def create_cities_geojson(_cities: List[City]) -> dict:
+    json_lst=[]
+    for i in _cities:
+        geometry = to_shape(i.buffer)
+        feature = Feature(
+                id=i.id,
+                geometry=geometry,
+                properties={
+                    "id" : i.id,
+                    "name" : i.name,
+                    "total_images" : i.total_images
+                })
+        json_lst.append(feature)
+    geojson_str = dumps(FeatureCollection(json_lst))
+    return json.loads(geojson_str)
+
+def create_cities_df(_cities: List[Country]) -> pd.DataFrame:
+    return pd.DataFrame({
+        'id': [i.id for i in _cities],
+        'name' : [i.name for i in _cities],
+        'total_images' : [i.total_images for i in _cities]})
 
 def query_distinct_satellite_names(_session: session.Session) -> List[str]:
     query = _session.query(Satellite.name).distinct()
@@ -111,4 +133,22 @@ def query_countries_with_filters(_session: session.Session,
     
     return countries
 
-
+def query_cities_with_filters(_session: session.Session,
+                                sat_names: str, 
+                                cloud_cover: float, 
+                                start_date: datetime.date, 
+                                end_date: datetime.date) -> List[Country]:
+    '''
+    gets all country objects with total images per country from postgis with applied filters.
+    '''
+    
+    subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
+    countries = _session.query(City.id, City.name, City.buffer, func.count(SatImage.geom).label('total_images'))\
+                                                            .join(City.sat_images)\
+                                                            .filter(SatImage.time_acquired >= start_date,
+                                                                    SatImage.time_acquired <= end_date,
+                                                                    SatImage.cloud_cover <= cloud_cover,
+                                                                    SatImage.sat_id.in_(select(subquery)))\
+                                                            .group_by(City.id).all()
+    
+    return countries

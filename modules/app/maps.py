@@ -42,6 +42,34 @@ def _tooltip_highlight_func():
                             'fillOpacity': 0.50, 
                             'weight': 0.1}
 
+
+def image_info_map(
+    map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    
+    
+    folium.Choropleth(geo_data=images_geojson,
+                name='Choropleth: Satellite Imagery Cloud Cover',
+                data=df_images,
+                columns=['id', 'cloud_cover'],
+                key_on ='feature.id',
+                fill_color='YlGnBu',
+                legend_name='Cloud Cover',
+                smooth_factor=0).add_to(map)
+
+    folium.GeoJson(
+    images_geojson,
+    control=False,
+    style_function=_tooltip_style_func(),
+    highlight_function = _tooltip_highlight_func(),
+    tooltip=folium.GeoJsonTooltip(
+        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' , 'Asset_Types', 'Time Acquired: '],
+        fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 'pixel_res', 'item_type_id', 'asset_types', 'time_acquired'],
+        )).add_to(map)
+    
+    return map, st_folium(map, height= 500, width=700)
+    
+
+
 def images_per_country_map(
     map: folium.Map, countries_geojson: str, df_countries: pd.DataFrame) -> Tuple[folium.Map, dict]:
     """instantiates a Chloropleth map that dislays images per country"""
@@ -66,33 +94,30 @@ def images_per_country_map(
             
             )).add_to(map)
     
-    return map, st_folium(map, height= 500, width=700, key='Choropleth')
+    return map, st_folium(map, height= 500, width=700, key='Country')
 
 
-def image_info_map(
-    map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> Tuple[folium.Map, dict]:
-    
-    
-    folium.Choropleth(geo_data=images_geojson,
-                name='Choropleth: Satellite Imagery Cloud Cover',
-                data=df_images,
-                columns=['id', 'cloud_cover'],
-                key_on ='feature.id',
-                fill_color='YlGnBu',
-                legend_name='Cloud Cover',
-                smooth_factor=0).add_to(map)
+def images_per_city(
+     map: folium.Map, cities_geojson: str, df_cities: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    """instantiates a Chloropleth map that dislays images per country"""
+
+    folium.Choropleth(geo_data=cities_geojson,
+                    name='Choropleth: Total Satellite Imagery per City',
+                    data=df_cities,
+                    columns=['id', 'total_images'],
+                    key_on ='feature.id',
+                    fill_color='YlGnBu',
+                    legend_name='Satellite Image per City',
+                    smooth_factor=0).add_to(map)
 
     folium.GeoJson(
-    images_geojson,
-    control=False,
-    style_function=_tooltip_style_func(),
-    highlight_function = _tooltip_highlight_func(),
-    tooltip=folium.GeoJsonTooltip(
-        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' , 'Time Acquired: '],
-        fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 'pixel_res', 'item_type_id', 'time_acquired'],
-        )).add_to(map)
-    
-    return map, st_folium(map, height= 500, width=700)
-    
+        cities_geojson,
+        control=False,
+        style_function=_tooltip_style_func(),
+        highlight_function =_tooltip_highlight_func(),
+        tooltip=folium.GeoJsonTooltip(
+            fields=['name', 'total_images'],
+            aliases=['City:  ','Total Images: '],
+            )).add_to(map)
 
-
+    return map, st_folium(map, height= 500, width=700, key='City')
