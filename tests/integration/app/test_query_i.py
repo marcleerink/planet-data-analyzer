@@ -68,4 +68,12 @@ def test_query_countries_with_filter(db_session, setup_models):
     assert [i.name for i in countries_list] == ['Germany']
     assert [i.total_images for i in countries_list] == [1]
 
+def test_query_cities_with_filter(db_session, setup_models):
+    cloud_cover = 0.7
+    start_date = datetime.utcnow() - timedelta(days=7)
+    end_date = datetime.utcnow()
+    sat_names = 'Planetscope'
 
+    cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
+
+    assert [i.name for i in cities_list] == ['Berlin']

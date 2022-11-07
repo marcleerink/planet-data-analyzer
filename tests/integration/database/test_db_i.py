@@ -52,7 +52,7 @@ def satellite():
 @pytest.fixture()
 def item_type():
     return ItemType(id = 'PSScene',
-                        sat_id = 's145')
+                    sat_id = 's145')
 
 @pytest.fixture()
 def geom_shape():

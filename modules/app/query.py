@@ -22,7 +22,6 @@ def create_images_df(_images: List[SatImage]):
 
 def create_images_geojson(_images: List[SatImage]) -> dict:
     json_lst=[]
-    
     for i in _images:
         geometry = to_shape(i.geom)
         feature = Feature(
@@ -152,3 +151,4 @@ def query_cities_with_filters(_session: session.Session,
                                                             .group_by(City.id).all()
     
     return countries
+

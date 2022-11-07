@@ -139,6 +139,10 @@ class SatImage(Base):
         return round((area_mm / 1000000), 3)
 
     @hybrid_property
+    def image_covers_land_cover_class(self, land_cover_geom):
+        session.scalar(self.geom.ST_Overlaps())
+
+    @hybrid_property
     def geojson(self): 
         return Feature(
                 id=self.id,
@@ -153,6 +157,7 @@ class SatImage(Base):
                     "item_type_id" : self.item_type_id,
                     "srid" : self.srid,
                     "area_sqkm": self.area_sqkm,
+                    "land_cover_class" : self.land_cover_class,
                     "asset_types": self.item_types.assets,
                 })
 
@@ -162,6 +167,7 @@ items_assets = Table(
     Column('item_id', ForeignKey('item_types.id'), primary_key=True),
     Column('asset_id', ForeignKey('asset_types.id'), primary_key=True)
 )
+
 class ItemType(Base):
     __tablename__='item_types'
     id = Column(String(50), primary_key=True)
@@ -204,16 +210,7 @@ class Country(Base):
         uselist=False,
         lazy='joined')
     
-    @hybrid_property
-    def geojson(self): 
-        return Feature(
-                id=self.iso,
-                geometry=to_shape(self.geom),
-                properties={
-                    "iso" : self.iso,
-                    "name" : self.name,
-                    "total_images" : self.sat_images.count()
-                })
+    
 
 class City(Base):
     __tablename__='cities'
@@ -234,7 +231,7 @@ class City(Base):
     
     @hybrid_property
     def buffer(self):
-        return self.geom.ST_Transform(3035).ST_Buffer(30000).ST_Transform(4326)
+        return self.geom.ST_Transform(3035).ST_Buffer(50000).ST_Transform(4326)
 
 
 class LandCoverClass(Base):

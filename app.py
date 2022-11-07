@@ -14,7 +14,6 @@ def main():
     st.caption(APP_SUB_TITLE)
     
     session = db.get_db_session()
-    engine = db.get_db_engine()
 
     # add sidebar with filters
     sat_name_list = query.query_distinct_satellite_names(session)
@@ -28,10 +27,10 @@ def main():
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
                                             end_date=end_date)
-    
-    
+    lat_lon_lst = maps.query_lat_lon_sat_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
+
 
     countries = query.query_countries_with_filters(session,
                                             sat_names,
@@ -47,7 +46,6 @@ def main():
                                             cloud_cover=cloud_cover,
                                             start_date=start_date,
                                             end_date=end_date)
-    
     cities_geojson = query.create_cities_geojson(_cities=cities)
     df_cities = query.create_cities_df(_cities=cities)
 
@@ -55,8 +53,6 @@ def main():
         st.write('No Images available for selected filters')
     else:
         st.write('Total Satellite Images: {}'.format(len(df_images.index)))
-        
-        lat_lon_lst = maps.query_lat_lon_sat_images(images)
 
         maps.heatmap(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                     lat_lon_lst=lat_lon_lst, 
@@ -66,11 +62,12 @@ def main():
                             images_geojson=images_geojson, 
                             df_images=df_images)
 
-        maps.images_per_country_map(map=maps.create_basemap(zoom=4),
+        
+        maps.images_per_country_map(map=maps.create_basemap(zoom=1),
                                     countries_geojson=countries_geojson, 
                                     df_countries=df_countries)
-                                    
-        maps.images_per_city(map=maps.create_basemap(zoom=4),
+
+        maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                             cities_geojson=cities_geojson,
                             df_cities=df_cities)
 if __name__=='__main__':
