@@ -1,5 +1,4 @@
 import pytest
-import json
 import httplib2
 from concurrent.futures import ThreadPoolExecutor
 import geopandas as gpd
@@ -8,7 +7,7 @@ import pandas as pd
 from modules.database import db
 from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature,\
                                              CountryFeature, LandCoverClassFeature
-from tests.integration.database.test_db_i import db_session
+from tests.integration.database.test_db_i import db_session, setup_test_db
 
 @pytest.fixture
 def fake_cities():
@@ -52,7 +51,7 @@ def test_conn():
     assert int(response_river_lake[0]['status']) == 200
     assert int(response_urban_area[0]['status']) == 200
 
-def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, db_session):
+def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, db_session, setup_test_db):
     """
     Test if all data from geojson xyz is imported to tables in db correctly when done in parallel.
     """

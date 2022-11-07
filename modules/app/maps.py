@@ -1,10 +1,13 @@
 import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
+import pandas as pd
+from typing import Tuple
+import geopandas as gpd
 
 from modules.app.query import query_lat_lon_sat_images
 
-def create_basemap(zoom=None, lat_lon_list=None):
+def create_basemap(zoom: int=None, lat_lon_list: list=None) -> folium.Map:
     if zoom:
         map = folium.Map(location=[52.5200, 13.4050], zoom_start=zoom)
     else:
@@ -16,33 +19,33 @@ def create_basemap(zoom=None, lat_lon_list=None):
         map.fit_bounds(lat_lon_list, max_zoom=7)
     return map
 
-def heatmap(image, sat_names):
-    lat_lon_lst = query_lat_lon_sat_images(image)
-    map = create_basemap(lat_lon_list=lat_lon_lst)
-
+def heatmap(map: folium.Map, lat_lon_lst: list, sat_name: str) -> Tuple[folium.Map, dict]:
+    """instantiates a HeatMap with lat_lon coordinates."""
     heat_data_list = [
-        [lat_lon_lst, sat_names]
+        [lat_lon_lst, sat_name]
     ]
 
     for heat_data, title in heat_data_list:
         HeatMap(data=heat_data, name=title).add_to(map)
+    
+    return map , st_folium(map, height= 500, width=700)
+    
 
-    st_folium(map, height= 500, width=700)
-
-def tooltip_style_func():
+def _tooltip_style_func():
     return lambda x: {'fillColor': '#ffffff', 
                         'color':'#000000', 
                         'fillOpacity': 0.1, 
                         'weight': 0.1}
-def tooltip_highlight_func():
+def _tooltip_highlight_func():
     return lambda x: {'fillColor': '#000000', 
                             'color':'#000000', 
                             'fillOpacity': 0.50, 
                             'weight': 0.1}
 
-def images_per_country_map(countries_geojson, df_countries):
-    map = create_basemap(zoom=4)
-    
+def images_per_country_map(
+    map: folium.Map, countries_geojson: str, df_countries: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    """instantiates a Chloropleth map that dislays images per country"""
+
     folium.Choropleth(geo_data=countries_geojson,
                     name='Choropleth: Total Satellite Imagery per Country',
                     data=df_countries,
@@ -51,26 +54,25 @@ def images_per_country_map(countries_geojson, df_countries):
                     fill_color='YlGnBu',
                     legend_name='Satellite Image per Country',
                     smooth_factor=0).add_to(map)
-    
-    
-                    
+               
     folium.GeoJson(
         countries_geojson,
         control=False,
-        style_function=tooltip_style_func(),
-        highlight_function =tooltip_highlight_func(),
+        style_function=_tooltip_style_func(),
+        highlight_function =_tooltip_highlight_func(),
         tooltip=folium.GeoJsonTooltip(
             fields=['name', 'total_images'],
             aliases=['Country:  ','Total Images: '],
             
             )).add_to(map)
+    
+    return map, st_folium(map, height= 500, width=700, key='Choropleth')
 
-    st_folium(map, height= 500, width=700)
 
-
-def image_info_map(images, images_geojson, df_images):
-    map = create_basemap(lat_lon_list = query_lat_lon_sat_images(images))
-
+def image_info_map(
+    map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    
+    
     folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
                 data=df_images,
@@ -83,11 +85,14 @@ def image_info_map(images, images_geojson, df_images):
     folium.GeoJson(
     images_geojson,
     control=False,
-    style_function=tooltip_style_func(),
-    highlight_function = tooltip_highlight_func(),
+    style_function=_tooltip_style_func(),
+    highlight_function = _tooltip_highlight_func(),
     tooltip=folium.GeoJsonTooltip(
+        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' , 'Time Acquired: '],
         fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 'pixel_res', 'item_type_id', 'time_acquired'],
-        aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 'Pixel Resolution: ', 'Item Type' , 'Time Acquired: ']
         )).add_to(map)
     
-    st_folium(map, height= 500, width=700)
+    return map, st_folium(map, height= 500, width=700)
+    
+
+

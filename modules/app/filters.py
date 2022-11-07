@@ -4,16 +4,12 @@ import pandas as pd
 
 from modules.app.query import query_distinct_satellite_names
 
-def display_sat_name_filter(session):
-    sat_name_list = query_distinct_satellite_names(session)
+def display_sat_name_filter(sat_name_list):
     return st.sidebar.radio('Satellite Providers',sat_name_list)
 
 def display_time_filter():
     start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))
     end_date = st.sidebar.date_input('End Date', datetime.utcnow())
-    
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
     return start_date, end_date
 
 def display_cloud_cover_filter():

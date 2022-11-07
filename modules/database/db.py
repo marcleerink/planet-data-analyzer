@@ -19,8 +19,11 @@ from modules.config import POSTGIS_URL
 
 Base = declarative_base()
 
+def get_db_engine():
+    return create_engine(POSTGIS_URL, echo=False)
+
 def get_db_session():
-    engine = create_engine(POSTGIS_URL, echo=False)
+    engine = get_db_engine()
     Session = sessionmaker(bind=engine)
     return Session()
     
@@ -62,7 +65,10 @@ class MultiGeomFromSingle(TypeDecorator):
         
 
 class CentroidFromPolygon(TypeDecorator):
-    '''Calculate and insert the centroid points of each Polygon on insert'''
+    '''
+    Calculate and insert the centroid points of each Polygon on insert.
+    Reprojects to equal area proj CRS:3035.
+    '''
     impl = Geometry
     cache_ok = True
 
@@ -158,7 +164,6 @@ items_assets = Table(
     Column('item_id', ForeignKey('item_types.id'), primary_key=True),
     Column('asset_id', ForeignKey('asset_types.id'), primary_key=True)
 )
-
 class ItemType(Base):
     __tablename__='item_types'
     id = Column(String(50), primary_key=True)
@@ -231,5 +236,5 @@ class LandCoverClass(Base):
 
 
 if __name__=='__main__':
-    engine = create_engine(POSTGIS_URL, echo=True)
+    engine = get_db_engine()
     create_tables(engine, Base)

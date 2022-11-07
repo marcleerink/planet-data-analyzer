@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 import json
-from datetime import datetime
+import httplib2
 from concurrent.futures import ThreadPoolExecutor
 
 from modules.database import db
@@ -52,9 +52,9 @@ def geometry():
 
 def test_conn():
     client = DataAPIClient()
-    response = client._get(SEARCH_URL)
-
-    assert response
+    http = httplib2.Http()
+    response_base = http.request(client.base_url, 'HEAD')
+    assert int(response_base[0]['status']) == 200
 
 def test_get_item_types_i(item_types):
     """test if filled list with item types is returned"""

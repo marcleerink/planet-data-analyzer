@@ -3,7 +3,7 @@ import cv2
 import time
 import subprocess
 
-APP_URL = "http://localhost:8501"
+APP_URL = "http://localhost:8502"
 
 class ComponentsTest(BaseCase):
     current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
@@ -17,7 +17,7 @@ class ComponentsTest(BaseCase):
         self.save_screenshot(self.current_screenshot_path)
 
         # Test that page has identical structure to baseline
-        self.check_window(name="current_test", level=2)
+        self.check_window(name="current_test", level=1)
         
         # Check folium app-sepecific parts
         # Main

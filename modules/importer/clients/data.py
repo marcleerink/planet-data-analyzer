@@ -209,7 +209,7 @@ class ImageDataFeature:
     def __init__(self, image_feature, client=None):
         """
         :param dict image_feature:
-            A dictionary containing metadata of a image from the Data API.
+            The JSON api response from the DataAPIClient
         :param DataAPIClient client:
             A specific client instance to use. Will be created if not specified.
         """
