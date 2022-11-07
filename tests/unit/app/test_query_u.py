@@ -16,20 +16,28 @@ class FakeSatellite:
     pixel_res : str
 
 @dataclass
+class FakeAssetType:
+    id: str
+
+@dataclass
 class FakeItemType:
     id: str
     sat_id: FakeSatellite
+    assets: FakeAssetType
     
 @dataclass
 class FakeSatImage:
     id: str
     cloud_cover: float
-    satellites: FakeSatellite
     time_acquired: datetime
-    sat_id: FakeSatellite
-    item_type_id: FakeItemType
     geom: geometry
     area_sqkm: float
+    satellites: FakeSatellite
+    sat_id: FakeSatellite
+    item_type_id: FakeItemType
+    item_types: FakeItemType
+   
+   
 
 @dataclass
 class FakeCountry:
@@ -49,17 +57,18 @@ def fake_satellite():
 
 @pytest.fixture
 def fake_item_type(fake_satellite):
-    return FakeItemType(id='fake_item', sat_id=fake_satellite)
+    return FakeItemType(id='fake_item', sat_id=fake_satellite, assets=['analytic'])
 
 @pytest.fixture
 def fake_image(fake_satellite, fake_item_type, geom_shape):
     return FakeSatImage(
                     id='fake_id', 
                     cloud_cover=0.1, 
+                    time_acquired = datetime.utcnow(), 
                     sat_id='fake_sat_id',
                     satellites= fake_satellite,
                     item_type_id = 'fake_item_type_id',
-                    time_acquired = datetime.utcnow(),  
+                    item_types = fake_item_type,
                     geom=from_shape(geom_shape),
                     area_sqkm = 25.0)
 

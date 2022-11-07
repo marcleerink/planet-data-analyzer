@@ -72,7 +72,8 @@ def test_image_info_map():
                                 'cloud_cover':[0.0],
                                 'pixel_res':[3.125],
                                 'time_acquired': ['2022-11-02 10:44:57'],
-                                'sat_name':['Planetscope']})
+                                'sat_name':['Planetscope'],
+                                'asset_type': ['analytic']})
     
     info_map, streamlit_map = maps.image_info_map(
                                 map=fake_map,
