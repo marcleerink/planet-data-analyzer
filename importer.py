@@ -75,11 +75,11 @@ def data_api_importer(args):
 
     def to_postgis(feature):
         feature.to_satellite_model()
-        feature.to_item_type_model()
+        feature.to_item_asset_model()
         feature.to_sat_image_model()
-        feature.to_asset_type_model()
-
-    with ThreadPoolExecutor() as executor:
+        
+    
+    with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
 
@@ -90,7 +90,7 @@ def country_table_import():
     def to_postgis(feature):
         feature.to_country_model()
     
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
 def city_table_import():
@@ -100,7 +100,7 @@ def city_table_import():
     def to_postgis(feature):
         feature.to_city_model()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
 def land_cover_import():
@@ -110,7 +110,7 @@ def land_cover_import():
     def to_postgis(feature):
         feature.to_land_cover_model()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
 def geojson_import(aoi_file):

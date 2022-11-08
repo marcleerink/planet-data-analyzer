@@ -2,7 +2,7 @@ import psycopg2
 import os
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
     DateTime, ForeignKey, func
 from sqlalchemy.types import TypeDecorator
@@ -179,7 +179,8 @@ class ItemType(Base):
 
     assets = relationship('AssetType', 
                             secondary=items_assets, 
-                            backref='item_types')
+                            backref='item_types',
+                            lazy='dynamic')
     
     
 class AssetType(Base):

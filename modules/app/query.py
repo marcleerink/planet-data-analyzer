@@ -35,7 +35,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,
                     "item_type_id" : i.item_type_id,
-                    "asset_types" : i.item_types.assets,
+                    "asset_types" : [x.id for x in i.item_types.assets],
                     "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)

@@ -21,16 +21,19 @@ def main():
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
     
+
+    
+        
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
                                             sat_names=sat_names, 
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
                                             end_date=end_date)
+
     lat_lon_lst = maps.query_lat_lon_sat_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
-
 
     countries = query.query_countries_with_filters(session,
                                             sat_names,
@@ -49,6 +52,7 @@ def main():
     cities_geojson = query.create_cities_geojson(_cities=cities)
     df_cities = query.create_cities_df(_cities=cities)
 
+    
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
