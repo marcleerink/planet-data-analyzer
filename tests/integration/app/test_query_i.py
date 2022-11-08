@@ -55,7 +55,6 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
     #assert
     assert len(sat_images) == expected_output
 
-
 def test_query_countries_with_filter(db_session, setup_models):
     cloud_cover = 0.7
     start_date = datetime.utcnow() - timedelta(days=7)

@@ -17,7 +17,7 @@ class GeojsonXYZClient(object):
     Base client for working with the geojson-xyz API
     http://geojson.xyz/
     """
-    base_url = "https://d2ad6b4ur7yvpq.cloudfront.net"
+    base_url = "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
 
     def _url(self, endpoint):
         return '{}/{}'.format(self.base_url, endpoint)

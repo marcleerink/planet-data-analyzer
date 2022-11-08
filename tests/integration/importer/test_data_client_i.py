@@ -124,9 +124,8 @@ def test_to_postgis_in_parallel_i(fake_response_list, setup_test_db, db_session)
     
     def to_postgis(feature):
         feature.to_satellite_model()
-        feature.to_item_type_model()
+        feature.to_item_asset_model()
         feature.to_sat_image_model()
-        feature.to_asset_type_model()
 
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, fake_features_list)

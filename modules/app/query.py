@@ -24,6 +24,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
     json_lst=[]
     for i in _images:
         geometry = to_shape(i.geom)
+        asset_type = query_asset_types_from_image(i)
         feature = Feature(
                 id=i.id,
                 geometry=geometry,
@@ -35,7 +36,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
                     "sat_id" : i.sat_id,
                     "sat_name" : i.satellites.name,
                     "item_type_id" : i.item_type_id,
-                    "asset_types" : [x.id for x in i.item_types.assets],
+                    "asset_types" : asset_type,
                     "area_sqkm": i.area_sqkm,
                 })
         json_lst.append(feature)
@@ -86,6 +87,9 @@ def create_cities_df(_cities: List[Country]) -> pd.DataFrame:
         'name' : [i.name for i in _cities],
         'total_images' : [i.total_images for i in _cities]})
 
+def query_asset_types_from_image(_image: SatImage) -> List[str]:
+    return [i.id for i in _image.item_types.assets]
+
 def query_distinct_satellite_names(_session: session.Session) -> List[str]:
     query = _session.query(Satellite.name).distinct()
     return [sat.name for sat in query]
@@ -96,7 +100,6 @@ def query_lat_lon_sat_images(_images: List[SatImage]) -> List[float]:
     lon_list = [image.lon for image in _images]
     lat_list = [image.lat for image in _images]
     return list(map(list,zip(lat_list,lon_list)))
-
 
 def query_sat_images_with_filter(_session: session.Session, 
                                 sat_names: str, 

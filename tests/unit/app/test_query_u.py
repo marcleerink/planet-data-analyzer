@@ -17,7 +17,7 @@ class FakeSatellite:
 
 @dataclass
 class FakeAssetType:
-    id: str
+    id: list
 
 @dataclass
 class FakeItemType:
@@ -35,9 +35,7 @@ class FakeSatImage:
     satellites: FakeSatellite
     sat_id: FakeSatellite
     item_type_id: FakeItemType
-    item_types: FakeItemType
-   
-   
+    item_types: FakeItemType   
 
 @dataclass
 class FakeCountry:
@@ -56,8 +54,16 @@ def fake_satellite():
     return FakeSatellite(id='fake_sat', name='planetscope', pixel_res=3.0)
 
 @pytest.fixture
-def fake_item_type(fake_satellite):
-    return FakeItemType(id='fake_item', sat_id=fake_satellite, assets=['analytic'])
+def fake_item_type(fake_satellite, fake_asset_type, fake_asset_type2):
+    return FakeItemType(id='fake_item', sat_id=fake_satellite, assets=[fake_asset_type, fake_asset_type2])
+
+@pytest.fixture
+def fake_asset_type():
+    return FakeAssetType(id='asset1')
+
+@pytest.fixture
+def fake_asset_type2():
+    return FakeAssetType(id='asset2')
 
 @pytest.fixture
 def fake_image(fake_satellite, fake_item_type, geom_shape):
@@ -87,14 +93,17 @@ def test_create_images_df(fake_image):
     assert images_df['sat_name'][0] == fake_image.satellites.name
 
 
+
 def test_create_images_geojson(fake_image):
     
     images_geojson = query.create_images_geojson([fake_image])
+    
     assert images_geojson['features'][0]['properties']['id'] == fake_image.id
     assert images_geojson['features'][0]['properties']['cloud_cover'] == fake_image.cloud_cover
     assert images_geojson['features'][0]['properties']['pixel_res'] == fake_image.satellites.pixel_res
     assert images_geojson['features'][0]['properties']['time_acquired'] == fake_image.time_acquired.strftime("%Y-%m-%d %H:%M:%S")
     assert images_geojson['features'][0]['properties']['sat_name'] == fake_image.satellites.name
+    assert images_geojson['features'][0]['properties']['asset_types'] ==[i.id for i in fake_image.item_types.assets]
 
 def test_create_countries_geojson(fake_country):
 

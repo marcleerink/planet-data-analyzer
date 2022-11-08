@@ -1,12 +1,12 @@
 import streamlit as st
-
+from geoalchemy2.shape import to_shape
 from modules.database import db
 from modules.app import maps
 from modules.app import query
 from modules.app import filters
 
 APP_TITLE = "Satellite Image Joins"
-APP_SUB_TITLE = 'Source: Planet'
+APP_SUB_TITLE = 'Source: Planet: https://developers.planet.com/docs/apis/data/'
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout='centered')
@@ -22,18 +22,17 @@ def main():
     cloud_cover = filters.display_cloud_cover_filter()
     
 
-    
-        
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
                                             sat_names=sat_names, 
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
                                             end_date=end_date)
-
     lat_lon_lst = maps.query_lat_lon_sat_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
+
+    city = session.query(db.City)
 
     countries = query.query_countries_with_filters(session,
                                             sat_names,
@@ -53,11 +52,15 @@ def main():
     df_cities = query.create_cities_df(_cities=cities)
 
     
+    item_types = set([i.item_type_id for i in images])
+    asset_types = set([x.id for i in images for x in i.item_types.assets])
+
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
-        st.write('Total Satellite Images: {}'.format(len(df_images.index)))
-
+        st.write('Total Satellite Images: {}'.format(len(images)))
+        st.write('Available Item Types: {}'.format(', '.join(item_types)))
+        st.write('Available Asset Types: {}'.format(', '.join(asset_types)))
         maps.heatmap(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                     lat_lon_lst=lat_lon_lst, 
                     sat_name=sat_names)
@@ -74,6 +77,7 @@ def main():
         maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                             cities_geojson=cities_geojson,
                             df_cities=df_cities)
+
 if __name__=='__main__':
     main()
 

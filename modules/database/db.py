@@ -208,7 +208,7 @@ class Country(Base):
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
-        uselist=False,
+        uselist=True,
         lazy='joined')
     
     
@@ -227,7 +227,7 @@ class City(Base):
         primaryjoin= join_query,
         backref='cities',
         viewonly=True,
-        uselist=False,
+        uselist=True,
         lazy='joined')
     
     @hybrid_property

@@ -4,7 +4,7 @@ import os
 import json
 from importer import importer, data_api_importer
 from modules.database import db
-from tests.integration.database.test_db_i import db_session
+from tests.integration.database.test_db_i import db_session, setup_test_db
 
 
 
@@ -49,7 +49,7 @@ def fake_response_small_aoi():
     with open('tests/resources/fake_response_small_aoi.json') as f:
         return json.load(f)
 
-def test_data_importer_i(fake_args, fake_response_small_aoi, db_session):
+def test_data_importer_i(fake_args, fake_response_small_aoi, db_session, setup_test_db):
     """
     Verifying that correct features are retrieved from data api and correctly stored in db.
     """

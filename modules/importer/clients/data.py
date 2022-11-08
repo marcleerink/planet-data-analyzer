@@ -241,13 +241,6 @@ class ImageDataFeature:
             pixel_res = self.pixel_res)
         db.sql_alch_commit(satellite)
 
-    
-    def to_item_type_model(self):
-            item_type = db.ItemType(
-            id = self.item_type_id,
-            sat_id = self.sat_id)
-            return item_type
-
     def to_sat_image_model(self):
         sat_image = db.SatImage(
                 id = self.id, 
@@ -261,10 +254,8 @@ class ImageDataFeature:
                 )
         db.sql_alch_commit(sat_image)
     
-    
-
     def to_item_asset_model(self):
-        def to_asset_type_model():
+        def get_asset_types():
             for id in self.asset_types:
                 yield db.AssetType(id = id)
         
@@ -272,6 +263,6 @@ class ImageDataFeature:
                 id = self.item_type_id,
                 sat_id = self.sat_id)
 
-        for asset in to_asset_type_model():
+        for asset in get_asset_types():
             item_type.assets.append(asset)
         db.sql_alch_commit(item_type)

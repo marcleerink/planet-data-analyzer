@@ -2,13 +2,15 @@ from seleniumbase import BaseCase
 import cv2
 import time
 import subprocess
+import pytest
 
-APP_URL = "http://localhost:8502"
+APP_URL = "http://localhost:8501"
 
 class ComponentsTest(BaseCase):
     current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
     reference_screenshot_path = "tests/resources/screenshots/reference-screenshot.png"
-
+    
+    @pytest.mark.last
     def test_app_screenshot_e(self):
 
         # Open the app and take a screenshot
