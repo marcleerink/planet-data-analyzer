@@ -4,8 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 import geopandas as gpd
 import pandas as pd
 
-from modules.database import db
-from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature,\
+from database import db
+from api_importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature,\
                                              CountryFeature, LandCoverClassFeature
 from tests.integration.database.test_db_i import db_session, setup_test_db
 

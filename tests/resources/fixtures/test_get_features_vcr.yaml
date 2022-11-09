@@ -1,0 +1,124 @@
+interactions:
+- request:
+    body: '{"item_types": ["Landsat8L1G", "MOD09GA", "MOD09GQ", "MYD09GA", "MYD09GQ",
+      "PSOrthoTile", "PSScene", "REOrthoTile", "REScene", "Sentinel1", "Sentinel2L1C",
+      "SkySatCollect", "SkySatScene", "SkySatVideo"], "filter": {"type": "AndFilter",
+      "config": [{"type": "DateRangeFilter", "field_name": "acquired", "config": {"gte":
+      "2022-10-01T00:00:00.000Z", "lte": "2022-10-02T00:00:00.000Z"}}, {"type": "RangeFilter",
+      "field_name": "cloud_cover", "config": {"lte": 0.1}}, {"type": "GeometryFilter",
+      "field_name": "geometry", "config": {"coordinates": [[[13.449675871265441, 52.522419258262346],
+      [13.449675871265441, 52.516753121430895], [13.45762751773293, 52.516753121430895],
+      [13.45762751773293, 52.522419258262346], [13.449675871265441, 52.522419258262346]]],
+      "type": "Polygon"}}]}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Basic UExBSzBiZmJkYjViNWM1ZDQ2Nzk5YWE4YjQyZWU4MWIxMTIxOg==
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '775'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.28.1
+    method: POST
+    uri: https://api.planet.com/data/v1/quick-search
+  response:
+    body:
+      string: !!binary |
+        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
+        4HzR3m//CwAA///FiAWXPRYAAA==
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 09 Nov 2022 17:00:49 GMT
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 edge, 1.1 google
+      X-Planet-Trace-Id:
+      - ede5166a-0171-444d-8b04-815aafbfcfff
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Basic UExBSzBiZmJkYjViNWM1ZDQ2Nzk5YWE4YjQyZWU4MWIxMTIxOg==
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.28.1
+    method: GET
+    uri: https://api.planet.com/data/v1/searches/70241910f46942678ea1d6a92ced357f/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6ICIyMDIyLTEwLTA2VDAzOjE0OjE0LjAwMDAwMFoiLCAic29ydF9sYXN0X2lkIjogIk1ZRDA5R0EuQTIwMjIyNzQuaDE4djAzLjA2MS4yMDIyMjc2MDMzNzUzIiwgInNvcnRfcHJldiI6IGZhbHNlLCAicXVlcnlfcGFyYW1zIjoge319
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/9SS3Y6iMBiGb8U02TMzQPFnMdlsGBCnRDC6iuhmY2pbpFiRWBgsk7n3TZ0Tb2EO
+        etA2T54v7/t9gIPg5VmCSe8DHDJ+kzWY9EBe15WcGAau+EslcMnqF3K9GBTX2Hi3DMnwjeRMGmMT
+        DizHMrPByBnA0fgnwxYdYQcSRu3hODNuTDailr8PFT6xX0yF7W5LRWrHFbts+IK7Kl67Enlhd7RD
+        M4XhEBXXEypfrd3lXhGYi72Hnv5XgsCIL/irScpEzD2XE+goGjgdnQWKemiEZkPrOGufmHtO7FWG
+        t0vNNXR7l09cSy4J1M79JZAEbjR3p9tEscRpd2mYH9OHb5yl5g/bB/0eOJTsrlMqGyH0VTKRfffQ
+        PKQiH6n5etrO1y5MfLdbFFNTn3nhtpHvtlFw5U+s3KWxmUJxfrjP1n7lu8OVOW2Wa9RGBVJxt2yw
+        Px3Qwu3mhQujP4OHIyoIjPyoi7tNh3h7QmX8TspVRt5CQbkucJ8f3+KvOdNEkFJkZBao3dbqtIvZ
+        lgM++z2QMVw3N6Z39++/fg/UqmK6h+Dr3bsKwUjNryX4/B8AAP//t3bfnecCAAA=
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 09 Nov 2022 17:00:49 GMT
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 edge, 1.1 google
+      X-Planet-Trace-Id:
+      - 2b885572-04a5-469d-8a9a-fe09f2c89634
+    status:
+      code: 200
+      message: OK
+version: 1

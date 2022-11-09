@@ -88,3 +88,6 @@ streamlit run app.py
 - Add satellite constellations from other companies.
 - Automate the import to PostGIS by deploying it on a server.
 
+
+Source: "https://developers.planet.com/docs/apis/data/"
+"Image © 2022 Planet Labs PBC"

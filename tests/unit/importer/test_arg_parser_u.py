@@ -1,5 +1,5 @@
 import pytest
-from modules.importer.arg_parser import arguments, args_validate
+from api_importer.arg_parser import arguments, args_validate
 import argparse
 from datetime import datetime, timedelta
 

@@ -1,9 +1,9 @@
 import streamlit as st
-from geoalchemy2.shape import to_shape
-from modules.database import db
-from modules.app import maps
-from modules.app import query
-from modules.app import filters
+
+from database import db
+from app import maps
+from app import query
+from app import filters
 
 APP_TITLE = "Satellite Image Joins"
 APP_SUB_TITLE = 'Source: Planet: https://developers.planet.com/docs/apis/data/'
@@ -31,8 +31,6 @@ def main():
     lat_lon_lst = maps.query_lat_lon_sat_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
-
-    city = session.query(db.City)
 
     countries = query.query_countries_with_filters(session,
                                             sat_names,

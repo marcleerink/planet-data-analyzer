@@ -9,9 +9,10 @@ import geopandas as gpd
 from sqlalchemy_utils import database_exists, create_database
 import psycopg2
 
-from modules.config import POSTGIS_URL, LOGGER
-from modules.database import db
-from modules.app.query import query_distinct_satellite_names, query_countries_with_filters,\
+
+from config import POSTGIS_URL
+from database import db
+from app.query import query_distinct_satellite_names, query_countries_with_filters,\
     query_distinct_satellite_names, query_sat_images_with_filter, query_lat_lon_sat_images, query_sat_images_with_filter
 
 from tests.resources import fake_feature
@@ -88,14 +89,13 @@ def city():
 @pytest.fixture
 def city_berlin():
     gdf = gpd.read_file('tests/resources/fake_city_berlin.geojson')
-    print(city_berlin)
     return db.City(id = 2,
                    name = gdf['name'][0],
                    geom = from_shape(gdf['geometry'][0], srid=4326))
 @pytest.fixture()
 def land_cover_class(geom_shape):
     return db.LandCoverClass(id = 1, 
-                    featureclass='fake_land_cover', 
+                    featureclass='fake_area', 
                     geom=from_shape(geom_shape))
 
 @pytest.fixture()
@@ -145,7 +145,6 @@ def test_ItemType(db_session, setup_models):
     assert query.satellites.id == 's145'
 
 
-
 def test_AssetType(db_session, setup_models):
     #act
     query = db_session.query(db.AssetType).one()
@@ -178,6 +177,11 @@ def test_SatImage(db_session, setup_models, geom_shape):
     assert [i.id for i in query.land_cover_class] == [1]
     assert [i.iso for i in query.countries] == ['DE']
 
+    #properties
+    assert query.lon == 8.804454520157185
+    assert query.lat == 55.474220203855445
+    assert query.area_sqkm == 1244037.118
+
 
 def test_Country(db_session, setup_models, city_berlin):
     #add city within germany to test cities relationship
@@ -196,8 +200,8 @@ def test_Country(db_session, setup_models, city_berlin):
     assert [i.name for i in query.cities]== ['Berlin']
 
 def test_City(db_session, setup_models, city_berlin):
-    #add city within germany to test sat_images relationship
-
+    #add city within germany to test sat_images spatial relationship
+    #TODO split happy
     db_session.add(city_berlin)
     db_session.commit()
 
@@ -209,14 +213,17 @@ def test_City(db_session, setup_models, city_berlin):
     assert query.name == 'Bombo'
     assert to_shape(query.geom).geom_type == 'Point'
     
-
     #relationships
-    
     assert [i.id for i in query.sat_images] == []
     assert [i.id for i in query_with_berlin.sat_images] == ['ss20221002']
     
+def test_LandCoverClass(db_session, setup_models, geom_shape):
+    query = db_session.query(db.LandCoverClass).one()
 
-    
+    #columns
+    assert query.id == 1
+    assert query.featureclass == 'fake_area'
+    assert to_shape(query.geom) == geom_shape
 
-
-
+    #relationships
+    assert [i.id for i in query.sat_image] == ['ss20221002']

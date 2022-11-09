@@ -4,11 +4,11 @@ import json
 import httplib2
 from concurrent.futures import ThreadPoolExecutor
 
-from modules.database import db
-from modules.importer.clients.data import DataAPIClient, ImageDataFeature
+from database import db
+from api_importer.clients.data import DataAPIClient, ImageDataFeature
 
 from tests.integration.database.test_db_i import asset_type, db_session, setup_test_db
-
+#TODO test rate limit 
 TEST_URL = "https://api.planet.com/data/v1"
 SEARCH_ENDPOINT = "quick-search"
 ITEM_ENDPOINT = "item-types"

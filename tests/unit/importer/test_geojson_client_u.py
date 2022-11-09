@@ -4,8 +4,8 @@ import pandas as pd
 from shapely.geometry import shape
 import vcr
 
-
-from modules.importer.clients.geojson_xyz import GeojsonXYZClient, CityFeature, CountryFeature, LandCoverClassFeature
+from api_importer.clients.geojson_xyz import \
+    GeojsonXYZClient, CityFeature, CountryFeature, LandCoverClassFeature
 
 @pytest.fixture
 def fake_countries():
@@ -31,7 +31,7 @@ def fake_land_cover(fake_rivers_lakes, fake_urban_areas):
     return pd.concat(gdf_list, axis=0, ignore_index=True).reset_index(names='id')\
                                                         .to_dict(orient='records')
 
-@vcr.use_cassette('tests/fixtures/test_get_countries_vcr.yaml')
+@vcr.use_cassette('tests/resources/fixtures/test_get_countries_vcr.yaml')
 def test_get_countries_vcr(fake_countries):
     """
     test if all countries are retrieved from geojsonxyz and 
@@ -47,7 +47,7 @@ def test_get_countries_vcr(fake_countries):
     assert country.name == str(fake_countries[0]['name'])
     assert country.geom == shape(fake_countries[0]['geometry'])
 
-@vcr.use_cassette('tests/fixtures/test_get_cities_vcr.yaml')
+@vcr.use_cassette('tests/resources/fixtures/test_get_cities_vcr.yaml')
 def test_get_cities_vcr(fake_cities):
     """
     test if all cities are retrieved from geojsonxyz and
@@ -65,7 +65,7 @@ def test_get_cities_vcr(fake_cities):
     assert city.geom == shape(fake_cities[0]["geometry"])
 
 
-@vcr.use_cassette('tests/fixtures/test_get_rivers_lakes_vcr.yaml')
+@vcr.use_cassette('tests/resources/fixtures/test_get_rivers_lakes_vcr.yaml')
 def test_get_rivers_lakes_vcr(fake_rivers_lakes):
     """
     test if all rivers/lakes are retrieved from geojsonxyz and 
@@ -79,7 +79,7 @@ def test_get_rivers_lakes_vcr(fake_rivers_lakes):
     assert river_lake_gdf.loc[0, 'featureclass'] == fake_rivers_lakes.loc[0,'featureclass']
     assert river_lake_gdf.loc[0 , 'geometry'] == fake_rivers_lakes.loc[0, 'geometry']
 
-@vcr.use_cassette('tests/fixtures/test_get_urban_areas_vcr.yaml')
+@vcr.use_cassette('tests/resources/fixtures/test_get_urban_areas_vcr.yaml')
 def test_get_urban_areas_vcr(fake_urban_areas):
     """
     test if all urban areas are retrieved from geojsonxyz and 

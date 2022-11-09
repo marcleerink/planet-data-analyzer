@@ -1,1 +1,53 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"scalerank":1,"natscale":300,"labelrank":3,"name":"Berlin","namepar":null,"namealt":null,"diffascii":0,"nameascii":"Berlin","adm0cap":1,"capalt":0,"capin":null,"worldcity":1,"megacity":1,"sov0name":"Germany","sov_a3":"DEU","adm0name":"Germany","adm0_a3":"DEU","adm1name":"Berlin","iso_a2":"DE","note":null,"latitude":52.5218186636,"longitude":13.4015486233,"changed":0,"namediff":0,"diffnote":null,"pop_max":3406000,"pop_min":3094014,"pop_other":3013258,"rank_max":12,"rank_min":12,"geonameid":2950159,"meganame":"Berlin","ls_name":"Berlin","ls_match":1,"checkme":0,"featureclass":"Admin-0 capital"},"geometry":{"type":"Point","coordinates":[13.399602764700546,52.523764522251156]}}]}
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "scalerank": 1,
+                "natscale": 300,
+                "labelrank": 3,
+                "name": "Berlin",
+                "namepar": null,
+                "namealt": null,
+                "diffascii": 0,
+                "nameascii": "Berlin",
+                "adm0cap": 1,
+                "capalt": 0,
+                "capin": null,
+                "worldcity": 1,
+                "megacity": 1,
+                "sov0name": "Germany",
+                "sov_a3": "DEU",
+                "adm0name": "Germany",
+                "adm0_a3": "DEU",
+                "adm1name": "Berlin",
+                "iso_a2": "DE",
+                "note": null,
+                "latitude": 52.5218186636,
+                "longitude": 13.4015486233,
+                "changed": 0,
+                "namediff": 0,
+                "diffnote": null,
+                "pop_max": 3406000,
+                "pop_min": 3094014,
+                "pop_other": 3013258,
+                "rank_max": 12,
+                "rank_min": 12,
+                "geonameid": 2950159,
+                "meganame": "Berlin",
+                "ls_name": "Berlin",
+                "ls_match": 1,
+                "checkme": 0,
+                "featureclass": "Admin-0 capital"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    13.399602764700546,
+                    52.523764522251156
+                ]
+            }
+        }
+    ]
+}

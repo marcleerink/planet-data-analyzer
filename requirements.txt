@@ -1,4 +1,4 @@
-#Python 3.10.8
+Python==3.10.8
 folium
 GeoAlchemy2
 geojson
@@ -8,6 +8,7 @@ Pillow
 plotly
 psycopg2
 pytest
+pytest-xdist
 python-dotenv
 SQLAlchemy
 SQLAlchemy-Utils

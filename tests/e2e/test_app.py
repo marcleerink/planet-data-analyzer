@@ -1,11 +1,10 @@
 from seleniumbase import BaseCase
 import cv2
 import time
-import subprocess
 import pytest
 
 APP_URL = "http://localhost:8501"
-
+#TODO: split to integration test exact match, multiple browsers
 class ComponentsTest(BaseCase):
     current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
     reference_screenshot_path = "tests/resources/screenshots/reference-screenshot.png"
@@ -15,7 +14,7 @@ class ComponentsTest(BaseCase):
 
         # Open the app and take a screenshot
         self.open(APP_URL)
-        time.sleep(10)
+        time.sleep(15)
         self.save_screenshot(self.current_screenshot_path)
 
         # Test that page has identical structure to baseline

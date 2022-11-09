@@ -2,10 +2,10 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 from itertools import chain
 
-from modules.importer import arg_parser
-from modules.importer.clients import data, geojson_xyz
-from modules.config import LOGGER
-from modules.database import db
+from api_importer import arg_parser
+from api_importer.clients import data, geojson_xyz
+from config import LOGGER
+from database import db
 
 def importer(args):
     '''

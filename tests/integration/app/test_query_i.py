@@ -1,11 +1,11 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from modules.database import db
-from modules.app import query
+from database import db
+from app import query
 
 from tests.integration.database.test_db_i import db_session, setup_test_db, \
-    setup_models, sat_image, geom_shape, satellite, item_type, asset_type, country
+    setup_models, sat_image, geom_shape, satellite, item_type, asset_type, country, land_cover_class, city, city_berlin
 
 def test_query_distinc_satellite_names(db_session, setup_test_db):
     #arrange
@@ -44,9 +44,9 @@ sat_names_input_output = [
 
 @pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
 def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expected_output):
-    #arrange
+    # setup filters
     cloud_cover = 0.7
-    start_date = datetime.utcnow() - timedelta(days=7)
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
     
     #act
@@ -55,9 +55,10 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
     #assert
     assert len(sat_images) == expected_output
 
-def test_query_countries_with_filter(db_session, setup_models):
+def test_query_countries_with_filter(db_session, setup_models, setup_test_db):
+    #setup filters
     cloud_cover = 0.7
-    start_date = datetime.utcnow() - timedelta(days=7)
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
     sat_names = 'Planetscope'
 
@@ -67,12 +68,18 @@ def test_query_countries_with_filter(db_session, setup_models):
     assert [i.name for i in countries_list] == ['Germany']
     assert [i.total_images for i in countries_list] == [1]
 
-def test_query_cities_with_filter(db_session, setup_models):
-    cloud_cover = 0.7
-    start_date = datetime.utcnow() - timedelta(days=7)
+def test_query_cities_with_filter(db_session, setup_models, city_berlin):
+    # add Berlin to cties table in db
+    db_session.add(city_berlin)
+    db_session.commit()
+    
+    #setup filters
+    cloud_cover = 1.0
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
     sat_names = 'Planetscope'
 
-    cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
 
+    cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
+    
     assert [i.name for i in cities_list] == ['Berlin']

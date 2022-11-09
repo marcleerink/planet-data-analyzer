@@ -1,8 +1,7 @@
-import pytest
 import streamlit as st
 from datetime import datetime, timedelta
 
-from modules.app import filters
+from app import filters
 
 def test_display_sat_name_filter():
     fake_sat_name_list = ['Planetscope', 'Skysat']

@@ -1,12 +1,13 @@
 import pytest
 from dataclasses import dataclass
 from datetime import datetime
-from modules.app import query
 import pandas as pd
 from shapely import geometry
 import geopandas as gpd
 from shapely.geometry import shape
-from geoalchemy2.shape import from_shape, to_shape
+from geoalchemy2.shape import from_shape
+
+from app import query
 from tests.resources import fake_feature
 
 @dataclass

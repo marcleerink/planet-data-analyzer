@@ -1,8 +1,7 @@
 import pytest
 import folium
-from modules.app import maps
+from app import maps
 import pandas as pd
-import geopandas as gpd
 from tests.resources import fake_country_geojson, fake_image, fake_lat_lon_list
 
 
