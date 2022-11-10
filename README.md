@@ -15,7 +15,6 @@ Futher down the road:
 
 ## Database setup
 ```mermaid
-
 classDiagram
 direction BT
 class alembic_version {
@@ -75,7 +74,8 @@ items_assets  -->  asset_types : asset_id:id
 items_assets  -->  item_types : item_id:id
 sat_images  -->  item_types : item_type_id:id
 sat_images  -->  satellites : sat_id:id
-```mermaid
+```
+
 ## Dependencies
 
 * Python 3
