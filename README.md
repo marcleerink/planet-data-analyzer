@@ -13,6 +13,69 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 Futher down the road:
 * What is the percentage of coverage of each land cover class for each image.
 
+```mermaid
+## Database setup
+
+classDiagram
+direction BT
+class alembic_version {
+   varchar(32) version_num
+}
+class asset_types {
+   varchar(50) id
+}
+class cities {
+   varchar(50) name
+   geometry(point,4326) geom
+   integer id
+}
+class countries {
+   varchar(50) name
+   geometry(geometry,4326) geom
+   varchar(3) iso
+}
+class item_types {
+   varchar(50) sat_id
+   varchar(50) id
+}
+class items_assets {
+   varchar(50) item_id
+   varchar(50) asset_id
+}
+class land_cover_classes {
+   varchar(50) featureclass
+   geometry(geometry,4326) geom
+   integer id
+}
+class sat_images {
+   double precision clear_confidence_percent
+   double precision cloud_cover
+   timestamp time_acquired
+   geometry(geometry,4326) geom
+   geometry(point,4326) centroid
+   varchar(50) sat_id
+   varchar(50) item_type_id
+   varchar(100) id
+}
+class satellites {
+   varchar(100) name
+   double precision pixel_res
+   varchar(50) id
+}
+class spatial_ref_sys {
+   varchar(256) auth_name
+   integer auth_srid
+   varchar(2048) srtext
+   varchar(2048) proj4text
+   integer srid
+}
+
+item_types  -->  satellites : sat_id:id
+items_assets  -->  asset_types : asset_id:id
+items_assets  -->  item_types : item_id:id
+sat_images  -->  item_types : item_type_id:id
+sat_images  -->  satellites : sat_id:id
+```mermaid
 ## Dependencies
 
 * Python 3

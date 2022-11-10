@@ -8,7 +8,7 @@ from shapely.geometry import shape
 import geopandas as gpd
 from sqlalchemy_utils import database_exists, create_database
 import psycopg2
-
+import json
 
 from config import POSTGIS_URL
 from database import db
@@ -16,6 +16,9 @@ from app.query import query_distinct_satellite_names, query_countries_with_filte
     query_distinct_satellite_names, query_sat_images_with_filter, query_lat_lon_sat_images, query_sat_images_with_filter
 
 from tests.resources import fake_feature
+
+ #TODO: seperate test for centroid insert
+ # test on conflict do nothing
 
 @pytest.fixture()
 def setup_test_db():
@@ -55,11 +58,17 @@ def item_type():
     return db.ItemType(id = 'PSScene',
                     sat_id = 's145')
 
-@pytest.fixture()
+@pytest.fixture
 def geom_shape():
     return shape(fake_feature.feature['geometry'])
 
-@pytest.fixture()
+@pytest.fixture
+def geom_shape_nl_germany_border():
+    gdf = gpd.read_file('tests/resources/polygon_border_germany.geojson')
+    return gdf['geometry'][0]
+    
+    
+@pytest.fixture
 def sat_image(geom_shape):
     return db.SatImage(id = 'ss20221002', 
                         clear_confidence_percent = 95,
@@ -69,7 +78,16 @@ def sat_image(geom_shape):
                         geom = from_shape(geom_shape, srid=4326),
                         sat_id = 's145',
                         item_type_id = 'PSScene')
-
+@pytest.fixture
+def sat_image_nl_germany_border(geom_shape_nl_germany_border):
+    return db.SatImage(id = 'fake_not_in_bounds', 
+                    clear_confidence_percent = 95,
+                    cloud_cover = 0.65,
+                    time_acquired = datetime(2022, 10, 1, 23, 55, 59),
+                    centroid = from_shape(geom_shape_nl_germany_border, srid=4326),
+                    geom = from_shape(geom_shape_nl_germany_border, srid=4326),
+                    sat_id = 's145',
+                    item_type_id = 'PSScene')
 @pytest.fixture()
 def asset_type():
     return db.AssetType(id='analytic')
@@ -166,7 +184,6 @@ def test_SatImage(db_session, setup_models, geom_shape):
     assert query.cloud_cover == 0.65
     assert query.time_acquired == datetime(2022, 10, 1, 23, 55, 59)
     assert to_shape(query.geom) == geom_shape
-    assert to_shape(query.centroid).wkt == 'POINT (8.804454520157185 55.474220203855445)'
     
     #foreign
     assert query.sat_id == 's145'
@@ -174,7 +191,7 @@ def test_SatImage(db_session, setup_models, geom_shape):
     
     # relationships
     assert query.satellites.pixel_res == 3.15
-    assert [i.id for i in query.land_cover_class] == [1]
+    assert [i.featureclass for i in query.land_cover_class] == ['fake_area']
     assert [i.iso for i in query.countries] == ['DE']
 
     #properties
@@ -182,8 +199,13 @@ def test_SatImage(db_session, setup_models, geom_shape):
     assert query.lat == 55.474220203855445
     assert query.area_sqkm == 1244037.118
 
+def test_CentroidFromPolygon(db_session, setup_models):
 
-def test_Country(db_session, setup_models, city_berlin):
+    query = db_session.query(db.SatImage).one()
+
+    assert to_shape(query.centroid).wkt == 'POINT (8.804454520157185 55.474220203855445)'
+
+def test_Country_success(db_session, setup_models, city_berlin):
     #add city within germany to test cities relationship
     db_session.add(city_berlin)
     db_session.commit()
@@ -199,24 +221,41 @@ def test_Country(db_session, setup_models, city_berlin):
     assert query.sat_images.id == 'ss20221002'
     assert [i.name for i in query.cities]== ['Berlin']
 
-def test_City(db_session, setup_models, city_berlin):
+def test_Country_rel_none_found(db_session, setup_models, sat_image_nl_germany_border):
+    """Test that spatial relationships with City and SatImage are not returning objects when out of bounds"""
+    
+    #add sat_image out of geometry bounds
+    db_session.add(sat_image_nl_germany_border)
+    db_session.commit()
+
+    query = db_session.query(db.Country).one()
+    
+    #relationships
+    assert query.sat_images.id == 'ss20221002'
+    assert query.sat_images.id != 'fake_not_in_bounds'
+    assert [i.name for i in query.cities]== []
+
+def test_City_success(db_session, setup_models, city_berlin):
     #add city within germany to test sat_images spatial relationship
-    #TODO split happy
     db_session.add(city_berlin)
     db_session.commit()
 
-    query = db_session.query(db.City).first()
     query_with_berlin = db_session.query(db.City).filter_by(name='Berlin').one()
 
     #columns
-    assert query.id == 1
-    assert query.name == 'Bombo'
-    assert to_shape(query.geom).geom_type == 'Point'
+    assert query_with_berlin.id == 2
+    assert query_with_berlin.name == 'Berlin'
+    assert to_shape(query_with_berlin.geom).geom_type == 'Point'
     
-    #relationships
-    assert [i.id for i in query.sat_images] == []
+    #spatial relationship
     assert [i.id for i in query_with_berlin.sat_images] == ['ss20221002']
-    
+
+def test_City_relationship_none_found(db_session, setup_models):
+
+    query = db_session.query(db.City).first()
+
+    assert [i.id for i in query.sat_images] == []
+
 def test_LandCoverClass(db_session, setup_models, geom_shape):
     query = db_session.query(db.LandCoverClass).one()
 
@@ -227,3 +266,17 @@ def test_LandCoverClass(db_session, setup_models, geom_shape):
 
     #relationships
     assert [i.id for i in query.sat_image] == ['ss20221002']
+
+def test_prefix_insert(db_session, setup_models, sat_image):
+    """
+    test that double unique constraint items are not added to database ('ON CONFLICT DO NOTHING'), 
+    without throwing an error.
+    """
+    db_session.add(sat_image)
+    db_session.commit()
+
+    query = db_session.query(db.SatImage).one()
+
+    #assert query only returns one item
+    assert query
+

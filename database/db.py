@@ -19,28 +19,33 @@ from config import POSTGIS_URL
 
 Base = declarative_base()
 
+
 def get_db_engine():
     return create_engine(POSTGIS_URL, echo=False)
+
 
 def get_db_session():
     engine = get_db_engine()
     Session = sessionmaker(bind=engine)
     return Session()
-    
+
+
 session = get_db_session()
 
+
 def sql_alch_commit(model):
-        session = get_db_session()
-        session.add(model)
-        session.commit()
+    session = get_db_session()
+    session.add(model)
+    session.commit()
+
 
 def create_tables(engine, Base):
     if not database_exists(engine.url):
         create_database(url=engine.url)
-        conn = psycopg2.connect(dbname=os.environ['DB_NAME'], 
-                                user=os.environ['DB_USER'], 
-                                password=os.environ['DB_PW'], 
-                                host=os.environ['DB_HOST'], 
+        conn = psycopg2.connect(dbname=os.environ['DB_NAME'],
+                                user=os.environ['DB_USER'],
+                                password=os.environ['DB_PW'],
+                                host=os.environ['DB_HOST'],
                                 port=os.environ['DB_PORT'])
         cursor = conn.cursor()
         cursor.execute('CREATE EXTENSION postgis')
@@ -54,7 +59,7 @@ def create_tables(engine, Base):
 @compiles(Insert)
 def prefix_inserts(insert, compiler, **kw):
     return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
-        
+
 
 class CentroidFromPolygon(TypeDecorator):
     '''
@@ -66,50 +71,54 @@ class CentroidFromPolygon(TypeDecorator):
 
     def bind_expression(self, bindvalue):
         return self.impl.bind_expression(bindvalue).ST_Transform(3035)\
-                                                    .ST_Centroid()\
-                                                    .ST_Transform(4326)
+            .ST_Centroid()\
+            .ST_Transform(4326)
+
+
 class Satellite(Base):
-    __tablename__='satellites'
+    __tablename__ = 'satellites'
     id = Column(String(50), primary_key=True)
     name = Column(String(100), nullable=False)
     pixel_res = Column(Float)
-    
-    sat_images = relationship('SatImage', 
-                            backref='satellites',
-                            lazy='joined'
-                            )
-    items = relationship('ItemType', 
-                        backref='satellites',
-                        lazy='joined'
-                        )
+
+    sat_images = relationship('SatImage',
+                              backref='satellites',
+                              lazy='joined'
+                              )
+    items = relationship('ItemType',
+                         backref='satellites',
+                         lazy='joined'
+                         )
+
 
 class SatImage(Base):
-    __tablename__='sat_images'
+    __tablename__ = 'sat_images'
     id = Column(String(100), primary_key=True)
     clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(srid=4326, spatial_index=True), nullable=False)
-    centroid = Column(CentroidFromPolygon(srid=4326, geometry_type='POINT', nullable=False))
+    centroid = Column(CentroidFromPolygon(
+        srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'))
     item_type_id = Column(String(50), ForeignKey('item_types.id'))
-    
+
     land_cover_class = relationship(
-                    'LandCoverClass',
-                    primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
-                    backref='sat_image',
-                    viewonly=True,
-                    uselist=True,
-                    lazy='joined')
+        'LandCoverClass',
+        primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
+        backref='sat_image',
+        viewonly=True,
+        uselist=True,
+        lazy='joined')
 
     @hybrid_property
     def lon(self):
         return session.scalar(self.centroid.ST_X())
 
-    @hybrid_property   
+    @hybrid_property
     def lat(self):
         return session.scalar(self.centroid.ST_Y())
-  
+
     @hybrid_property
     def area_sqkm(self):
         area_mm = session.scalar((self.geom.ST_Transform(3035).ST_Area()))
@@ -120,23 +129,24 @@ class SatImage(Base):
         session.scalar(self.geom.ST_Overlaps())
 
     @hybrid_property
-    def geojson(self): 
+    def geojson(self):
         return Feature(
-                id=self.id,
-                geometry=to_shape(self.geom),
-                properties={
-                    "id" : self.id,
-                    "cloud_cover" : self.cloud_cover,
-                    "pixel_res" : self.satellites.pixel_res,
-                    "time_acquired" : self.time_acquired.strftime("%Y-%m-%d"),
-                    "sat_id" : self.sat_id,
-                    "sat_name" : self.satellites.name,
-                    "item_type_id" : self.item_type_id,
-                    "srid" : self.srid,
-                    "area_sqkm": self.area_sqkm,
-                    "land_cover_class" : self.land_cover_class,
-                    "asset_types": self.item_types.assets,
-                })
+            id=self.id,
+            geometry=to_shape(self.geom),
+            properties={
+                "id": self.id,
+                "cloud_cover": self.cloud_cover,
+                "pixel_res": self.satellites.pixel_res,
+                "time_acquired": self.time_acquired.strftime("%Y-%m-%d"),
+                "sat_id": self.sat_id,
+                "sat_name": self.satellites.name,
+                "item_type_id": self.item_type_id,
+                "srid": self.srid,
+                "area_sqkm": self.area_sqkm,
+                "land_cover_class": self.land_cover_class,
+                "asset_types": self.item_types.assets,
+            })
+
 
 items_assets = Table(
     'items_assets',
@@ -145,33 +155,34 @@ items_assets = Table(
     Column('asset_id', ForeignKey('asset_types.id'), primary_key=True)
 )
 
+
 class ItemType(Base):
-    __tablename__='item_types'
+    __tablename__ = 'item_types'
     id = Column(String(50), primary_key=True)
 
     sat_id = Column(String(50), ForeignKey('satellites.id'))
 
-    sat_image = relationship('SatImage', 
-                            backref='item_types',)
+    sat_image = relationship('SatImage',
+                             backref='item_types',)
 
-    assets = relationship('AssetType', 
-                            secondary=items_assets, 
-                            backref='item_types',
-                            lazy='dynamic')
-    
-    
+    assets = relationship('AssetType',
+                          secondary=items_assets,
+                          backref='item_types',
+                          lazy='dynamic')
+
+
 class AssetType(Base):
-    __tablename__='asset_types'
-    id = Column(String(50), primary_key=True) 
+    __tablename__ = 'asset_types'
+    id = Column(String(50), primary_key=True)
 
 
 class Country(Base):
-    __tablename__='countries'
+    __tablename__ = 'countries'
     iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
-    geom = Column(Geometry(srid=4326, spatial_index=True), 
-                            nullable=False)
-    
+    geom = Column(Geometry(srid=4326, spatial_index=True),
+                  nullable=False)
+
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
@@ -187,38 +198,38 @@ class Country(Base):
         viewonly=True,
         uselist=True,
         lazy='joined')
-    
-    
+
 
 class City(Base):
-    __tablename__='cities'
+    __tablename__ = 'cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True), 
-                            nullable=False,
-                            unique=True)
+    geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True),
+                  nullable=False,
+                  unique=True)
 
     join_query = 'func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)'
     sat_images = relationship(
         'SatImage',
-        primaryjoin= join_query,
+        primaryjoin=join_query,
         backref='cities',
         viewonly=True,
         uselist=True,
         lazy='joined')
-    
+
     @hybrid_property
     def buffer(self):
         return self.geom.ST_Transform(3035).ST_Buffer(50000).ST_Transform(4326)
 
 
 class LandCoverClass(Base):
-    __tablename__='land_cover_classes'
+    __tablename__ = 'land_cover_classes'
     id = Column(Integer, primary_key=True)
     featureclass = Column(String(50))
     geom = Column(Geometry(srid=4326, spatial_index=True),
-                            nullable=False)
+                  nullable=False)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     engine = get_db_engine()
     create_tables(engine, Base)

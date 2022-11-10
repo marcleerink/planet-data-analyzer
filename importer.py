@@ -1,11 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
 import json
-from itertools import chain
 
 from api_importer import arg_parser
 from api_importer.clients import data, geojson_xyz
 from config import LOGGER
 from database import db
+
 
 def importer(args):
     '''
@@ -37,14 +37,22 @@ def importer(args):
         land_cover_import()
 
     data_api_importer(args)
-    
-    LOGGER.info('Total of {} countries in db'.format(session.query(db.Country).count()))
-    LOGGER.info('Total of {} cities in db'.format(session.query(db.City).count()))
-    LOGGER.info('Total of {} landcoverclasses in db'.format(session.query(db.LandCoverClass).count()))
-    LOGGER.info('Total of {} satellites in db'.format(session.query(db.Satellite).count()))
-    LOGGER.info('Total of {} item types in db'.format(session.query(db.ItemType).count()))
-    LOGGER.info('Total of {} sat images in db'.format(session.query(db.SatImage).count()))
-    LOGGER.info('Total of {} asset types in db'.format(session.query(db.AssetType).count()))
+
+    LOGGER.info('Total of {} countries in db'.format(
+        session.query(db.Country).count()))
+    LOGGER.info('Total of {} cities in db'.format(
+        session.query(db.City).count()))
+    LOGGER.info('Total of {} landcoverclasses in db'.format(
+        session.query(db.LandCoverClass).count()))
+    LOGGER.info('Total of {} satellites in db'.format(
+        session.query(db.Satellite).count()))
+    LOGGER.info('Total of {} item types in db'.format(
+        session.query(db.ItemType).count()))
+    LOGGER.info('Total of {} sat images in db'.format(
+        session.query(db.SatImage).count()))
+    LOGGER.info('Total of {} asset types in db'.format(
+        session.query(db.AssetType).count()))
+
 
 def data_api_importer(args):
     """
@@ -64,20 +72,20 @@ def data_api_importer(args):
         float cc
             Cloud cover value (0.0 - 1.0)
     """
-    
+
     client = data.DataAPIClient(api_key=args.api_key)
     geometry = geojson_import(args.aoi_file)
 
     features = client.get_features(start_date=args.start_date,
-                                end_date=args.end_date, 
-                                cc=args.cc,
-                                geometry=geometry)  
+                                   end_date=args.end_date,
+                                   cc=args.cc,
+                                   geometry=geometry)
 
     def to_postgis(feature):
         feature.to_satellite_model()
         feature.to_item_asset_model()
         feature.to_sat_image_model()
-        
+
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
@@ -88,9 +96,10 @@ def country_table_import():
 
     def to_postgis(feature):
         feature.to_country_model()
-    
+
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
+
 
 def city_table_import():
     client = geojson_xyz.GeojsonXYZClient()
@@ -102,6 +111,7 @@ def city_table_import():
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
+
 def land_cover_import():
     client = geojson_xyz.GeojsonXYZClient()
     features = client.get_land_cover_classes()
@@ -112,13 +122,13 @@ def land_cover_import():
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
 
+
 def geojson_import(aoi_file):
     with open(aoi_file) as f:
         geometry = json.load(f)
     return geometry['features'][0]['geometry']
-    
+
 
 if __name__ == "__main__":
     args = arg_parser.parser()
     importer(args)
-    
