@@ -13,8 +13,8 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 Futher down the road:
 * What is the percentage of coverage of each land cover class for each image.
 
-```mermaid
 ## Database setup
+```mermaid
 
 classDiagram
 direction BT
