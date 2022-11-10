@@ -74,6 +74,7 @@ items_assets  -->  asset_types : asset_id:id
 items_assets  -->  item_types : item_id:id
 sat_images  -->  item_types : item_type_id:id
 sat_images  -->  satellites : sat_id:id
+
 ```
 
 ## Dependencies
