@@ -9,6 +9,13 @@ import datetime
 from typing import List
 from database.db import SatImage, Satellite, City, Country
 
+def query_asset_types_from_image(_image: SatImage) -> List[str]:
+    return [i.id for i in _image.item_types.assets]
+    
+
+def query_land_cover_class_from_image(_image: SatImage) -> List[str]:
+    return list(set([i.featureclass for i in _image.land_cover_class]))
+       
 
 def create_images_df(_images: List[SatImage]):
     
@@ -25,6 +32,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
     for i in _images:
         geometry = to_shape(i.geom)
         asset_type = query_asset_types_from_image(i)
+        land_cover_class = query_land_cover_class_from_image(i)
         feature = Feature(
                 id=i.id,
                 geometry=geometry,
@@ -38,6 +46,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
                     "item_type_id" : i.item_type_id,
                     "asset_types" : asset_type,
                     "area_sqkm": i.area_sqkm,
+                    "land_cover_class": land_cover_class
                 })
         json_lst.append(feature)
     geojson_str = dumps(FeatureCollection(json_lst))
@@ -87,9 +96,6 @@ def create_cities_df(_cities: List[Country]) -> pd.DataFrame:
         'name' : [i.name for i in _cities],
         'total_images' : [i.total_images for i in _cities]})
 
-def query_asset_types_from_image(_image: SatImage) -> List[str]:
-    return [i.id for i in _image.item_types.assets]
-
 def query_distinct_satellite_names(_session: session.Session) -> List[str]:
     query = _session.query(Satellite.name).distinct()
     return [sat.name for sat in query]
@@ -123,7 +129,6 @@ def query_countries_with_filters(_session: session.Session,
     '''
     gets all country objects with total images per country from postgis with applied filters.
     '''
-    
     subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
     countries = _session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.geom).label('total_images'))\
                                                             .join(Country.sat_images)\

@@ -188,7 +188,7 @@ class Country(Base):
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
-        uselist=False,
+        uselist=True,
         lazy='joined')
 
     cities = relationship(

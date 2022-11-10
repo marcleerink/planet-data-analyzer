@@ -32,6 +32,7 @@ def main():
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
 
+
     countries = query.query_countries_with_filters(session,
                                             sat_names,
                                             cloud_cover, 
