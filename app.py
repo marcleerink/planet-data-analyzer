@@ -28,7 +28,7 @@ def main():
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
                                             end_date=end_date)
-    lat_lon_lst = query.query_lat_lon_sat_images(images)
+    lat_lon_lst = query.query_lat_lon_from_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
 

@@ -12,8 +12,6 @@ import json
 
 from config import POSTGIS_URL
 from database import db
-from app.query import query_distinct_satellite_names, query_countries_with_filters,\
-    query_distinct_satellite_names, query_sat_images_with_filter, query_lat_lon_sat_images, query_sat_images_with_filter
 
 from tests.resources import fake_feature
 
@@ -218,7 +216,7 @@ def test_Country_success(db_session, setup_models, city_berlin):
     assert to_shape(query.geom).geom_type == 'MultiPolygon'
     
     #relationships
-    assert query.sat_images.id == 'ss20221002'
+    assert [i.id for i in query.sat_images] == ['ss20221002']
     assert [i.name for i in query.cities]== ['Berlin']
 
 def test_Country_rel_none_found(db_session, setup_models, sat_image_nl_germany_border):
@@ -231,8 +229,7 @@ def test_Country_rel_none_found(db_session, setup_models, sat_image_nl_germany_b
     query = db_session.query(db.Country).one()
     
     #relationships
-    assert query.sat_images.id == 'ss20221002'
-    assert query.sat_images.id != 'fake_not_in_bounds'
+    assert [i.id for i in query.sat_images] == ['ss20221002']
     assert [i.name for i in query.cities]== []
 
 def test_City_success(db_session, setup_models, city_berlin):

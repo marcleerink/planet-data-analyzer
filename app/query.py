@@ -54,6 +54,7 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
 
 def create_country_geojson(_countries: List[Country]) -> dict:
     json_lst=[]
+    
     for i in _countries:
         geometry = to_shape(i.geom)
         feature = Feature(
@@ -101,7 +102,7 @@ def query_distinct_satellite_names(_session: session.Session) -> List[str]:
     return [sat.name for sat in query]
 
 
-def query_lat_lon_sat_images(_images: List[SatImage]) -> List[float]:
+def query_lat_lon_from_images(_images: List[SatImage]) -> List[float]:
     """gets lon and lat for each SatImage model instance"""
     lon_list = [image.lon for image in _images]
     lat_list = [image.lat for image in _images]
@@ -129,8 +130,9 @@ def query_countries_with_filters(_session: session.Session,
     '''
     gets all country objects with total images per country from postgis with applied filters.
     '''
+
     subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
-    countries = _session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.geom).label('total_images'))\
+    countries = _session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.id).label('total_images'))\
                                                             .join(Country.sat_images)\
                                                             .filter(SatImage.time_acquired >= start_date,
                                                                     SatImage.time_acquired <= end_date,

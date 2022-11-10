@@ -108,8 +108,7 @@ class SatImage(Base):
         primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
         backref='sat_image',
         viewonly=True,
-        uselist=True,
-        lazy='joined')
+        uselist=True)
 
     @hybrid_property
     def lon(self):
@@ -188,16 +187,14 @@ class Country(Base):
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
-        uselist=True,
-        lazy='joined')
+        uselist=True)
 
     cities = relationship(
         'City',
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
         backref='countries',
         viewonly=True,
-        uselist=True,
-        lazy='joined')
+        uselist=True)
 
 
 class City(Base):
@@ -214,8 +211,7 @@ class City(Base):
         primaryjoin=join_query,
         backref='cities',
         viewonly=True,
-        uselist=True,
-        lazy='joined')
+        uselist=True)
 
     @hybrid_property
     def buffer(self):

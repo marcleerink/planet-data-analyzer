@@ -56,9 +56,8 @@ image_geojson = {
                 "sat_name": "Planetscope",
                 "item_type_id": "PSOrthoTile",
                 "area_sqkm": 478.664,
-                "asset_types": [
-                    "analytic"
-                ]
+                "asset_types": ["analytic"],
+                "land_cover_class": ["Urban Area"]
             }
         }
     ]

@@ -25,7 +25,13 @@ class FakeItemType:
     id: str
     sat_id: FakeSatellite
     assets: FakeAssetType
-    
+
+@dataclass
+class FakeLandCoverClass:
+    id: int
+    featureclass: str
+    geom: geometry
+
 @dataclass
 class FakeSatImage:
     id: str
@@ -33,10 +39,15 @@ class FakeSatImage:
     time_acquired: datetime
     geom: geometry
     area_sqkm: float
+    lon: float
+    lat: float
+
     satellites: FakeSatellite
     sat_id: FakeSatellite
     item_type_id: FakeItemType
-    item_types: FakeItemType   
+    item_types: FakeItemType 
+    land_cover_class: FakeLandCoverClass
+
 
 @dataclass
 class FakeCountry:
@@ -67,7 +78,7 @@ def fake_asset_type2():
     return FakeAssetType(id='asset2')
 
 @pytest.fixture
-def fake_image(fake_satellite, fake_item_type, geom_shape):
+def fake_image(fake_satellite, fake_item_type, fake_land_cover_class, geom_shape):
     return FakeSatImage(
                     id='fake_id', 
                     cloud_cover=0.1, 
@@ -77,11 +88,39 @@ def fake_image(fake_satellite, fake_item_type, geom_shape):
                     item_type_id = 'fake_item_type_id',
                     item_types = fake_item_type,
                     geom=from_shape(geom_shape),
-                    area_sqkm = 25.0)
+                    area_sqkm = 25.0,
+                    land_cover_class = [fake_land_cover_class],
+                    lon = 23.0235,
+                    lat = -15.0452)
+
+@pytest.fixture
+def fake_land_cover_class(geom_shape):
+    return FakeLandCoverClass(id=1,
+                                featureclass='fake_land_cover_class',
+                                geom = geom_shape)
 
 @pytest.fixture
 def fake_country(geom_shape):
     return FakeCountry(iso='NL', name='Netherlands', total_images=50, geom=from_shape(geom_shape))
+
+def test_query_asset_types_from_image(fake_image):
+
+    asset_types = query.query_asset_types_from_image(fake_image)
+
+    assert asset_types == ['asset1', 'asset2']
+
+def test_query_query_land_cover_class_from_image(fake_image):
+
+    land_cover_class = query.query_land_cover_class_from_image(fake_image)
+
+    assert land_cover_class == ['fake_land_cover_class']
+
+def test_query_lat_lon_from_images(fake_image):
+
+    lat_lon_list = query.query_lat_lon_from_images([fake_image])
+
+    assert lat_lon_list == [-15.0452, 23.0235]
+
 
 def test_create_images_df(fake_image):
     images_df = query.create_images_df([fake_image])
@@ -123,4 +162,4 @@ def test_create_countries_df(fake_country):
     assert country_df['iso'][0] == fake_country.iso
     assert country_df['name'][0] == fake_country.name
     assert country_df['total_images'][0] == fake_country.total_images
-    
+
