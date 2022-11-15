@@ -15,8 +15,7 @@ from database import db
 
 from tests.resources import fake_feature
 
- #TODO: seperate test for centroid insert
- # test on conflict do nothing
+ #TODO: add country bongo
 
 @pytest.fixture()
 def setup_test_db():
@@ -93,20 +92,21 @@ def asset_type():
 @pytest.fixture()
 def country():
     gdf = gpd.read_file('tests/resources/germany.geojson')
-    return db.Country(iso = gdf['ISO2'][0],
+    return db.Country(iso = gdf['ISO'][0],
                     name = gdf['NAME_ENGLI'][0],
                     geom = from_shape(gdf['geometry'][0], srid=4326))
 @pytest.fixture()
 def city():
     gdf = gpd.read_file('tests/resources/fake_cities.geojson')
     return db.City(id = 1,
-                   name = gdf['name'][0],
+                   name = gdf['NAME'][0],
                    geom = from_shape(gdf['geometry'][0], srid=4326))
 @pytest.fixture
 def city_berlin():
     gdf = gpd.read_file('tests/resources/fake_city_berlin.geojson')
     return db.City(id = 2,
                    name = gdf['name'][0],
+                   country_iso = gdf['adm0_a3'][0],
                    geom = from_shape(gdf['geometry'][0], srid=4326))
 @pytest.fixture()
 def land_cover_class(geom_shape):
@@ -190,7 +190,7 @@ def test_SatImage(db_session, setup_models, geom_shape):
     # relationships
     assert query.satellites.pixel_res == 3.15
     assert [i.featureclass for i in query.land_cover_class] == ['fake_area']
-    assert [i.iso for i in query.countries] == ['DE']
+    assert [i.iso for i in query.countries] == ['DEU']
 
     #properties
     assert query.lon == 8.804454520157185
@@ -211,7 +211,7 @@ def test_Country_success(db_session, setup_models, city_berlin):
     query = db_session.query(db.Country).one()
 
     #columns
-    assert query.iso == 'DE'
+    assert query.iso == 'DEU'
     assert query.name == 'Germany'
     assert to_shape(query.geom).geom_type == 'MultiPolygon'
     
@@ -244,6 +244,9 @@ def test_City_success(db_session, setup_models, city_berlin):
     assert query_with_berlin.name == 'Berlin'
     assert to_shape(query_with_berlin.geom).geom_type == 'Point'
     
+    #relationships
+    assert query_with_berlin.country_iso == 'DEU'
+
     #spatial relationship
     assert [i.id for i in query_with_berlin.sat_images] == ['ss20221002']
 

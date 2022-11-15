@@ -182,6 +182,10 @@ class Country(Base):
     geom = Column(Geometry(srid=4326, spatial_index=True),
                   nullable=False)
 
+    cities = relationship('City',
+                        backref='country',
+                        lazy='dynamic')
+
     sat_images = relationship(
         'SatImage',
         primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(SatImage.geom)).as_comparison(1,2)',
@@ -189,23 +193,20 @@ class Country(Base):
         viewonly=True,
         uselist=True)
 
-    cities = relationship(
-        'City',
-        primaryjoin='func.ST_Intersects(foreign(Country.geom), remote(City.geom)).as_comparison(1,2)',
-        backref='countries',
-        viewonly=True,
-        uselist=True)
+    
 
 
 class City(Base):
     __tablename__ = 'cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
+    country_iso = Column(String(3), ForeignKey('countries.iso')) #TODO: add nullable false
     geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True),
                   nullable=False,
                   unique=True)
 
     join_query = 'func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)'
+
     sat_images = relationship(
         'SatImage',
         primaryjoin=join_query,

@@ -119,7 +119,7 @@ def test_query_lat_lon_from_images(fake_image):
 
     lat_lon_list = query.query_lat_lon_from_images([fake_image])
 
-    assert lat_lon_list == [-15.0452, 23.0235]
+    assert lat_lon_list == [[-15.0452, 23.0235]]
 
 
 def test_create_images_df(fake_image):

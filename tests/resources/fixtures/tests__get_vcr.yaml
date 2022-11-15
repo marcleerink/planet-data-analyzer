@@ -7,7 +7,7 @@ interactions:
       Accept-Encoding:
       - gzip, deflate
       Authorization:
-      - Basic UExBSzBiZmJkYjViNWM1ZDQ2Nzk5YWE4YjQyZWU4MWIxMTIxOg==
+      - Basic UExBSzlhMjQ3ZDA1ZTA4YTQ0YjY5MDQ4ZjljNWM1MWJiZGYxOg==
       Connection:
       - keep-alive
       User-Agent:
@@ -50,7 +50,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 09 Nov 2022 17:00:45 GMT
+      - Tue, 15 Nov 2022 15:03:51 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
@@ -58,7 +58,7 @@ interactions:
       Via:
       - 1.1 edge, 1.1 google
       X-Planet-Trace-Id:
-      - e8127bdc-16ee-45f1-9138-e0707acfeef7
+      - b3f9a41a-1f7e-451e-894b-6f80111dd6cf
     status:
       code: 200
       message: OK

@@ -61,7 +61,8 @@ def test_get_cities_vcr(fake_cities):
     
     assert len(cities_list) == 1249
     assert city.id == int(fake_cities[0]["id"]) 
-    assert city.name == str(fake_cities[0]["name"])
+    assert city.name == str(fake_cities[0]["NAME"])
+    assert city.country_iso == str(fake_cities[0]['ADM0_A3'])
     assert city.geom == shape(fake_cities[0]["geometry"])
 
 
@@ -115,11 +116,13 @@ def test_CityFeature(fake_cities):
 
     fake_id_list = [i.id for i in fake_feature_list]
     fake_name_list = [i.name for i in fake_feature_list]
+    fake_iso_list = [i.country_iso for i in fake_feature_list]
     fake_geom_list = [i.geom for i in fake_feature_list]
 
     assert len(fake_cities) == len(fake_feature_list)
     assert fake_id_list == [int(i["id"]) for i in fake_cities]
-    assert fake_name_list == [str(i["name"]) for i in fake_cities]
+    assert fake_name_list == [str(i["NAME"]) for i in fake_cities]
+    assert fake_iso_list == [str(i['ADM0_A3']) for i in fake_cities]
     assert fake_geom_list == [shape(i["geometry"]) for i in fake_cities]
     
 

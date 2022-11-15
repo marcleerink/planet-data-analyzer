@@ -39,7 +39,7 @@ class GeojsonXYZClient(object):
             yield CountryFeature(f)
        
     def get_cities(self):
-        endpoint = "naturalearth-3.3.0/ne_50m_populated_places_simple.geojson"
+        endpoint = "naturalearth-3.3.0/ne_50m_populated_places.geojson"
         features = gpd.read_file(self._url(endpoint)).reset_index(names='id')\
                                                     .to_dict(orient='records')
         LOGGER.info('{} cities found'.format(len(features)))            
@@ -115,13 +115,15 @@ class CityFeature:
             setattr(self, key, value)
 
         self.id = int(self.id)
-        self.name = str(self.name)
+        self.name = str(self.NAME).title()
+        self.country_iso = str(self.ADM0_A3)
         self.geom = shape(self.geometry)
 
     def to_city_model(self):
         city = db.City(
                 id = self.id,
                 name = self.name,
+                country_iso = self.country_iso,
                 geom = from_shape(self.geom, srid=4326),
                 )
         db.sql_alch_commit(city)
@@ -129,7 +131,7 @@ class CityFeature:
 class LandCoverClassFeature:
     """
     Represents a landcoverclass feature its metadata.
-    Imported from Planets Data API.
+    Imported from GeojsonXYZ API    
     """
     def __init__(self, land_cover_feature):
         """

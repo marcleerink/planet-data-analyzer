@@ -27,7 +27,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 09 Nov 2022 17:00:45 GMT
+      - Tue, 15 Nov 2022 15:03:51 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
@@ -37,7 +37,7 @@ interactions:
       Www-Authenticate:
       - Basic realm="Please enter a valid API key."
       X-Planet-Trace-Id:
-      - 90664c24-e5ce-4d58-aadb-c10c3e1b9fee
+      - c2b2c4c4-76ff-45d0-bb7c-ac4675e992aa
     status:
       code: 401
       message: Unauthorized
