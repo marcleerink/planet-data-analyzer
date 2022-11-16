@@ -1,3 +1,6 @@
+from shapely import geometry
+import geopandas as gpd
+
 country_bounding_boxes = {
     'AF': ('Afghanistan', (60.5284298033, 29.318572496, 75.1580277851, 38.4862816432)),
     'AO': ('Angola', (11.6400960629, -17.9306364885, 24.0799052263, -4.43802336998)),
@@ -173,3 +176,9 @@ country_bounding_boxes = {
     'ZM': ('Zambia', (21.887842645, -17.9612289364, 33.4856876971, -8.23825652429)),
     'ZW': ('Zimbabwe', (25.2642257016, -22.2716118303, 32.8498608742, -15.5077869605)),
 }
+
+germany_bbox = country_bounding_boxes['DE'][1]
+germany_polygon = geometry.box(*germany_bbox, ccw=True)
+
+germany_geojson = gpd.GeoSeries([germany_polygon]).to_json()
+

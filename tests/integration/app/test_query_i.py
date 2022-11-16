@@ -30,7 +30,7 @@ def test_query_lat_lon_sat_images(db_session, setup_models):
     sat_images = db_session.query(db.SatImage).all()
 
     #act
-    lat_lon = query.query_lat_lon_sat_images(sat_images)
+    lat_lon = query.query_lat_lon_from_images(sat_images)
 
     #assert
     assert lat_lon == [[55.474220203855445, 8.804454520157185]]
@@ -64,7 +64,7 @@ def test_query_countries_with_filter(db_session, setup_models, setup_test_db):
 
     countries_list = query.query_countries_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
 
-    assert [i.iso for i in countries_list] == ['DE']
+    assert [i.iso for i in countries_list] == ['DEU']
     assert [i.name for i in countries_list] == ['Germany']
     assert [i.total_images for i in countries_list] == [1]
 

@@ -6,7 +6,7 @@ from app import query
 from app import filters
 
 APP_TITLE = "Satellite Image Joins"
-APP_SUB_TITLE = 'Source: Planet: https://developers.planet.com/docs/apis/data/'
+APP_SUB_TITLE = 'Source: Planet  https://developers.planet.com/docs/apis/data/'
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout='centered')
@@ -52,14 +52,15 @@ def main():
 
     
     item_types = set([i.item_type_id for i in images])
-    asset_types = set([x.id for i in images for x in i.item_types.assets])
+    # asset_types = set([x.id for i in images for x in i.item_types.assets])
 
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
         st.write('Total Satellite Images: {}'.format(len(images)))
         st.write('Available Item Types: {}'.format(', '.join(item_types)))
-        st.write('Available Asset Types: {}'.format(', '.join(asset_types)))
+        # st.write('Available Asset Types: {}'.format(', '.join(asset_types)))
+
         maps.heatmap(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                     lat_lon_lst=lat_lon_lst, 
                     sat_name=sat_names)

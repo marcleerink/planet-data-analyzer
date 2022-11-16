@@ -60,9 +60,9 @@ def test_get_cities_vcr(fake_cities):
     city = cities_list[0]
     
     assert len(cities_list) == 1249
-    assert city.id == int(fake_cities[0]["id"]) 
-    assert city.name == str(fake_cities[0]["NAME"])
-    assert city.country_iso == str(fake_cities[0]['ADM0_A3'])
+    assert city.id == 0
+    assert city.name == 'Bombo'
+    assert city.country_iso == 'UGA'
     assert city.geom == shape(fake_cities[0]["geometry"])
 
 

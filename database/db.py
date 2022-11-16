@@ -200,13 +200,12 @@ class City(Base):
     __tablename__ = 'cities'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    country_iso = Column(String(3), ForeignKey('countries.iso')) #TODO: add nullable false
+    country_iso = Column(String(3), ForeignKey('countries.iso'))
     geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True),
                   nullable=False,
                   unique=True)
 
     join_query = 'func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)'
-
     sat_images = relationship(
         'SatImage',
         primaryjoin=join_query,

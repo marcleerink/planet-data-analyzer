@@ -60,9 +60,9 @@ def image_info_map(
     highlight_function = _tooltip_highlight_func(),
     tooltip=folium.GeoJsonTooltip(
         aliases=['ID:  ','Satellite: ', 'Cloud Cover: ','Area Sqkm', 
-            'Pixel Resolution: ', 'Item Type: ' , 'Asset_Types: ', 'Time Acquired: ', 'Land Cover Classes: '],
+            'Pixel Resolution: ', 'Item Type: ' , 'Time Acquired: ', 'Land Cover Classes: '],
         fields=['id', 'sat_name', 'cloud_cover' ,'area_sqkm', 
-        'pixel_res', 'item_type_id', 'asset_types', 'time_acquired', 'land_cover_class'],
+        'pixel_res', 'item_type_id', 'time_acquired', 'land_cover_class'],
         )).add_to(map)
     
     return map, st_folium(map, height= 500, width=700)

@@ -72,8 +72,12 @@ def test_to_postgis_in_parallel_i(fake_countries, fake_cities, fake_land_cover, 
 
     with ThreadPoolExecutor() as executor:
         executor.map(to_country, fake_country_list)
+    
+    with ThreadPoolExecutor() as executor:
         executor.map(to_city, fake_city_list)
-        executor.map(to_land_cover, fake_land_cover_list)
+    
+    with ThreadPoolExecutor() as executor:
+         executor.map(to_land_cover, fake_land_cover_list)
         
     countries_in_db = db_session.query(db.Country)
     cities_in_db = db_session.query(db.City)
