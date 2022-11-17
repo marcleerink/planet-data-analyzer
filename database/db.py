@@ -80,7 +80,7 @@ class CentroidFromPolygon(TypeDecorator):
 class Satellite(Base):
     __tablename__ = 'satellites'
     id = Column(String(50), primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(50), nullable=False)
     pixel_res = Column(Float)
 
     sat_images = relationship('SatImage',
