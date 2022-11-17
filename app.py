@@ -21,7 +21,8 @@ def main():
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
 
-       
+
+    
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
                                             sat_names=sat_names, 
@@ -70,7 +71,7 @@ def main():
                             df_images=df_images)
 
         
-        maps.images_per_country_map(map=maps.create_basemap(zoom=1),
+        maps.images_per_country_map(map=maps.create_basemap(zoom=4),
                                     countries_geojson=countries_geojson, 
                                     df_countries=df_countries)
 

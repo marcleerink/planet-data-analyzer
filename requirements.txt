@@ -8,11 +8,12 @@ Pillow
 plotly
 psycopg2
 pytest
+pytest-cov
 pytest-xdist
 python-dotenv
 SQLAlchemy
 SQLAlchemy-Utils
-streamlit
+streamlit==1.14.0
 streamlit-folium
 vcrpy
 

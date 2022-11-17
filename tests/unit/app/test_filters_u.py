@@ -5,10 +5,10 @@ from app import filters
 
 def test_display_sat_name_filter():
     fake_sat_name_list = ['Planetscope', 'Skysat']
-    fake_radio_filter = st.sidebar.radio('dummy', fake_sat_name_list)
+
     sat_name_filter = filters.display_sat_name_filter(fake_sat_name_list)
 
-    assert sat_name_filter == fake_radio_filter
+    assert sat_name_filter == ['Planetscope', 'Skysat']
 
 def test_display_time_filter():
     

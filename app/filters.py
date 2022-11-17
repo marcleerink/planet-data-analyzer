@@ -2,8 +2,11 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 
-def display_sat_name_filter(sat_name_list):
+def _display_sat_name_filter(sat_name_list):
     return st.sidebar.radio('Satellite Providers',sat_name_list)
+
+def display_sat_name_filter(sat_name_list):
+    return st.sidebar.multiselect('Satellite Providers',sat_name_list, default=sat_name_list)
 
 def display_time_filter():
     start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))

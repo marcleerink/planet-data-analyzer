@@ -15,7 +15,7 @@ class ComponentsTest(BaseCase):
         # Open the app and take a screenshot
         self.open(APP_URL)
         time.sleep(15)
-        self.save_screenshot(self.current_screenshot_path)
+        self.save_screenshot(self.reference_screenshot_path)
 
         # Test that page has identical structure to baseline
         self.check_window(name="current_test", level=1)

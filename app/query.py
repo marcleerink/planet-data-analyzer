@@ -6,18 +6,18 @@ from geojson import Feature, FeatureCollection, dumps
 import json
 import datetime
 
-from typing import List
+
 from database.db import SatImage, Satellite, City, Country
 
-def query_asset_types_from_image(_image: SatImage) -> List[str]:
+def query_asset_types_from_image(_image: SatImage) -> list[str]:
     return [i.id for i in _image.item_types.assets]
     
 
-def query_land_cover_class_from_image(_image: SatImage) -> List[str]:
+def query_land_cover_class_from_image(_image: SatImage) -> list[str]:
     return list(set([i.featureclass for i in _image.land_cover_class]))
        
 
-def create_images_df(_images: List[SatImage]):
+def create_images_df(_images: list[SatImage]):
     
     return pd.DataFrame({
         'id': [image.id for image in _images],
@@ -27,7 +27,7 @@ def create_images_df(_images: List[SatImage]):
         'sat_name' : [image.satellites.name for image in _images]})
 
 
-def create_images_geojson(_images: List[SatImage]) -> dict:
+def create_images_geojson(_images: list[SatImage]) -> dict:
     json_lst=[]
     for i in _images:
         geometry = to_shape(i.geom)
@@ -52,7 +52,8 @@ def create_images_geojson(_images: List[SatImage]) -> dict:
     geojson_str = dumps(FeatureCollection(json_lst))
     return json.loads(geojson_str)
 
-def create_country_geojson(_countries: List[Country]) -> dict:
+
+def create_country_geojson(_countries: list[Country]) -> dict:
     json_lst=[]
     
     for i in _countries:
@@ -69,13 +70,15 @@ def create_country_geojson(_countries: List[Country]) -> dict:
     geojson_str = dumps(FeatureCollection(json_lst))
     return json.loads(geojson_str)
 
-def create_countries_df(_countries: List[Country]) -> pd.DataFrame:
+
+def create_countries_df(_countries: list[Country]) -> pd.DataFrame:
     return pd.DataFrame({
         'iso': [c.iso for c in _countries],
         'name' : [c.name for c in _countries],
         'total_images' : [c.total_images for c in _countries]})
 
-def create_cities_geojson(_cities: List[City]) -> dict:
+
+def create_cities_geojson(_cities: list[City]) -> dict:
     json_lst=[]
     for i in _cities:
         geometry = to_shape(i.buffer)
@@ -91,47 +94,49 @@ def create_cities_geojson(_cities: List[City]) -> dict:
     geojson_str = dumps(FeatureCollection(json_lst))
     return json.loads(geojson_str)
 
-def create_cities_df(_cities: List[Country]) -> pd.DataFrame:
+
+def create_cities_df(_cities: list[Country]) -> pd.DataFrame:
     return pd.DataFrame({
         'id': [i.id for i in _cities],
         'name' : [i.name for i in _cities],
         'total_images' : [i.total_images for i in _cities]})
 
-def query_distinct_satellite_names(_session: session.Session) -> List[str]:
+def query_distinct_satellite_names(_session: session.Session) -> list[str]:
     query = _session.query(Satellite.name).distinct()
     return [sat.name for sat in query]
 
 
-def query_lat_lon_from_images(_images: List[SatImage]) -> List[float]:
+def query_lat_lon_from_images(_images: list[SatImage]) -> list[tuple[float]]:
     """gets lon and lat for each SatImage model instance"""
     lon_list = [image.lon for image in _images]
     lat_list = [image.lat for image in _images]
     return list(map(list,zip(lat_list,lon_list)))
 
+
 def query_sat_images_with_filter(_session: session.Session, 
-                                sat_names: str, 
+                                sat_names: list, 
                                 cloud_cover: float, 
                                 start_date: datetime.date, 
-                                end_date: datetime.date) -> List[SatImage]:
+                                end_date: datetime.date) -> list[SatImage]:
     '''
     gets all sat images objects from postgis with applied filters. 
     '''
-    return _session.query(SatImage).join(Satellite).filter(Satellite.name == sat_names)\
+    return _session.query(SatImage).join(Satellite).filter(Satellite.name.in_(sat_names))\
                                 .filter(SatImage.cloud_cover <= cloud_cover)\
                                 .filter(SatImage.time_acquired >= start_date)\
                                 .filter(SatImage.time_acquired <= end_date).all()
     
 
 def query_countries_with_filters(_session: session.Session,
-                                sat_names: str, 
+                                sat_names: list, 
                                 cloud_cover: float, 
                                 start_date: datetime.date, 
-                                end_date: datetime.date) -> List[Country]:
+                                end_date: datetime.date) -> list[Country]:
     '''
     gets all country objects with total images per country from postgis with applied filters.
     '''
 
-    subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
+    subquery = _session.query(Satellite.id).filter(Satellite.name.in_(sat_names)).subquery()
     countries = _session.query(Country.iso, Country.name, Country.geom, func.count(SatImage.id).label('total_images'))\
                                                             .join(Country.sat_images)\
                                                             .filter(SatImage.time_acquired >= start_date,
@@ -142,16 +147,17 @@ def query_countries_with_filters(_session: session.Session,
     
     return countries
 
+
 def query_cities_with_filters(_session: session.Session,
-                                sat_names: str, 
+                                sat_names: list, 
                                 cloud_cover: float, 
                                 start_date: datetime.date, 
-                                end_date: datetime.date) -> List[Country]:
+                                end_date: datetime.date) -> list[Country]:
     '''
     gets all country objects with total images per country from postgis with applied filters.
     '''
     
-    subquery = _session.query(Satellite.id).filter(Satellite.name == sat_names).subquery()
+    subquery = _session.query(Satellite.id).filter(Satellite.name.in_(sat_names)).subquery()
     countries = _session.query(City.id, City.name, City.buffer, func.count(SatImage.geom).label('total_images'))\
                                                             .join(City.sat_images)\
                                                             .filter(SatImage.time_acquired >= start_date,

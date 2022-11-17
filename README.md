@@ -9,12 +9,7 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 * What is the overlap of area coverage for the different satellite constelations for a choses point in time.
 * Where is the highest density of overlap?
 * When is the highest denistity of overlap?
-
-Futher down the road:
 * What is the percentage of coverage of each land cover class for each image.
-
-## Database setup
-
 
 ## Dependencies
 
@@ -57,13 +52,13 @@ Secondly, the importer.py file should be run.
 To run the importer from your command line with only the required arguments, you need to pass the following arguments:
 
 ```
-python importer.py --aoi_file=PATH_TO_GEOJSON
+python importer.py --aoi_file=data/germany_bb.geojson
 ```
 
 Here's an example of how the command looks when passing optional arguments, too:
 
 ```
-python main.py --aoi_file=PATH_TO_GEOJSON --api_key=API_KEY --start_date=2022-02-01 --end_date=2022-08-25 --cc=0.3
+python main.py --aoi_file=data/germany_bb.geojson --api_key=API_KEY --start_date=2022-02-01 --end_date=2022-08-25 --cc=0.3
 ```
 
 To get a full description of all the arguments or further help with the script:
@@ -89,5 +84,11 @@ streamlit run app.py
 - Automate the import to PostGIS by deploying it on a server.
 
 
+### App Screenshots
+![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing.png)
+![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap.png)
+![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
+![Countries Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/countries.png)
+![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
 Source: "https://developers.planet.com/docs/apis/data/"
 "Image © 2022 Planet Labs PBC"

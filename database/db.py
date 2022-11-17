@@ -55,9 +55,11 @@ def create_tables(engine, Base):
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
 
-# set every insert to ON CONFLICT DO NOTHING
 @compiles(Insert)
 def prefix_inserts(insert, compiler, **kw):
+    """
+    set every insert to ON CONFLICT DO NOTHING for efficient skipping op double items
+    """
     return compiler.visit_insert(insert, **kw) + " ON CONFLICT DO NOTHING"
 
 
@@ -77,7 +79,7 @@ class CentroidFromPolygon(TypeDecorator):
 
 class Satellite(Base):
     __tablename__ = 'satellites'
-    id = Column(String(50), primary_key=True)
+    id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     pixel_res = Column(Float)
 
@@ -93,15 +95,15 @@ class Satellite(Base):
 
 class SatImage(Base):
     __tablename__ = 'sat_images'
-    id = Column(String(100), primary_key=True)
+    id = Column(String(50), primary_key=True)
     clear_confidence_percent = Column(Float)
     cloud_cover = Column(Float, nullable=False)
     time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(srid=4326, spatial_index=True), nullable=False)
     centroid = Column(CentroidFromPolygon(
         srid=4326, geometry_type='POINT', nullable=False))
-    sat_id = Column(String(50), ForeignKey('satellites.id'))
-    item_type_id = Column(String(50), ForeignKey('item_types.id'))
+    sat_id = Column(String(50), ForeignKey('satellites.id'), nullable=False)
+    item_type_id = Column(String(50), ForeignKey('item_types.id'), nullable=False)
 
     land_cover_class = relationship(
         'LandCoverClass',
@@ -155,9 +157,9 @@ items_assets = Table(
 
 class ItemType(Base):
     __tablename__ = 'item_types'
-    id = Column(String(50), primary_key=True)
+    id = Column(String(50), primary_key=True, index=True)
 
-    sat_id = Column(String(50), ForeignKey('satellites.id'))
+    sat_id = Column(String(50), ForeignKey('satellites.id'), nullable=False)
 
     sat_image = relationship('SatImage',
                              backref='item_types',)
@@ -170,7 +172,7 @@ class ItemType(Base):
 
 class AssetType(Base):
     __tablename__ = 'asset_types'
-    id = Column(String(50), primary_key=True)
+    id = Column(String(50), primary_key=True, index=True)
 
 
 class Country(Base):
@@ -203,10 +205,9 @@ class City(Base):
                   nullable=False,
                   unique=True)
 
-    join_query = 'func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)'
     sat_images = relationship(
         'SatImage',
-        primaryjoin=join_query,
+        primaryjoin='func.ST_Intersects(foreign(City.buffer), remote(SatImage.geom)).as_comparison(1,2)',
         backref='cities',
         viewonly=True,
         uselist=True)

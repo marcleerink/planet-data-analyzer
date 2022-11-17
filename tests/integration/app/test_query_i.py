@@ -36,10 +36,10 @@ def test_query_lat_lon_sat_images(db_session, setup_models):
     assert lat_lon == [[55.474220203855445, 8.804454520157185]]
 
 sat_names_input_output = [
-    ('Planetscope', 1),
-    ('Skysat', 0),
-    ('Esa', 0),
-    ('Usgs', 0),
+    (['Planetscope'], 1),
+    (['Skysat'], 0),
+    (['Esa'], 0),
+    (['Usgs'], 0),
     ]
 
 @pytest.mark.parametrize('sat_names, expected_output', sat_names_input_output)
@@ -60,7 +60,7 @@ def test_query_countries_with_filter(db_session, setup_models, setup_test_db):
     cloud_cover = 0.7
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
-    sat_names = 'Planetscope'
+    sat_names = ['Planetscope']
 
     countries_list = query.query_countries_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
 
@@ -77,7 +77,7 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     cloud_cover = 1.0
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
-    sat_names = 'Planetscope'
+    sat_names = ['Planetscope']
 
 
     cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
