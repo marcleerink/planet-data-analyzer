@@ -74,9 +74,17 @@ After the data has been importer the app.py can be started:
 streamlit run app.py
 ```
 
-### Database Setup
+## Database Setup
 
 ![ER-Diagram](https://github.com/marcleerink/sat_img_joiner/blob/main/data/er_diagram.jpg)
+
+## App Screenshots
+![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing.png)
+![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap.png)
+![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
+![Countries Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/countries.png)
+![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
+
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
 - Add more land cover classifications to reference imagery against.
@@ -84,12 +92,6 @@ streamlit run app.py
 - Automate the import to PostGIS by deploying it on a server.
 
 
-### App Screenshots
-![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing.png)
-![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap.png)
-![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
-![Countries Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/countries.png)
-![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
 
 Source: https://developers.planet.com/docs/apis/data/
 
