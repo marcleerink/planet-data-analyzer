@@ -81,7 +81,7 @@ streamlit run app.py
 
 ### Database Setup
 
-![ER-Diagram](https://github.com/marcleerink/sat_img_joiner/blob/main/data/er_diagram.png)
+![ER-Diagram](https://github.com/marcleerink/sat_img_joiner/blob/main/data/er_diagram_miro.png)
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.
 - Add more land cover classifications to reference imagery against.

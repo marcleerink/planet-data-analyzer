@@ -64,7 +64,7 @@ def prefix_inserts(insert, compiler, **kw):
 class CentroidFromPolygon(TypeDecorator):
     '''
     Calculate the centroid points of each Polygon on insert.
-    Reprojects to equal area proj CRS:3035.
+    Reprojects to equal area proj CRS:3035 for accurate calculation.
     '''
     impl = Geometry
     cache_ok = True
@@ -123,9 +123,7 @@ class SatImage(Base):
         area_mm = session.scalar((self.geom.ST_Transform(3035).ST_Area()))
         return round((area_mm / 1000000), 3)
 
-    @hybrid_property
-    def image_covers_land_cover_class(self, land_cover_geom):
-        session.scalar(self.geom.ST_Overlaps())
+    
 
     @hybrid_property
     def geojson(self):
@@ -215,7 +213,7 @@ class City(Base):
 
     @hybrid_property
     def buffer(self):
-        return self.geom.ST_Transform(3035).ST_Buffer(50000).ST_Transform(4326)
+        return self.geom.ST_Transform(3035).ST_Buffer(30000).ST_Transform(4326)
 
 
 class LandCoverClass(Base):
