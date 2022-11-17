@@ -90,5 +90,7 @@ streamlit run app.py
 ![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
 ![Countries Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/countries.png)
 ![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
-Source: "https://developers.planet.com/docs/apis/data/"
-"Image © 2022 Planet Labs PBC"
+
+Source: https://developers.planet.com/docs/apis/data/
+
+Image © 2022 Planet Labs PBC
