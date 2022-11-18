@@ -15,13 +15,15 @@ def main():
     
     session = db.get_db_session()
 
-    # add sidebar with filters
+    #small queries for filters
     sat_name_list = query.query_distinct_satellite_names(session)
-   
+    country_list = query.query_all_countries_name(session)
+
+    # add sidebar with filters
     sat_names = filters.display_sat_name_filter(sat_name_list)
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
- 
+    country_list = filters.display_country_filter(country_iso_list=country_list)
     
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
@@ -29,7 +31,8 @@ def main():
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
                                             end_date=end_date,
-                                            country=country)
+                                            country=country_list)
+
     lat_lon_lst = query.query_lat_lon_from_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)

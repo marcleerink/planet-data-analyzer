@@ -92,8 +92,8 @@ def test_query_all_countries(db_session, setup_models):
     db_session.add(fake_country)
     db_session.commit()
 
-    countries_iso_list = query.query_all_countries_iso(db_session)
+    countries_iso_list = query.query_all_countries_name(db_session)
 
-    assert countries_iso_list == ['DEU', 'FKE']
+    assert countries_iso_list == ['Germany', 'FAKE']
 
     
