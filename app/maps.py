@@ -2,7 +2,7 @@ import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 import pandas as pd
-from typing import Tuple
+
 
 def create_basemap(zoom: int=None, lat_lon_list: list=None) -> folium.Map:
     if zoom:
@@ -16,7 +16,7 @@ def create_basemap(zoom: int=None, lat_lon_list: list=None) -> folium.Map:
         map.fit_bounds(lat_lon_list, max_zoom=7)
     return map
 
-def heatmap(map: folium.Map, lat_lon_lst: list, sat_name: str) -> Tuple[folium.Map, dict]:
+def heatmap(map: folium.Map, lat_lon_lst: list, sat_name: str) -> tuple[folium.Map, dict]:
     """instantiates a HeatMap with lat_lon coordinates."""
     heat_data_list = [
         [lat_lon_lst, sat_name]
@@ -25,7 +25,7 @@ def heatmap(map: folium.Map, lat_lon_lst: list, sat_name: str) -> Tuple[folium.M
     for heat_data, title in heat_data_list:
         HeatMap(data=heat_data, name=title).add_to(map)
     
-    return map , st_folium(map, height= 500, width=700)
+    return map , st_folium(map, height= 500, width=700, key='Heatmap')
     
 
 def _tooltip_style_func():
@@ -41,7 +41,7 @@ def _tooltip_highlight_func():
 
 
 def image_info_map(
-    map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> tuple[folium.Map, dict]:
     
     
     folium.Choropleth(geo_data=images_geojson,
@@ -65,12 +65,12 @@ def image_info_map(
         'pixel_res', 'item_type_id', 'time_acquired', 'land_cover_class'],
         )).add_to(map)
     
-    return map, st_folium(map, height= 500, width=700)
+    return map, st_folium(map, height= 500, width=700, key='Image')
     
 
 
 def images_per_country_map(
-    map: folium.Map, countries_geojson: str, df_countries: pd.DataFrame) -> Tuple[folium.Map, dict]:
+    map: folium.Map, countries_geojson: str, df_countries: pd.DataFrame) -> tuple[folium.Map, dict]:
     """instantiates a Chloropleth map that dislays images per country"""
 
     folium.Choropleth(geo_data=countries_geojson,
@@ -97,8 +97,8 @@ def images_per_country_map(
 
 
 def images_per_city(
-     map: folium.Map, cities_geojson: str, df_cities: pd.DataFrame) -> Tuple[folium.Map, dict]:
-    """instantiates a Chloropleth map that dislays images per country"""
+     map: folium.Map, cities_geojson: str, df_cities: pd.DataFrame) -> tuple[folium.Map, dict]:
+    """instantiates a Chloropleth map that dislays images per city"""
     
     folium.Choropleth(geo_data=cities_geojson,
                     name='Choropleth: Total Satellite Imagery per City',

@@ -23,3 +23,9 @@ def test_display_cloud_cover_filter():
     cloud_filter = filters.display_cloud_cover_filter()
 
     assert cloud_filter == st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1, value=1.0)
+
+def test_display_country_filter():
+
+    country_filter = filters.display_country_filter('DEU')
+
+    assert country_filter == 'DEU'

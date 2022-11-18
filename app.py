@@ -17,9 +17,11 @@ def main():
 
     # add sidebar with filters
     sat_name_list = query.query_distinct_satellite_names(session)
+   
     sat_names = filters.display_sat_name_filter(sat_name_list)
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
+ 
 
 
     
@@ -28,7 +30,8 @@ def main():
                                             sat_names=sat_names, 
                                             cloud_cover=cloud_cover, 
                                             start_date=start_date, 
-                                            end_date=end_date)
+                                            end_date=end_date,
+                                            country=country)
     lat_lon_lst = query.query_lat_lon_from_images(images)
     images_geojson = query.create_images_geojson(images)
     df_images = query.create_images_df(images)
@@ -53,14 +56,13 @@ def main():
 
     
     item_types = set([i.item_type_id for i in images])
-    # asset_types = set([x.id for i in images for x in i.item_types.assets])
+    
 
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
         st.write('Total Satellite Images: {}'.format(len(images)))
         st.write('Available Item Types: {}'.format(', '.join(item_types)))
-        # st.write('Available Asset Types: {}'.format(', '.join(asset_types)))
 
         maps.heatmap(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                     lat_lon_lst=lat_lon_lst, 

@@ -119,7 +119,7 @@ class DataAPIClient(object):
 
     def get_item_types(self, key=None):
         """
-        Gall available item types from Planets Data API
+        Gets available item types from Planets Data API
 
         :param str key
             Key to return results for.

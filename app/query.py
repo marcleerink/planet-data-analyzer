@@ -9,6 +9,8 @@ import datetime
 
 from database.db import SatImage, Satellite, City, Country
 
+
+
 def query_asset_types_from_image(_image: SatImage) -> list[str]:
     return [i.id for i in _image.item_types.assets]
     
@@ -117,14 +119,17 @@ def query_sat_images_with_filter(_session: session.Session,
                                 sat_names: list, 
                                 cloud_cover: float, 
                                 start_date: datetime.date, 
-                                end_date: datetime.date) -> list[SatImage]:
+                                end_date: datetime.date,
+                                country_iso: str) -> list[SatImage]:
     '''
     gets all sat images objects from postgis with applied filters. 
     '''
+    subquery = _session.query(Country.geom).filter(Country.iso == country_iso).subquery()
     return _session.query(SatImage).join(Satellite).filter(Satellite.name.in_(sat_names))\
-                                .filter(SatImage.cloud_cover <= cloud_cover)\
+                                .filter(SatImage.geom.ST_Intersects(subquery))\
                                 .filter(SatImage.time_acquired >= start_date)\
-                                .filter(SatImage.time_acquired <= end_date).all()
+                                .filter(SatImage.time_acquired <= end_date)\
+                                .filter(SatImage.cloud_cover <= cloud_cover).all()
     
 
 def query_countries_with_filters(_session: session.Session,
