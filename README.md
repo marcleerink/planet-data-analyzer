@@ -2,14 +2,14 @@
 
 ## Purpose
 This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data within PostGIS. 
-The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
+The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes Plotly Grapths with general statistics and Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
 
 ### Research questions
+* What is the amount of Planets satellite imagery in a specified country for a chosen timeframe?
 * Which areas in a specified country are most captured by Planet's satellites?
-* What is the overlap of area coverage for the different satellite constelations for a choses point in time.
-* Where is the highest density of overlap?
-* When is the highest denistity of overlap?
-* What is the coverage of each land cover class for each image?
+      * What is the amount of satellite images per city?
+* What is the amount of Planets satellite imagery for each land cover classification?
+* Which land cover classifications are covered for each individual satellite image?
 
 ## Dependencies
 
@@ -80,10 +80,12 @@ streamlit run app.py
 
 ## App Screenshots
 ![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing.png)
+![Total Images Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/total_images_plot.png)
 ![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap.png)
-![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
-![Countries Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/countries.png)
 ![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
+![Land Cover Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_plot.png)
+![Land Cover Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_map.png)
+![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
 
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations.

@@ -36,20 +36,29 @@ def main():
     df_images = query.create_images_df(images)
 
 
-    # cities = query.query_cities_with_filters(_session=session,
-    #                                         sat_names=sat_names,
-    #                                         cloud_cover=cloud_cover,
-    #                                         start_date=start_date,
-    #                                         end_date=end_date,
-    #                                         country_name=country_name)
-    # cities_geojson = query.create_cities_geojson(_cities=cities)
-    # df_cities = query.create_cities_df(_cities=cities)
+    cities = query.query_cities_with_filters(_session=session,
+                                            sat_names=sat_names,
+                                            cloud_cover=cloud_cover,
+                                            start_date=start_date,
+                                            end_date=end_date,
+                                            country_name=country_name)
+    cities_geojson = query.create_cities_geojson(_cities=cities)
+    df_cities = query.create_cities_df(_cities=cities)
     
 
+    land_cover_classes = query.query_land_cover_classes_with_filters(_session=session,
+                                                                sat_names=sat_names,
+                                                                cloud_cover=cloud_cover,
+                                                                start_date=start_date,
+                                                                end_date=end_date,
+                                                                country_name=country_name)
+    
+    gdf_land_cover = query.create_land_cover_gpd(land_cover_classes)
+    
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
-        st.subheader("What is the total amount of satellite images in {} for a chosen timeframe?".format(country_name))
+        st.subheader("What is the amount of Planets satellite imagery in {} for a chosen timeframe?".format(country_name))
         st.write('Total Satellite Images: {}'.format(len(images)))
         plots.plot_images_per_satellite(df_images=df_images)
         
@@ -58,17 +67,28 @@ def main():
                     lat_lon_lst=lat_lon_lst, 
                     sat_name=sat_names)
         
-        st.subheader("What is the overlap of area coverage for the different satellite constelations for a choses timeframe?")
+        st.write('Total images for each major city in {} with 30km buffer radius'.format(country_name))
+        st.caption('This also displays cities near the borders due to the buffer polygon around the city and the geometry of the satellite image which may cross the border')
+        maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
+                            cities_geojson=cities_geojson,
+                            df_cities=df_cities)
+        
+        st.subheader("What is the imagery coverage for each land cover classification?")
+        
+        plots.plot_images_per_land_cover_class(df_images=df_images)
 
-        st.subheader("What is the coverage of each land cover class for each image?")
-        # maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst), 
-        #                     images_geojson=images_geojson, 
-        #                     df_images=df_images)
+        st.caption('This displays all land cover class geometries that are covered by Planets satellite imagegery and specified filters,"\
+                    "it does not display land cover geometries that are not covered by imagery with the specified filters')
+                    
+        maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
+                                        gdf_land_cover=gdf_land_cover)
 
-        # maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-        #                     cities_geojson=cities_geojson,
-        #                     df_cities=df_cities)
+        st.subheader('Which land cover classifications are covered for each individual satellite image?')
+        maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst), 
+                            images_geojson=images_geojson, 
+                            df_images=df_images)
 
+        
 if __name__=='__main__':
     main()
 

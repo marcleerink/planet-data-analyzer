@@ -2,6 +2,7 @@ import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 import pandas as pd
+import geopandas as gpd
 
 
 def create_basemap(zoom: int=None, lat_lon_list: list=None) -> folium.Map:
@@ -66,34 +67,6 @@ def image_info_map(
         )).add_to(map)
     
     return map, st_folium(map, height= 500, width=700, key='Image')
-    
-
-
-def images_per_country_map(
-    map: folium.Map, countries_geojson: str, df_countries: pd.DataFrame) -> tuple[folium.Map, dict]:
-    """instantiates a Chloropleth map that dislays images per country"""
-
-    folium.Choropleth(geo_data=countries_geojson,
-                    name='Choropleth: Total Satellite Imagery per Country',
-                    data=df_countries,
-                    columns=['iso', 'total_images'],
-                    key_on ='feature.id',
-                    fill_color='YlGnBu',
-                    legend_name='Satellite Image per Country',
-                    smooth_factor=0).add_to(map)
-               
-    folium.GeoJson(
-        countries_geojson,
-        control=False,
-        style_function=_tooltip_style_func(),
-        highlight_function =_tooltip_highlight_func(),
-        tooltip=folium.GeoJsonTooltip(
-            fields=['name', 'total_images'],
-            aliases=['Country:  ','Total Images: '],
-            
-            )).add_to(map)
-    
-    return map, st_folium(map, height= 500, width=700, key='Country')
 
 
 def images_per_city(
@@ -120,3 +93,29 @@ def images_per_city(
             )).add_to(map)
 
     return map, st_folium(map, height= 500, width=700, key='City')
+
+def images_per_land_cover_class( 
+    map: folium.Map, gdf_land_cover: gpd.GeoDataFrame) -> tuple[folium.Map, dict]:
+    """instantiates a Chloropleth map that dislays images per land cover class"""
+
+    land_cover_geojson = gdf_land_cover.to_json()
+    folium.Choropleth(geo_data=land_cover_geojson,
+                    name='Choropleth: Total Satellite Imagery per Land Cover Class',
+                    data=gdf_land_cover,
+                    columns=['id', 'total_images'],
+                    key_on ='feature.id',
+                    fill_color='YlGnBu',
+                    legend_name='Satellite Image per Land Cover Class',
+                    smooth_factor=0).add_to(map)
+
+    folium.GeoJson(
+        land_cover_geojson,
+        control=False,
+        style_function=_tooltip_style_func(),
+        highlight_function =_tooltip_highlight_func(),
+        tooltip=folium.GeoJsonTooltip(
+            fields=['featureclass', 'total_images'],
+            aliases=['Featureclass:  ','Total Images: '],
+            )).add_to(map)
+
+    return map, st_folium(map, height= 500, width=700, key='Land_Cover')

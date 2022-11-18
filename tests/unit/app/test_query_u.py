@@ -146,21 +146,4 @@ def test_create_images_geojson(fake_image):
     assert images_geojson['features'][0]['properties']['sat_name'] == fake_image.satellites.name
     assert images_geojson['features'][0]['properties']['asset_types'] ==[i.id for i in fake_image.item_types.assets]
 
-# def test_create_countries_geojson(fake_country):
-
-#     country_geojson = query.create_country_geojson([fake_country])
-    
-#     assert country_geojson['features'][0]['properties']['iso'] == fake_country.iso
-#     assert country_geojson['features'][0]['properties']['name'] == fake_country.name
-#     assert country_geojson['features'][0]['properties']['total_images'] == fake_country.total_images
-    
-
-# def test_create_countries_df(fake_country):
-
-#     country_df = query.create_countries_df([fake_country])
-    
-#     assert isinstance(country_df, pd.DataFrame)
-#     assert country_df['iso'][0] == fake_country.iso
-#     assert country_df['name'][0] == fake_country.name
-#     assert country_df['total_images'][0] == fake_country.total_images
 
