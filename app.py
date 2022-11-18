@@ -22,8 +22,6 @@ def main():
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
  
-
-
     
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
