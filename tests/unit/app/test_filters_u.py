@@ -26,6 +26,6 @@ def test_display_cloud_cover_filter():
 
 def test_display_country_filter():
 
-    country_filter = filters.display_country_filter('DEU')
+    country_filter = filters.display_country_filter(['DEU'])
 
     assert country_filter == 'DEU'
