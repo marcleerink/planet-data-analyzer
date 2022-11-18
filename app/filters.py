@@ -17,4 +17,4 @@ def display_cloud_cover_filter() -> float:
     return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1, value=1.0)
 
 def display_country_filter(country_iso: str) -> str:
-    pass
+    return st.sidebar.radio('Country', country_iso)
