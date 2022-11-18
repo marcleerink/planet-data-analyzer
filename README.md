@@ -79,10 +79,10 @@ streamlit run app.py
 ![ER-Diagram](https://github.com/marcleerink/sat_img_joiner/blob/main/data/er_diagram.jpg)
 
 ## App Screenshots
-![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing.png)
+![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing_page.png)
 ![Total Images Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/total_images_plot.png)
-![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap.png)
-![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities.png)
+![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap_images.png)
+![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities_map.png)
 ![Land Cover Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_plot.png)
 ![Land Cover Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_map.png)
 ![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
