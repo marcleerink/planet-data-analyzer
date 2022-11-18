@@ -77,9 +77,9 @@ def main():
         
         plots.plot_images_per_land_cover_class(df_images=df_images)
 
-        st.caption('This displays all land cover class geometries that are covered by Planets satellite imagegery and specified filters,"\
-                    "it does not display land cover geometries that are not covered by imagery with the specified filters')
-                    
+        st.caption('This displays all land cover class geometries that are covered by Planets satellite imagegery and specified filters,\
+                    it does not display land cover geometries that are not covered by imagery with the specified filters')
+
         maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                                         gdf_land_cover=gdf_land_cover)
 

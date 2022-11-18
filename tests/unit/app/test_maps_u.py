@@ -46,23 +46,6 @@ def test_heatmap_exception_lat_lon_incorrect():
         maps.heatmap(map=None, lat_lon_list=fake_lat_lon_list.lat_lon_list, name='Planetscope')
         maps.heatmap(map=fake_map, lat_lon_lst=1, sat_name='Planetscope')
 
-def test_images_per_country_map():
-    fake_map = folium.Map(location=[52.5200, 13.4050])
- 
-    fake_df_country = pd.DataFrame({'iso' : ['POL'], 'name': ['Poland'], 'total_images':[19]})
-
-    country_map, streamlit_map= maps.images_per_country_map(
-                                map=fake_map, 
-                                countries_geojson=fake_country_geojson.country_geojson,
-                                df_countries=fake_df_country)
-
-    assert 'Choropleth' in country_map.to_json()
-    assert 'GeoJsonTooltip' in country_map.to_json()
-    assert 'ColorMap' in country_map.to_json()
-    assert streamlit_map['bounds']['_southWest'] == {'lat': 49.020752, 'lng': 14.128613}
-    assert streamlit_map['bounds']['_northEast'] == {'lat': 54.838184, 'lng': 24.105762}
-
-
 def test_image_info_map():
     fake_map = folium.Map(location=[52.5200, 13.4050])
     fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
