@@ -7,7 +7,7 @@ The aggregated and spatial statistics about the imagery are displayed on a Strea
 ### Research questions
 * What is the amount of Planets satellite imagery in a specified country for a chosen timeframe?
 * Which areas in a specified country are most captured by Planet's satellites?
-      * What is the amount of satellite images per city?
+* What is the amount of satellite images per city??
 * What is the amount of Planets satellite imagery for each land cover classification?
 * Which land cover classifications are covered for each individual satellite image?
 
