@@ -9,7 +9,8 @@ import datetime
 
 from database.db import SatImage, Satellite, City, Country
 
-
+def query_all_countries_iso() -> list[str]:
+    pass
 
 def query_asset_types_from_image(_image: SatImage) -> list[str]:
     return [i.id for i in _image.item_types.assets]

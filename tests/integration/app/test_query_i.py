@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime
-
+from shapely.geometry import Polygon
+from geoalchemy2.shape import from_shape
 from database import db
 from app import query
 
@@ -48,9 +49,10 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
     cloud_cover = 0.7
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
+    country_iso = 'DEU'
     
     #act
-    sat_images = query.query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date)
+    sat_images = query.query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date, country_iso)
     
     #assert
     assert len(sat_images) == expected_output
@@ -83,3 +85,15 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
     
     assert [i.name for i in cities_list] == ['Berlin']
+
+def test_query_all_countries(db_session, setup_models):
+
+    fake_country = db.Country(iso='FKE', name='FAKE', geom=from_shape(Polygon( ((1, 1), (1, 2), (2, 2), (1, 1)) )))
+    db_session.add(fake_country)
+    db_session.commit()
+
+    countries_iso_list = query.query_all_countries_iso()
+
+    assert countries_iso_list == ['DEU', 'FKE']
+
+    
