@@ -5,11 +5,11 @@ This is a tool for analyzing satellite image metadata from different constellati
 The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes various Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
 
 ### Research questions
-* Which areas in Germany are most captured by Planet's satellites?
+* Which areas in a specified country are most captured by Planet's satellites?
 * What is the overlap of area coverage for the different satellite constelations for a choses point in time.
 * Where is the highest density of overlap?
 * When is the highest denistity of overlap?
-* What is the percentage of coverage of each land cover class for each image.
+* What is the coverage of each land cover class for each image?
 
 ## Dependencies
 

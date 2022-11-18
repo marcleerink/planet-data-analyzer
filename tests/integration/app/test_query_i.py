@@ -24,7 +24,7 @@ def test_query_distinc_satellite_names(db_session, setup_test_db):
     sat_names = query.query_distinct_satellite_names(db_session)
     
     #assert
-    assert sat_names == ['fake2', 'fake']
+    assert sat_names == ['fake', 'fake2']
 
 def test_query_lat_lon_sat_images(db_session, setup_models):
     #arrange
@@ -49,26 +49,14 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
     cloud_cover = 0.7
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
-    country_iso = 'DEU'
+    country_name = 'Germany'
 
     #act
-    sat_images = query.query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date, country_iso)
+    sat_images = query.query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date, country_name)
     
     #assert
     assert len(sat_images) == expected_output
 
-def test_query_countries_with_filter(db_session, setup_models, setup_test_db):
-    #setup filters
-    cloud_cover = 0.7
-    start_date = datetime(2022, 9, 1, 23, 55, 59)
-    end_date = datetime.utcnow()
-    sat_names = ['Planetscope']
-
-    countries_list = query.query_countries_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
-
-    assert [i.iso for i in countries_list] == ['DEU']
-    assert [i.name for i in countries_list] == ['Germany']
-    assert [i.total_images for i in countries_list] == [1]
 
 def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     # add Berlin to cties table in db
@@ -80,9 +68,10 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
     sat_names = ['Planetscope']
+    country_name = 'Germany'
 
 
-    cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date)
+    cities_list = query.query_cities_with_filters(db_session, sat_names, cloud_cover, start_date, end_date, country_name)
     
     assert [i.name for i in cities_list] == ['Berlin']
 
