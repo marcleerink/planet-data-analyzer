@@ -16,5 +16,6 @@ def display_time_filter() -> tuple[datetime, datetime]:
 def display_cloud_cover_filter() -> float:
     return st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1, value=1.0)
 
-def display_country_filter(country_iso_list: list[str]) -> str:
-    return st.sidebar.selectbox('Country', country_name_list)
+def display_country_filter(country_name_list: list[str]) -> str:
+    default_index = country_name_list.index('Germany')
+    return st.sidebar.selectbox('Country', country_name_list, index=default_index)
