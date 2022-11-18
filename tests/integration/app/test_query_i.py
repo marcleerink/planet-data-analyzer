@@ -50,7 +50,7 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
     start_date = datetime(2022, 9, 1, 23, 55, 59)
     end_date = datetime.utcnow()
     country_iso = 'DEU'
-    
+
     #act
     sat_images = query.query_sat_images_with_filter(db_session, sat_names, cloud_cover, start_date, end_date, country_iso)
     
@@ -92,7 +92,7 @@ def test_query_all_countries(db_session, setup_models):
     db_session.add(fake_country)
     db_session.commit()
 
-    countries_iso_list = query.query_all_countries_iso()
+    countries_iso_list = query.query_all_countries_iso(db_session)
 
     assert countries_iso_list == ['DEU', 'FKE']
 
