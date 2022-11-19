@@ -1,7 +1,7 @@
 # Satellite Image Joiner
 
 ## Purpose
-This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data within PostGIS. 
+This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data within PostGIS. The land cover classification data is imported from http://geojson.xyz/ naturalearth API.
 The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes Plotly Grapths with general statistics and Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
 
 ### Research questions
@@ -88,7 +88,7 @@ streamlit run app.py
 ![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
 
 ## Future Implementations:
-- Add more visualisations from spatial and statistic calculations.
+- Add more visualisations from spatial and statistic calculations. (e.g. coverage percentage of country/city/land cover classification for each satellite)
 - Add more land cover classifications to reference imagery against.
 - Add satellite constellations from other companies.
 - Automate the import to PostGIS by deploying it on a server.
