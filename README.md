@@ -2,7 +2,7 @@
 
 ## Purpose
 This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data within PostGIS. The land cover classification data is imported from http://geojson.xyz/ naturalearth API.
-The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes Plotly Grapths with general statistics and Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
+The aggregated and spatial statistics about the imagery are displayed on a Streamlit dashboard.  The dashboards includes Plotly Graphs with general statistics and Folium maps displaying where and when images are available from what satellite, including various specifications (Bands / Pixel resolution / Cloud Cover / Area covered) referenced against cities/countries and land cover classification data. 
 
 ### Research questions
 * What is the amount of Planets satellite imagery in a specified country for a chosen timeframe?
@@ -36,7 +36,7 @@ The database should first be setup.
 Run the modules/database/db.py file to create a Postgres database with the PostGIS extension installed. 
 This will also create all necessary tables.
 ```
-python -m modules.database.db
+python -m database.db
 ```
 
 ### Run the importer.py
@@ -84,8 +84,8 @@ streamlit run app.py
 ![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap_images.png)
 ![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities_map.png)
 ![Land Cover Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_plot.png)
-![Land Cover Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_map.png)
-![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images.png)
+![Land Cover Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_ch_map.png)
+![Images Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/images_ch_map.png)
 
 ## Future Implementations:
 - Add more visualisations from spatial and statistic calculations. (e.g. coverage percentage of country/city/land cover classification for each satellite)

@@ -48,10 +48,10 @@ def image_info_map(
     folium.Choropleth(geo_data=images_geojson,
                 name='Choropleth: Satellite Imagery Cloud Cover',
                 data=df_images,
-                columns=['id', 'cloud_cover'],
+                columns=['id', 'area_sqkm'],
                 key_on ='feature.id',
                 fill_color='YlGnBu',
-                legend_name='Cloud Cover',
+                legend_name='Area Coverage in Sqkm',
                 smooth_factor=0).add_to(map)
 
     folium.GeoJson(

@@ -31,7 +31,7 @@ def create_images_df(_images: list[SatImage]):
         'time_acquired': [image.time_acquired.strftime("%Y-%m-%d %H:%M:%S") for image in _images],
         'sat_name' : [image.satellites.name for image in _images],
         "area_sqkm": [image.area_sqkm for image in _images],
-        'land_cover_class': [query_land_cover_class_from_image(image) for image in _images]})
+        'land_cover_class': [query_land_cover_class_from_image(image) for image in _images if image]})
 
 
 def create_images_geojson(_images: list[SatImage]) -> dict:
