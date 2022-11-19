@@ -80,7 +80,7 @@ streamlit run app.py
 
 ## App Screenshots
 ![Landingpage](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/landing_page.png)
-![Total Images Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/total_images_plot.png)
+![Total Images Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/total_images_plotly.png)
 ![Heatmap](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/heatmap_images.png)
 ![Cities Choropleth Map](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/cities_map.png)
 ![Land Cover Plot](https://github.com/marcleerink/sat_img_joiner/blob/main/data/app_screenshots/land_cover_plot.png)
