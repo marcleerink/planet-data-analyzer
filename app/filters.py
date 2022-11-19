@@ -9,7 +9,7 @@ def display_sat_name_filter(sat_name_list: list[str]) -> list[str]:
     return st.sidebar.multiselect('Satellite Providers',sat_name_list, default=sat_name_list)
 
 def display_time_filter() -> tuple[datetime, datetime]:
-    start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))
+    start_date = st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=1))
     end_date = st.sidebar.date_input('End Date', datetime.utcnow())
     return start_date, end_date
 

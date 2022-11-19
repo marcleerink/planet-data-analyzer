@@ -14,7 +14,7 @@ def test_display_time_filter():
     
     start_date, end_date = filters.display_time_filter()
 
-    assert start_date == st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=7))
+    assert start_date == st.sidebar.date_input('Start Date', datetime.utcnow() - timedelta(days=1))
     assert end_date == st.sidebar.date_input('End Date', datetime.utcnow())
 
 

@@ -60,22 +60,22 @@ def main():
     if len(df_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
-        st.subheader("What is the amount of Planets satellite imagery in {} for a chosen timeframe?".format(country_name))
+        st.subheader(f"What is the amount of Planets satellite imagery in {country_name} from {start_date} to {end_date}?")
         st.write('Total Satellite Images: {}'.format(len(images)))
         plots.plot_images_per_satellite(df_images=df_images)
         
-        st.subheader("Which areas in {} are most captured by Planet's satellites?".format(country_name))
+        st.subheader(f"Which areas in {country_name} are most captured by Planet's satellites from {start_date} to {end_date}?")
         maps.heatmap(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                     lat_lon_lst=lat_lon_lst, 
                     sat_name=sat_names)
         
-        st.write('Total images for each major city in {} with 30km buffer radius'.format(country_name))
+        st.write(f'Total images for each major city in {country_name} with 30km buffer radius from {start_date} to {end_date}')
         st.caption('This also displays cities near the borders due to the buffer polygon around the city and the geometry of the satellite image which may cross the border')
         maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                             cities_geojson=cities_geojson,
                             df_cities=df_cities)
         
-        st.subheader("What is the imagery coverage for each land cover classification?")
+        st.subheader(f"What is the imagery coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
         
         plots.plot_images_per_land_cover_class(df_images=df_images)
 
@@ -85,7 +85,7 @@ def main():
         maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                                         gdf_land_cover=gdf_land_cover)
 
-        st.subheader('Which land cover classifications are covered for each individual satellite image?')
+        st.subheader('Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date}?')
         maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst), 
                             images_geojson=images_geojson, 
                             df_images=df_images)
