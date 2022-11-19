@@ -99,11 +99,12 @@ def images_per_land_cover_class(
     """instantiates a Chloropleth map that dislays images per land cover class"""
 
     land_cover_geojson = gdf_land_cover.to_json()
+    
     folium.Choropleth(geo_data=land_cover_geojson,
                     name='Choropleth: Total Satellite Imagery per Land Cover Class',
                     data=gdf_land_cover,
                     columns=['id', 'total_images'],
-                    key_on ='feature.id',
+                    key_on ='feature.properties.id',
                     fill_color='YlGnBu',
                     legend_name='Satellite Image per Land Cover Class',
                     smooth_factor=0).add_to(map)

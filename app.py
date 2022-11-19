@@ -3,14 +3,14 @@ import streamlit as st
 from database import db
 from app import maps, plots, query, filters
 
-APP_TITLE = "Satellite Image Joins"
+APP_TITLE = "Planets Satellite Imagery"
 APP_SUB_TITLE = 'Source: Planet  https://developers.planet.com/docs/apis/data/'
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout='centered')
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
-
+    
     session = db.get_db_session()
 
     #small queries for filters
@@ -23,6 +23,8 @@ def main():
     cloud_cover = filters.display_cloud_cover_filter()
     country_name = filters.display_country_filter(country_name_list=country_list)
     
+   
+
     # query postgis
     images = query.query_sat_images_with_filter(_session=session,
                                             sat_names=sat_names, 
