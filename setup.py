@@ -11,15 +11,21 @@ setup(
     python_requires='>=3.6',
     packages=['planet-data-analyzer'],
     install_requires=['folium',
-                        'geopandas',
-                        'openpyxl',
-                        'pandas',
-                        'plotly',
-                        'requests',
-                        'retrying',
-                        'Shapely'],
-    entry_points = {
-    'console_scripts': ['tasking-reporter=reporter.main:create_report']
-    },    
+                    'GeoAlchemy2',
+                    'geojson'
+                    'geopandas'
+                    'pandas'
+                    'Pillow'
+                    'plotly'
+                    'psycopg2'
+                    'pytest'
+                    'pytest-cov'
+                    'pytest-xdist'
+                    'python-dotenv'
+                    'SQLAlchemy'
+                    'SQLAlchemy-Utils'
+                    'streamlit==1.14.0'
+                    'streamlit-folium'
+                    'vcrpy'],  
  
 )
