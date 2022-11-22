@@ -85,7 +85,7 @@ def main():
         maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                                         gdf_land_cover=gdf_land_cover)
 
-        st.subheader('Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date}?')
+        st.subheader(f'Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date}?')
         maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst), 
                             images_geojson=images_geojson, 
                             df_images=df_images)

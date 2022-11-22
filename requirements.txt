@@ -1,4 +1,3 @@
-Python==3.10.8
 folium
 GeoAlchemy2
 geojson

@@ -1,4 +1,4 @@
-# Satellite Image Joiner
+# planet-data-analyzer
 
 ## Purpose
 This is a tool for analyzing satellite image metadata from different constellations. It imports the metadata from [Planets Data API](https://developers.planet.com/docs/apis/data/) for a specified AOI and TOI into PostGIS. This is referenced against geospatial information about countries/cities and various land cover classification data within PostGIS. The land cover classification data is imported from http://geojson.xyz/ naturalearth API.
