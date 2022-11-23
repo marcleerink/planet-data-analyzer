@@ -2,6 +2,8 @@ folium
 GeoAlchemy2
 geojson
 geopandas
+httplib2
+opencv-python
 pandas
 Pillow
 plotly
@@ -10,6 +12,7 @@ pytest
 pytest-cov
 pytest-xdist
 python-dotenv
+seleniumbase
 SQLAlchemy
 SQLAlchemy-Utils
 streamlit==1.14.0

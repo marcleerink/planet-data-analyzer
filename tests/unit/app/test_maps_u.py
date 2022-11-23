@@ -55,6 +55,7 @@ def test_image_info_map():
                                 'pixel_res':[3.125],
                                 'time_acquired': ['2022-11-02 10:44:57'],
                                 'sat_name':['Planetscope'],
+                                'area_sqkm': [245.43],
                                 'asset_type': ['analytic']})
     
     info_map, streamlit_map = maps.image_info_map(
