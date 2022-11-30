@@ -10,22 +10,25 @@ import pandas as pd
 from config import LOGGER
 from database import db
 
+
 class MissingAPIKeyException(BaseException):
     pass
+
 
 def _get_client(client):
     if client is None:
         client = DataAPIClient()
     return client
 
+
 class DataAPIClient(object):
     """
     Base client for working with the Planet Data API.
     https://developers.planet.com/docs/apis/data/
     """
-    
+
     base_url = "https://api.planet.com/data/v1"
-    
+
     def __init__(self, api_key=None):
         """
         :param str api_key:
@@ -58,7 +61,7 @@ class DataAPIClient(object):
         rv = self.session.post(url, json=json_data)
         rv.raise_for_status()
         return rv.json()
-    
+
     def _item(self, endpoint, **params):
         return self._get(self._url(endpoint), **params)
 
@@ -85,7 +88,7 @@ class DataAPIClient(object):
         geometry_filter = {
             "type": "GeometryFilter",
             "field_name": "geometry",
-            "config":geometry}
+            "config": geometry}
 
         and_filter = {
             "type": "AndFilter",
@@ -104,7 +107,7 @@ class DataAPIClient(object):
         url = self._url(endpoint)
         page = self._post(url, json_query)
         features = page[key]
-        
+
         # # for testing, please ignore
         # with open('tests/resources/fake_response_page.json', 'w') as f:
         #     json.dump(page, f)
@@ -114,7 +117,7 @@ class DataAPIClient(object):
             page_url = page['_links'].get('_next')
             page = self._get(page_url)
             features += page[key]
-            
+
         return features
 
     def get_item_types(self, key=None):
@@ -126,7 +129,7 @@ class DataAPIClient(object):
 
         returns list of item type
         """
-        
+
         endpoint = 'item-types'
         items = self._item(endpoint=endpoint)
         item_types = items['item_types']
@@ -135,9 +138,9 @@ class DataAPIClient(object):
             return [item[key] for item in item_types]
         else:
             return [item for item in item_types]
-        
-    def get_features(self, start_date, end_date, 
-                    cc, geometry, item_types=None):
+
+    def get_features(self, start_date, end_date,
+                     cc, geometry, item_types=None):
         """
         Gets all features from quick search end-point with specified filters.
         If no item_types provided, searches for all item_types
@@ -156,47 +159,46 @@ class DataAPIClient(object):
             A GeoJSON polygon to filter results by.
         :param list item_types
             Item types to filter results by. Gets all available item_types if none provided.
-      
+
         """
-        
+
         endpoint = 'quick-search'
         key = 'features'
         if not item_types:
             item_types = [
-                'Landsat8L1G', 
-                'MOD09GA', 
-                'MOD09GQ', 
-                'MYD09GA', 
-                'MYD09GQ', 
-                'PSOrthoTile', 
+                'Landsat8L1G',
+                'MOD09GA',
+                'MOD09GQ',
+                'MYD09GA',
+                'MYD09GQ',
+                'PSOrthoTile',
                 'PSScene',
-                'REOrthoTile', 
-                'REScene', 
-                'Sentinel1', 
-                'Sentinel2L1C', 
-                'SkySatCollect', 
-                'SkySatScene', 
+                'REOrthoTile',
+                'REScene',
+                'Sentinel1',
+                'Sentinel2L1C',
+                'SkySatCollect',
+                'SkySatScene',
                 'SkySatVideo']
-        
 
         payload = self._payload(start_date=start_date,
                                 end_date=end_date,
                                 cc=cc,
                                 geometry=geometry,
                                 item_types=item_types)
-        
-        features = self._query(endpoint=endpoint, 
-                                json_query=payload,
-                                key=key)
-        
+
+        features = self._query(endpoint=endpoint,
+                               json_query=payload,
+                               key=key)
+
         # # for testing, please ignore
         # with open('tests/resources/fake_response_small_aoi.json', 'w') as f:
         #     json.dump(features, f)
 
-        features_unique = list({v['id']:v for v in features}.values())
+        features_unique = list({v['id']: v for v in features}.values())
 
         LOGGER.info('Found {} unique image features'.format(len(features_unique)))
-        
+
         for feature in features_unique:
             yield ImageDataFeature(feature)
 
@@ -206,6 +208,7 @@ class ImageDataFeature:
     Represents a image feature its metadata. 
     Imported from Planets Data API.
     """
+
     def __init__(self, image_feature, client=None):
         """
         :param dict image_feature:
@@ -229,39 +232,38 @@ class ImageDataFeature:
         self.clear_confidence_percent = int(self.properties["clear_confidence_percent"]) \
             if "clear_confidence_percent" in self.properties else 0
         self.geom = shape(self.geometry)
-        
-        
+
     def to_dict(self):
         return vars(self)
 
     def to_satellite_model(self):
         satellite = db.Satellite(
-            id = self.sat_id,
-            name = self.satellite,
-            pixel_res = self.pixel_res)
+            id=self.sat_id,
+            name=self.satellite,
+            pixel_res=self.pixel_res)
         db.sql_alch_commit(satellite)
 
     def to_sat_image_model(self):
         sat_image = db.SatImage(
-                id = self.id, 
-                clear_confidence_percent = self.clear_confidence_percent,
-                cloud_cover = self.cloud_cover,
-                time_acquired = self.time_acquired,
-                centroid = from_shape(self.geom, srid=4326),
-                geom = from_shape(self.geom, srid=4326),
-                sat_id = self.sat_id,
-                item_type_id = self.item_type_id
-                )
+            id=self.id,
+            clear_confidence_percent=self.clear_confidence_percent,
+            cloud_cover=self.cloud_cover,
+            time_acquired=self.time_acquired,
+            centroid=from_shape(self.geom, srid=4326),
+            geom=from_shape(self.geom, srid=4326),
+            sat_id=self.sat_id,
+            item_type_id=self.item_type_id
+        )
         db.sql_alch_commit(sat_image)
-    
+
     def to_item_asset_model(self):
         def get_asset_types():
             for id in self.asset_types:
-                yield db.AssetType(id = id)
-        
+                yield db.AssetType(id=id)
+
         item_type = db.ItemType(
-                id = self.item_type_id,
-                sat_id = self.sat_id)
+            id=self.item_type_id,
+            sat_id=self.sat_id)
 
         for asset in get_asset_types():
             item_type.assets.append(asset)

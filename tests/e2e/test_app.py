@@ -1,14 +1,16 @@
+import time
 from seleniumbase import BaseCase
 import cv2
-import time
 import pytest
 
 APP_URL = "http://localhost:8501"
-#TODO: split to integration test exact match, multiple browsers
+# TODO: split to integration test exact match, multiple browsers
+
+
 class ComponentsTest(BaseCase):
     current_screenshot_path = "tests/resources/screenshots/current-screenshot.png"
     reference_screenshot_path = "tests/resources/screenshots/reference-screenshot.png"
-    
+
     @pytest.mark.last
     def test_app_screenshot_e(self):
 
@@ -19,7 +21,7 @@ class ComponentsTest(BaseCase):
 
         # Test that page has identical structure to baseline
         self.check_window(name="current_test", level=1)
-        
+
         # Check folium app-sepecific parts
         # Main
         self.assert_text("Satellite Image Joins")

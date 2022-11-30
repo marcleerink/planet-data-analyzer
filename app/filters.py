@@ -2,9 +2,6 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 
-def _display_sat_name_filter(sat_name_list: list[str]) -> list[str]:
-    return st.sidebar.radio('Satellite Providers',sat_name_list)
-
 def display_sat_name_filter(sat_name_list: list[str]) -> list[str]:
     return st.sidebar.multiselect('Satellite Providers',sat_name_list, default=sat_name_list)
 

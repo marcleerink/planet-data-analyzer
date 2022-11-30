@@ -10,7 +10,7 @@ DB_NAME = os.environ['DB_NAME']
 DB_HOST = os.environ['DB_HOST']
 DB_PORT = os.environ['DB_PORT']
 
-POSTGIS_URL=f"postgresql://{DB_USER}:{DB_PW}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+POSTGIS_URL = f"postgresql://{DB_USER}:{DB_PW}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 PL_API_KEY = os.environ['PL_API_KEY']
 
@@ -19,4 +19,3 @@ LOGGER = logging.getLogger(__name__)
 f_handler = logging.FileHandler('importer.log')
 f_handler.setLevel(logging.ERROR)
 LOGGER.addHandler(f_handler)
-

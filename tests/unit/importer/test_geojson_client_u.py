@@ -7,29 +7,35 @@ import vcr
 from api_importer.clients.geojson_xyz import \
     GeojsonXYZClient, CityFeature, CountryFeature, LandCoverClassFeature
 
+
 @pytest.fixture
 def fake_countries():
-        return gpd.read_file('tests/resources/fake_countries.geojson').reset_index(names='id')\
-                                                               .to_dict(orient='records')
+    return gpd.read_file('tests/resources/fake_countries.geojson').reset_index(names='id')\
+        .to_dict(orient='records')
+
 
 @pytest.fixture
 def fake_cities():
     return gpd.read_file('tests/resources/fake_cities.geojson').reset_index(names='id')\
-                                                    .to_dict(orient='records')
+        .to_dict(orient='records')
+
 
 @pytest.fixture
 def fake_rivers_lakes():
     return gpd.read_file('tests/resources/fake_rivers_lakes.geojson')
 
+
 @pytest.fixture
 def fake_urban_areas():
     return gpd.read_file('tests/resources/fake_urban_areas.geojson')
+
 
 @pytest.fixture
 def fake_land_cover(fake_rivers_lakes, fake_urban_areas):
     gdf_list = [fake_rivers_lakes, fake_urban_areas]
     return pd.concat(gdf_list, axis=0, ignore_index=True).reset_index(names='id')\
-                                                        .to_dict(orient='records')
+        .to_dict(orient='records')
+
 
 @vcr.use_cassette('tests/resources/fixtures/test_get_countries_vcr.yaml')
 def test_get_countries_vcr(fake_countries):
@@ -41,11 +47,12 @@ def test_get_countries_vcr(fake_countries):
 
     country_list = list(client.get_countries())
     country = country_list[0]
-    
+
     assert len(country_list) == 241
     assert country.iso == str(fake_countries[0]['adm0_a3'])
     assert country.name == str(fake_countries[0]['name'])
     assert country.geom == shape(fake_countries[0]['geometry'])
+
 
 @vcr.use_cassette('tests/resources/fixtures/test_get_cities_vcr.yaml')
 def test_get_cities_vcr(fake_cities):
@@ -54,11 +61,11 @@ def test_get_cities_vcr(fake_cities):
     CityFeature instances returned with correct data
     """
     client = GeojsonXYZClient()
-    
+
     # get first 8 instances
     cities_list = list(client.get_cities())
     city = cities_list[0]
-    
+
     assert len(cities_list) == 1249
     assert city.id == 0
     assert city.name == 'Bombo'
@@ -77,8 +84,9 @@ def test_get_rivers_lakes_vcr(fake_rivers_lakes):
     river_lake_gdf = client.get_rivers_lakes()
 
     assert len(river_lake_gdf.index) > 400
-    assert river_lake_gdf.loc[0, 'featureclass'] == fake_rivers_lakes.loc[0,'featureclass']
-    assert river_lake_gdf.loc[0 , 'geometry'] == fake_rivers_lakes.loc[0, 'geometry']
+    assert river_lake_gdf.loc[0, 'featureclass'] == fake_rivers_lakes.loc[0, 'featureclass']
+    assert river_lake_gdf.loc[0, 'geometry'] == fake_rivers_lakes.loc[0, 'geometry']
+
 
 @vcr.use_cassette('tests/resources/fixtures/test_get_urban_areas_vcr.yaml')
 def test_get_urban_areas_vcr(fake_urban_areas):
@@ -94,11 +102,12 @@ def test_get_urban_areas_vcr(fake_urban_areas):
     assert urban_areas_gdf.loc[0, 'featureclass'] == fake_urban_areas.loc[0, 'featureclass']
     assert urban_areas_gdf.loc[0, 'geometry'] == fake_urban_areas.loc[0, 'geometry']
 
+
 def test_CountryFeature(fake_countries):
     """test if all metadata from multiple features is converted correctly"""
-    
+
     fake_feature_list = [CountryFeature(i) for i in fake_countries]
-    
+
     fake_iso_list = [i.iso for i in fake_feature_list]
     fake_name_list = [i.name for i in fake_feature_list]
     fake_geom_list = [i.geom for i in fake_feature_list]
@@ -111,7 +120,7 @@ def test_CountryFeature(fake_countries):
 
 def test_CityFeature(fake_cities):
     """test if all metadata from multiple features is converted correctly"""
-    
+
     fake_feature_list = [CityFeature(i) for i in fake_cities]
 
     fake_id_list = [i.id for i in fake_feature_list]
@@ -124,7 +133,7 @@ def test_CityFeature(fake_cities):
     assert fake_name_list == [str(i["NAME"]) for i in fake_cities]
     assert fake_iso_list == [str(i['ADM0_A3']) for i in fake_cities]
     assert fake_geom_list == [shape(i["geometry"]) for i in fake_cities]
-    
+
 
 def test_LandCoverClassFeature(fake_land_cover):
     """test if all metadata from multiple features is converted correctly"""
@@ -138,4 +147,3 @@ def test_LandCoverClassFeature(fake_land_cover):
     assert fake_id_list == [int(i["id"]) for i in fake_land_cover]
     assert fake_feat_list == [str(i["featureclass"]) for i in fake_land_cover]
     assert fake_geom_list == [shape(i["geometry"]) for i in fake_land_cover]
-

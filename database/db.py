@@ -1,8 +1,9 @@
-import psycopg2
+"""Module containing the database"""
 import os
+import psycopg2
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
     DateTime, ForeignKey
 from sqlalchemy.types import TypeDecorator
@@ -54,6 +55,7 @@ def create_tables(engine, Base):
         conn.close()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
+
 
 @compiles(Insert)
 def prefix_inserts(insert, compiler, **kw):
@@ -125,8 +127,6 @@ class SatImage(Base):
         area_mm = session.scalar((self.geom.ST_Transform(3035).ST_Area()))
         return round((area_mm / 1000000), 3)
 
-    
-
     @hybrid_property
     def geojson(self):
         return Feature(
@@ -183,8 +183,8 @@ class Country(Base):
                   nullable=False)
 
     cities = relationship('City',
-                        backref='country',
-                        lazy='dynamic')
+                          backref='country',
+                          lazy='dynamic')
 
     sat_images = relationship(
         'SatImage',
@@ -192,8 +192,6 @@ class Country(Base):
         backref='countries',
         viewonly=True,
         uselist=True)
-
-    
 
 
 class City(Base):
