@@ -5,7 +5,7 @@ from requests.adapters import HTTPAdapter
 from shapely.geometry import shape
 from geoalchemy2.shape import from_shape
 import pandas as pd
-
+import json
 
 from config import LOGGER
 from database import db

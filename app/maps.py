@@ -1,3 +1,4 @@
+"""Module containing Folium Streamlit Maps"""
 import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
@@ -6,12 +7,15 @@ import geopandas as gpd
 
 
 def create_basemap(zoom: int = None, lat_lon_list: list = None) -> folium.Map:
+    """Creates a folium basemap layer. 
+    Optionally sets a zoom level or zooms the map according to a lsit with lat_lon coordinates"""
     if zoom:
         map = folium.Map(location=[52.5200, 13.4050], zoom_start=zoom)
     else:
         map = folium.Map(location=[52.5200, 13.4050])
 
-    folium.TileLayer('CartoDB positron', name="Light Map", control=False).add_to(map)
+    folium.TileLayer('CartoDB positron', name="Light Map",
+                     control=False).add_to(map)
 
     if lat_lon_list:
         map.fit_bounds(lat_lon_list, max_zoom=7)
@@ -45,7 +49,8 @@ def _tooltip_highlight_func():
 
 
 def image_info_map(
-        map: folium.Map, images_geojson: str, df_images: pd.DataFrame) -> tuple[folium.Map, dict]:
+        map: folium.Map, images_geojson: dict, df_images: pd.DataFrame) -> tuple[folium.Map, dict]:
+    """instantiates a Choropleth map with tooltips per satellite image"""
 
     folium.Choropleth(geo_data=images_geojson,
                       name='Choropleth: Satellite Imagery Cloud Cover',

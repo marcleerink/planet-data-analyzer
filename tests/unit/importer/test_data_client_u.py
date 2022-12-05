@@ -3,7 +3,7 @@ import json
 from shapely.geometry import shape
 import pandas as pd
 import vcr
-
+import os
 import logging
 import requests
 
@@ -14,7 +14,7 @@ SEARCH_ENDPOINT = "quick-search"
 ITEM_ENDPOINT = "item-types"
 SEARCH_URL = "{}/{}".format(TEST_URL, SEARCH_ENDPOINT)
 ITEM_URL = "{}/{}".format(TEST_URL, ITEM_ENDPOINT)
-API_KEY = None
+API_KEY = os.environ['PL_API_KEY']
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def fake_payload(geometry, fake_item_types):
 @vcr.use_cassette('tests/resources/fixtures/tests__get_vcr.yaml')
 def test__get_vcr(fake_page_small_aoi):
     url = fake_page_small_aoi['_links'].get('_self')
-
+    
     client = DataAPIClient(api_key=API_KEY)
 
     response = client._get(url)
@@ -214,7 +214,7 @@ def test_ImageDataFeature(fake_response_list):
     fake_cloud_list = [i.cloud_cover for i in fake_features_list]
     fake_geom_list = [i.geom for i in fake_features_list]
 
-    # assert fake_feature_list has same data as fake_response_list
+    
     assert len(fake_response_list) == len(fake_features_list)
     assert fake_id_list == [str(i["id"]) for i in fake_response_list]
     assert fake_sat_id_list == [str(i["properties"]["satellite_id"]) for i in fake_response_list]

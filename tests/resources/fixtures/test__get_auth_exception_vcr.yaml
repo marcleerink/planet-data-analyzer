@@ -13,7 +13,7 @@ interactions:
       User-Agent:
       - python-requests/2.28.1
     method: GET
-    uri: https://api.planet.com/data/v1/searches/e63724e669f449eb8790e169fe4dcfca/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6IG51bGwsICJzb3J0X2xhc3RfaWQiOiBudWxsLCAic29ydF9wcmV2IjogZmFsc2UsICJxdWVyeV9wYXJhbXMiOiB7fX0%3D
+    uri: https://api.planet.com/data/v1/searches/3fd184f4d08f41b6868851f9308bdba7/results?_page=eyJwYWdlX3NpemUiOiAyNTAsICJzb3J0X2J5IjogInB1Ymxpc2hlZCIsICJzb3J0X2Rlc2MiOiB0cnVlLCAic29ydF9zdGFydCI6IG51bGwsICJzb3J0X2xhc3RfaWQiOiBudWxsLCAic29ydF9wcmV2IjogZmFsc2UsICJxdWVyeV9wYXJhbXMiOiB7fX0%3D
   response:
     body:
       string: !!binary |
@@ -27,7 +27,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Tue, 15 Nov 2022 15:03:51 GMT
+      - Sun, 04 Dec 2022 18:37:32 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
@@ -37,7 +37,7 @@ interactions:
       Www-Authenticate:
       - Basic realm="Please enter a valid API key."
       X-Planet-Trace-Id:
-      - c2b2c4c4-76ff-45d0-bb7c-ac4675e992aa
+      - ed8797e6-a5c0-4c2f-b210-4a1f8b326443
     status:
       code: 401
       message: Unauthorized

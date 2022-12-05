@@ -7,7 +7,7 @@ interactions:
       Accept-Encoding:
       - gzip, deflate
       Authorization:
-      - Basic UExBSzlhMjQ3ZDA1ZTA4YTQ0YjY5MDQ4ZjljNWM1MWJiZGYxOg==
+      - Basic UExBSzA4NDk0NGIwN2JiMjRjMGJhN2FmMDJlODgwNjJjYmYxOg==
       Connection:
       - keep-alive
       User-Agent:
@@ -27,7 +27,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Tue, 15 Nov 2022 15:03:51 GMT
+      - Sun, 04 Dec 2022 18:37:31 GMT
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       Transfer-Encoding:
@@ -35,7 +35,7 @@ interactions:
       Via:
       - 1.1 edge, 1.1 google
       X-Planet-Trace-Id:
-      - eedf7b9d-23bc-4876-8fd9-4e9f8add19da
+      - 53b01be1-68a7-407c-bc99-ab00e08bf359
     status:
       code: 404
       message: Not Found

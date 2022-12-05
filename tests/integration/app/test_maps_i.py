@@ -13,13 +13,13 @@ def fake_st_app():
     return st
     
 
-def test_heatmap_streamlit(fake_st_app):
+# def test_heatmap_streamlit(fake_st_app):
     
-    fake_map = folium.Map(location=[52.5200, 13.4050])
-    fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
+#     fake_map = folium.Map(location=[52.5200, 13.4050])
+#     fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
 
-    _, streamlit_map = maps.heatmap(map=fake_map,
-                              lat_lon_lst=fake_lat_lon_list.lat_lon_list,
-                              sat_name='Planetscope')
+#     _, streamlit_map = maps.heatmap(map=fake_map,
+#                               lat_lon_lst=fake_lat_lon_list.lat_lon_list,
+#                               sat_name='Planetscope')
 
-    assert streamlit_map ==  ''
+#     assert streamlit_map ==  ''

@@ -14,6 +14,7 @@ def test_plot_images_per_satellite():
 
     assert fig.__dict__['_data_objs'][0]['x'][0] == 'Planetscope'
     assert fig.__dict__['_data_objs'][0]['y'][0] == 1
+    
 
 
 def test_plot_image_per_land_cover_class():
