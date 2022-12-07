@@ -49,12 +49,15 @@ def _tooltip_highlight_func():
 
 
 def image_info_map(
-        map: folium.Map, images_geojson: dict, df_images: pd.DataFrame) -> tuple[folium.Map, dict]:
+        map: folium.Map, gdf_images: gpd.GeoDataFrame) -> tuple[folium.Map, dict]:
     """instantiates a Choropleth map with tooltips per satellite image"""
+
+    gdf_images['time_acquired'] = gdf_images['time_acquired'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    images_geojson = gdf_images.to_json()
 
     folium.Choropleth(geo_data=images_geojson,
                       name='Choropleth: Satellite Imagery Cloud Cover',
-                      data=df_images,
+                      data=gdf_images,
                       columns=['id', 'area_sqkm'],
                       key_on='feature.id',
                       fill_color='YlGnBu',

@@ -121,6 +121,7 @@ def land_cover_import():
 
     with ThreadPoolExecutor(4) as executor:
         executor.map(to_postgis, features)
+        
 
 
 def geojson_import(aoi_file):

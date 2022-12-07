@@ -2,20 +2,18 @@
 import pytest
 from sqlalchemy import create_engine
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from geoalchemy2.shape import from_shape, to_shape
 from shapely.geometry import shape
 import geopandas as gpd
 from sqlalchemy_utils import database_exists, create_database
 import psycopg2
-import json
+
 
 from config import POSTGIS_URL
 from database import db
 
 from tests.resources import fake_feature
-
-# TODO: add country bongo
 
 
 @pytest.fixture()
@@ -222,8 +220,7 @@ def test_CentroidFromPolygon(db_session, setup_models):
     query = db_session.query(db.SatImage).one()
 
     assert to_shape(query.centroid).wkt == 'POINT (8.804454520157185 55.474220203855445)'
-
-
+ 
 def test_Country_success(db_session, setup_models, city_berlin):
     # add city within germany to test cities relationship
     db_session.add(city_berlin)
