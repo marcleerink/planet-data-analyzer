@@ -104,7 +104,7 @@ def query_distinct_satellite_names(_session: session.Session) -> list[str]:
     return sorted([sat.name for sat in query])
 
 
-def get_lat_lon_from_images(gdf_images: list[SatImage]) -> list[tuple[float]]:
+def get_lat_lon_from_images(gdf_images: gpd.GeoDataFrame) -> list[tuple[float]]:
     """gets lon and lat for each row in gdf_images"""   
     return [(x,y) for x,y in zip(gdf_images['lat'],
                                         gdf_images['lon'])]
@@ -146,9 +146,10 @@ def query_sat_images_with_filter(_session: session.Session,
     gdf=gpd.read_postgis(sql=query.statement, con=query.session.bind, crs=4326)
     
     t2 = time.time()
-    LOGGER.info(f'query_sat_images took {t2-t1} seconds')
+    LOGGER.info(f'query sat images took {t2-t1} seconds')
     return gdf
     
+@st.experimental_memo
 def query_cities_with_filters(_session: session.Session,
                               sat_names: list,
                               cloud_cover: float,
@@ -158,20 +159,29 @@ def query_cities_with_filters(_session: session.Session,
     '''
     gets all country objects with total images per country from postgis with applied filters.
     '''
-
+    t1 = time.time()
     subquery_country = _session.query(Country.geom).filter(
         Country.name == country_name).scalar_subquery()
+
     subquery_sat = _session.query(Satellite.id).filter(
         Satellite.name.in_(sat_names)).subquery()
-    return _session.query(City.id, City.name, City.buffer, func.count(SatImage.id).label('total_images'))\
-        .join(City.sat_images)\
-        .filter(SatImage.geom.ST_Intersects(subquery_country))\
-        .filter(SatImage.sat_id.in_(select(subquery_sat)))\
-        .filter(SatImage.time_acquired >= start_date,
-                SatImage.time_acquired <= end_date,
-                SatImage.cloud_cover <= cloud_cover)\
-        .group_by(City.id).all()
 
+    query = _session.query(City.id, 
+                            City.name, 
+                            City.buffer.label('geom'), 
+                            func.count(SatImage.id).label('total_images'))\
+                            .join(City.sat_images)\
+                            .filter(SatImage.geom.ST_Intersects(subquery_country))\
+                            .filter(SatImage.sat_id.in_(select(subquery_sat)))\
+                            .filter(SatImage.time_acquired >= start_date,
+                                    SatImage.time_acquired <= end_date,
+                                    SatImage.cloud_cover <= cloud_cover)\
+                            .group_by(City.id)
+
+    gdf = gpd.read_postgis(sql=query.statement, con=query.session.bind, crs=4326)
+    t2 = time.time()
+    LOGGER.info(f'query cities took {t2-t1} seconds')
+    return gdf
 
 def query_land_cover_classes_with_filters(_session: session.Session,
                                           sat_names: list,

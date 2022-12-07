@@ -5,6 +5,7 @@ import geopandas as gpd
 import pandas as pd
 from tests.resources import fake_country_geojson, fake_image, fake_lat_lon_list
 
+@pytest.fixture
 
 def test_create_basemap_fit_bounds_u():
     fake_map = folium.Map(location=[52.5200, 13.4050])
@@ -67,3 +68,11 @@ def test_image_info_map():
     assert 'ColorMap' in info_map.to_json()
     assert streamlit_map['bounds']['_southWest'] == {'lat': 52.398654, 'lng': 12.921842}
     assert streamlit_map['bounds']['_northEast'] == {'lat': 52.629318, 'lng': 13.24332}
+
+def test_images_per_city():
+    fake_map = folium.Map(location=[52.5200, 13.4050])
+    fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
+
+    gdf_cities = gpd.GeoDataFrame({'id': [1204],
+                                    'name': ['Berlin'],
+                                    geom})

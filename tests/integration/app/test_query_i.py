@@ -65,11 +65,11 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     sat_names = ['Planetscope']
     country_name = 'Germany'
 
-    cities_list = query.query_cities_with_filters(
+    gdf_cities = query.query_cities_with_filters(
         db_session, sat_names, cloud_cover, start_date, end_date, country_name)
 
     #assert only city in bounds is returned
-    assert [i.name for i in cities_list] == ['Berlin']
+    assert gdf_cities['name'][0] == 'Berlin'
 
 
 def test_query_all_countries(db_session, setup_models):

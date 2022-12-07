@@ -80,14 +80,16 @@ def image_info_map(
 
 
 def images_per_city(
-        map: folium.Map, cities_geojson: str, df_cities: pd.DataFrame) -> tuple[folium.Map, dict]:
+        map: folium.Map, gdf_cities: gpd.GeoDataFrame) -> tuple[folium.Map, dict]:
     """instantiates a Chloropleth map that dislays images per city"""
 
+    cities_geojson = gdf_cities.to_json()
+    
     folium.Choropleth(geo_data=cities_geojson,
                       name='Choropleth: Total Satellite Imagery per City',
-                      data=df_cities,
+                      data=gdf_cities,
                       columns=['id', 'total_images'],
-                      key_on='feature.id',
+                      key_on='feature.properties.id',
                       fill_color='YlGnBu',
                       legend_name='Satellite Image per City',
                       smooth_factor=0).add_to(map)

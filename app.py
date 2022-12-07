@@ -42,15 +42,13 @@ def main():
 
     lat_lon_lst = query.get_lat_lon_from_images(gdf_images)
 
-    cities = query.query_cities_with_filters(_session=session,
+    gdf_cities = query.query_cities_with_filters(_session=session,
                                              sat_names=sat_names,
                                              cloud_cover=cloud_cover,
                                              start_date=start_date,
                                              end_date=end_date,
                                              country_name=country_name)
-    cities_geojson = query.create_cities_geojson(_cities=cities)
-    df_cities = query.create_cities_df(_cities=cities)
-
+   
     land_cover_classes = query.query_land_cover_classes_with_filters(_session=session,
                                                                      sat_names=sat_names,
                                                                      cloud_cover=cloud_cover,
@@ -78,8 +76,7 @@ def main():
             f'Total images for each major city in {country_name} with 30km buffer radius from {start_date} to {end_date}')
         st.caption('This also displays cities near the borders due to the buffer polygon around the city and the geometry of the satellite image which may cross the border')
         maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-                             cities_geojson=cities_geojson,
-                             df_cities=df_cities)
+                             gdf_cities=gdf_cities)
 
         st.subheader(
             f"What is the imagery coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
