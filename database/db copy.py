@@ -5,7 +5,7 @@ import psycopg2
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, select, func, Index
+    DateTime, ForeignKey, select, func
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
@@ -83,7 +83,7 @@ class CentroidFromPolygon(TypeDecorator):
 class Satellite(Base):
     __tablename__ = 'satellites'
     id = Column(String(50), primary_key=True, index=True)
-    name = Column(String(50), nullable=False, index=True)
+    name = Column(String(50), nullable=False)
     pixel_res = Column(Float)
 
     sat_images = relationship('SatImage',
@@ -98,13 +98,13 @@ class Satellite(Base):
 
 class SatImage(Base):
     __tablename__ = 'sat_images'
-    id = Column(String(50), primary_key=True, index=True)
+    id = Column(String(50), primary_key=True)
     clear_confidence_percent = Column(Float)
-    cloud_cover = Column(Float, nullable=False, index=True)
-    time_acquired = Column(DateTime, nullable=False, index=True)
+    cloud_cover = Column(Float, nullable=False)
+    time_acquired = Column(DateTime, nullable=False)
     geom = Column(Geometry(srid=4326, spatial_index=True), nullable=False)
     centroid = Column(CentroidFromPolygon(
-        srid=4326, geometry_type='POINT', nullable=False, spatial_index=True))
+        srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'), nullable=False)
     item_type_id = Column(String(50), ForeignKey(
         'item_types.id'), nullable=False)
@@ -120,15 +120,13 @@ class SatImage(Base):
     @hybrid_property
     def sat_name(self):
         return session.scalar(self.satellites.name)
-
     @sat_name.expression
     def sat_name(cls):
         return cls.satellites.name
-
     @hybrid_property
     def lon(self):
         return session.scalar(self.centroid.ST_X())
-
+    
     @lon.expression
     def lon(cls):
         return cls.centroid.ST_X()
@@ -136,7 +134,7 @@ class SatImage(Base):
     @hybrid_property
     def lat(self):
         return session.scalar(self.centroid.ST_Y())
-
+    
     @lat.expression
     def lat(cls):
         return cls.centroid.ST_Y()
@@ -150,7 +148,6 @@ class SatImage(Base):
     def area_sqkm(cls):
         area_mm = cls.geom.ST_Transform(3035).ST_Area()
         return (area_mm / 1000000)
-
     @hybrid_property
     def geojson(self):
         return Feature(
@@ -201,7 +198,7 @@ class AssetType(Base):
 
 class Country(Base):
     __tablename__ = 'countries'
-    iso = Column(String(3), primary_key=True, index=True)
+    iso = Column(String(3), primary_key=True)
     name = Column(String(50), nullable=False)
     geom = Column(Geometry(srid=4326, spatial_index=True),
                   nullable=False)
@@ -220,7 +217,7 @@ class Country(Base):
 
 class City(Base):
     __tablename__ = 'cities'
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     country_iso = Column(String(3), ForeignKey('countries.iso'))
     geom = Column(Geometry(geometry_type='Point', srid=4326, spatial_index=True),
