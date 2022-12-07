@@ -64,7 +64,7 @@ def test_query_sat_images_with_filter(db_session, setup_models, sat_names, expec
 
 
 def test_query_cities_with_filter(db_session, setup_models, city_berlin):
-    # add Berlin to cties table in db
+    # add Berlin to cities table in db
     db_session.add(city_berlin)
     db_session.commit()
 
@@ -78,6 +78,7 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     cities_list = query.query_cities_with_filters(
         db_session, sat_names, cloud_cover, start_date, end_date, country_name)
 
+    #assert only city in bounds is returned
     assert [i.name for i in cities_list] == ['Berlin']
 
 

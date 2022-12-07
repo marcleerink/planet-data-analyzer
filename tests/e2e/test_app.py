@@ -37,7 +37,7 @@ class ComponentsTest(BaseCase):
         self.assert_text("Cloud Cover Threshold")
         self.assert_text("Country")
 
-        #TODO include exact math
+        # # TODO include exact math
         # # Test screenshots look exactly the same
         # original = cv2.imread(self.current_screenshot_path)
         # reference = cv2.imread(self.reference_screenshot_path)

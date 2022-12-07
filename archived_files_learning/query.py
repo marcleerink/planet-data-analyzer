@@ -1,17 +1,18 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import session
-from sqlalchemy.ext import baked
 import pandas as pd
 from geoalchemy2.shape import to_shape
+from shapely.wkb import loads
 from geojson import Feature, FeatureCollection, dumps
 import json
 import datetime
 import geopandas as gpd
-import streamlit as st
-import time
-from database.db import SatImage, Satellite, City, Country, LandCoverClass
+import sqlalchemy
 
-from config import LOGGER
+
+from database.db import SatImage, Satellite, City, Country
+
+
 def query_all_countries_name(_session: session.Session) -> list[str]:
     query = _session.query(Country)
     return [i.name for i in query]
@@ -94,8 +95,7 @@ def create_land_cover_gpd(_land_cover_classes: list[tuple[LandCoverClass, int]])
         'total_images': [i[1] for i in _land_cover_classes],
         'geom': [to_shape(i[0].geom) for i in _land_cover_classes]})
 
-    gdf = gpd.GeoDataFrame(
-        df, geometry=df['geom'], crs=4326).drop(columns=['geom'])
+    gdf = gpd.GeoDataFrame(df, geometry=df['geom'], crs=4326).drop(columns=['geom'])
     return gdf.rename_geometry('geom')
 
 
@@ -106,49 +106,41 @@ def query_distinct_satellite_names(_session: session.Session) -> list[str]:
 
 def query_lat_lon_from_images(gdf_images: list[SatImage]) -> list[tuple[float]]:
     """gets lon and lat for each row in gdf_images"""   
-    return [(x,y) for x,y in zip(gdf_images['lat'],
-                                        gdf_images['lon'])]
+    gdf_images=gdf_images.set_geometry('centroid')
+    lat_lon_list = [(x,y) for x,y in zip(gdf_images['centroid'].y,
+                                        gdf_images['centroid'].x)]
+    return lat_lon_list
     
 
-@st.experimental_memo
-def query_sat_images_with_filter(_session: session.Session,
-                                 sat_names: list,
-                                 cloud_cover: float,
-                                 start_date: datetime.date,
-                                 end_date: datetime.date,
-                                 country_name: str) -> gpd.GeoDataFrame:
+def query_sat_images_with_filter(_conn: sqlalchemy.engine,
+                                country_name: str) -> list[SatImage]:
     '''
     gets all sat images objects from postgis with applied filters. 
     '''
-    t1 = time.time()
-    subquery = _session.query(Country.geom).filter(
-        Country.name == country_name).scalar_subquery()
-    query = _session.query(SatImage.id, 
-                            SatImage.clear_confidence_percent, 
-                            SatImage.cloud_cover,
-                            SatImage.time_acquired,
-                            SatImage.sat_id,
-                            Satellite.name.label('sat_name'),
-                            Satellite.pixel_res.label('pixel_res'),
-                            SatImage.item_type_id,
-                            SatImage.lon.label('lon'),
-                            SatImage.lat.label('lat'),
-                            SatImage.area_sqkm,
-                            LandCoverClass.featureclass.label('land_cover_class'),
-                            SatImage.geom).join(SatImage.satellites).join(SatImage.land_cover_class, isouter=True)\
-                                                .filter(Satellite.name.in_(sat_names))\
-                                                .filter(SatImage.geom.ST_Intersects(subquery))\
-                                                .filter(SatImage.time_acquired >= start_date)\
-                                                .filter(SatImage.time_acquired <= end_date)\
-                                                .filter(SatImage.cloud_cover <= cloud_cover)
     
     
-    gdf=gpd.read_postgis(sql=query.statement, con=query.session.bind, crs=4326)
+    sql = f"""
+    SELECT sat_images.id, 
+            sat_images.clear_confidence_percent, 
+            sat_images.cloud_cover, 
+            sat_images.time_acquired,
+            sat_images.centroid, 
+            ST_Intersects(sat_images.geom, urban_areas.geom) AS urban_areas,
+            ST_Intersects(sat_images.geom, rivers_lakes.geom) AS rivers_lakes,
+            sat_images.geom, 
+            satellites.name AS sat_name
+    FROM sat_images
+    INNER JOIN satellites ON sat_images.sat_id=satellites.id
+    JOIN land_cover_classes on ST_Intersects(sat_images.geom, land_cover_classes.geom)
+    WHERE ST_Intersects(sat_images.geom, (SELECT countries.geom 
+                                        FROM countries 
+                                        WHERE countries.name = '{country_name}'))
     
-    t2 = time.time()
-    LOGGER.info(f'query_sat_images took {t2-t1} seconds')
+    """
+    gdf = gpd.GeoDataFrame.from_postgis(sql=sql,con=_conn, crs=4326, geom_col='geom')
+    gdf['centroid'] = gdf['centroid'].apply(loads, hex=True)
+    print(gdf, gdf.columns)
     return gdf
-    
 def query_cities_with_filters(_session: session.Session,
                               sat_names: list,
                               cloud_cover: float,
@@ -159,10 +151,8 @@ def query_cities_with_filters(_session: session.Session,
     gets all country objects with total images per country from postgis with applied filters.
     '''
 
-    subquery_country = _session.query(Country.geom).filter(
-        Country.name == country_name).scalar_subquery()
-    subquery_sat = _session.query(Satellite.id).filter(
-        Satellite.name.in_(sat_names)).subquery()
+    subquery_country = _session.query(Country.geom).filter(Country.name == country_name).scalar_subquery()
+    subquery_sat = _session.query(Satellite.id).filter(Satellite.name.in_(sat_names)).subquery()
     return _session.query(City.id, City.name, City.buffer, func.count(SatImage.id).label('total_images'))\
         .join(City.sat_images)\
         .filter(SatImage.geom.ST_Intersects(subquery_country))\
@@ -173,22 +163,20 @@ def query_cities_with_filters(_session: session.Session,
         .group_by(City.id).all()
 
 
-def query_land_cover_classes_with_filters(_session: session.Session,
-                                          sat_names: list,
-                                          cloud_cover: float,
-                                          start_date: datetime.date,
-                                          end_date: datetime.date,
-                                          country_name: str) -> list[LandCoverClass]:
+# def query_land_cover_classes_with_filters(_session: session.Session,
+#                                           sat_names: list,
+#                                           cloud_cover: float,
+#                                           start_date: datetime.date,
+#                                           end_date: datetime.date,
+#                                           country_name: str) -> list[LandCoverClass]:
 
-    subquery_country = _session.query(Country.geom).filter(
-        Country.name == country_name).scalar_subquery()
-    subquery_sat = _session.query(Satellite.id).filter(
-        Satellite.name.in_(sat_names)).subquery()
-    return _session.query(LandCoverClass, func.count(SatImage.id).label('total_images'))\
-        .join(LandCoverClass.sat_image)\
-        .filter(SatImage.geom.ST_Intersects(subquery_country))\
-        .filter(SatImage.sat_id.in_(select(subquery_sat)))\
-        .filter(SatImage.time_acquired >= start_date,
-                SatImage.time_acquired <= end_date,
-                SatImage.cloud_cover <= cloud_cover)\
-        .group_by(LandCoverClass.id).all()
+#     subquery_country = _session.query(Country.geom).filter(Country.name == country_name).scalar_subquery()
+#     subquery_sat = _session.query(Satellite.id).filter(Satellite.name.in_(sat_names)).subquery()
+#     return _session.query(LandCoverClass, func.count(SatImage.id).label('total_images'))\
+#         .join(LandCoverClass.sat_image)\
+#         .filter(SatImage.geom.ST_Intersects(subquery_country))\
+#         .filter(SatImage.sat_id.in_(select(subquery_sat)))\
+#         .filter(SatImage.time_acquired >= start_date,
+#                 SatImage.time_acquired <= end_date,
+#                 SatImage.cloud_cover <= cloud_cover)\
+#         .group_by(LandCoverClass.id).all()

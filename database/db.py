@@ -5,7 +5,7 @@ import psycopg2
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey
+    DateTime, ForeignKey, select, func
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
@@ -15,6 +15,7 @@ from sqlalchemy_utils import database_exists, create_database
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
 from geojson import Feature
+
 
 from config import POSTGIS_URL
 
@@ -105,28 +106,48 @@ class SatImage(Base):
     centroid = Column(CentroidFromPolygon(
         srid=4326, geometry_type='POINT', nullable=False))
     sat_id = Column(String(50), ForeignKey('satellites.id'), nullable=False)
-    item_type_id = Column(String(50), ForeignKey('item_types.id'), nullable=False)
+    item_type_id = Column(String(50), ForeignKey(
+        'item_types.id'), nullable=False)
 
     land_cover_class = relationship(
         'LandCoverClass',
         primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
         backref='sat_image',
+        lazy='joined',
         viewonly=True,
         uselist=True)
 
     @hybrid_property
+    def sat_name(self):
+        return session.scalar(self.satellites.name)
+    @sat_name.expression
+    def sat_name(cls):
+        return cls.satellites.name
+    @hybrid_property
     def lon(self):
         return session.scalar(self.centroid.ST_X())
+    
+    @lon.expression
+    def lon(cls):
+        return cls.centroid.ST_X()
 
     @hybrid_property
     def lat(self):
         return session.scalar(self.centroid.ST_Y())
+    
+    @lat.expression
+    def lat(cls):
+        return cls.centroid.ST_Y()
 
     @hybrid_property
     def area_sqkm(self):
         area_mm = session.scalar((self.geom.ST_Transform(3035).ST_Area()))
         return round((area_mm / 1000000), 3)
-
+    
+    @area_sqkm.expression
+    def area_sqkm(cls):
+        area_mm = cls.geom.ST_Transform(3035).ST_Area()
+        return (area_mm / 1000000)
     @hybrid_property
     def geojson(self):
         return Feature(

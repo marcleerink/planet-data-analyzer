@@ -7,11 +7,11 @@ from geojson import Feature, FeatureCollection, dumps
 import json
 import datetime
 import geopandas as gpd
-import streamlit as st
-import time
+
+
 from database.db import SatImage, Satellite, City, Country, LandCoverClass
 
-from config import LOGGER
+
 def query_all_countries_name(_session: session.Session) -> list[str]:
     query = _session.query(Country)
     return [i.name for i in query]
@@ -104,51 +104,31 @@ def query_distinct_satellite_names(_session: session.Session) -> list[str]:
     return sorted([sat.name for sat in query])
 
 
-def query_lat_lon_from_images(gdf_images: list[SatImage]) -> list[tuple[float]]:
-    """gets lon and lat for each row in gdf_images"""   
-    return [(x,y) for x,y in zip(gdf_images['lat'],
-                                        gdf_images['lon'])]
-    
+def query_lat_lon_from_images(_images: list[SatImage]) -> list[tuple[float]]:
+    """gets lon and lat for each SatImage model instance"""
+    lon_list = [image.lon for image in _images]
+    lat_list = [image.lat for image in _images]
+    return list(map(list, zip(lat_list, lon_list)))
 
-@st.experimental_memo
+
 def query_sat_images_with_filter(_session: session.Session,
                                  sat_names: list,
                                  cloud_cover: float,
                                  start_date: datetime.date,
                                  end_date: datetime.date,
-                                 country_name: str) -> gpd.GeoDataFrame:
+                                 country_name: str) -> list[SatImage]:
     '''
     gets all sat images objects from postgis with applied filters. 
     '''
-    t1 = time.time()
     subquery = _session.query(Country.geom).filter(
         Country.name == country_name).scalar_subquery()
-    query = _session.query(SatImage.id, 
-                            SatImage.clear_confidence_percent, 
-                            SatImage.cloud_cover,
-                            SatImage.time_acquired,
-                            SatImage.sat_id,
-                            Satellite.name.label('sat_name'),
-                            Satellite.pixel_res.label('pixel_res'),
-                            SatImage.item_type_id,
-                            SatImage.lon.label('lon'),
-                            SatImage.lat.label('lat'),
-                            SatImage.area_sqkm,
-                            LandCoverClass.featureclass.label('land_cover_class'),
-                            SatImage.geom).join(SatImage.satellites).join(SatImage.land_cover_class, isouter=True)\
-                                                .filter(Satellite.name.in_(sat_names))\
-                                                .filter(SatImage.geom.ST_Intersects(subquery))\
-                                                .filter(SatImage.time_acquired >= start_date)\
-                                                .filter(SatImage.time_acquired <= end_date)\
-                                                .filter(SatImage.cloud_cover <= cloud_cover)
-    
-    
-    gdf=gpd.read_postgis(sql=query.statement, con=query.session.bind, crs=4326)
-    
-    t2 = time.time()
-    LOGGER.info(f'query_sat_images took {t2-t1} seconds')
-    return gdf
-    
+    return _session.query(SatImage).join(Satellite).filter(Satellite.name.in_(sat_names))\
+        .filter(SatImage.geom.ST_Intersects(subquery))\
+        .filter(SatImage.time_acquired >= start_date)\
+        .filter(SatImage.time_acquired <= end_date)\
+        .filter(SatImage.cloud_cover <= cloud_cover).all()
+
+
 def query_cities_with_filters(_session: session.Session,
                               sat_names: list,
                               cloud_cover: float,
