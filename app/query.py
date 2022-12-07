@@ -14,17 +14,10 @@ from database.db import SatImage, Satellite, City, Country, LandCoverClass
 from config import LOGGER
 
 
-def query_all_countries_name(_session: session.Session) -> list[str]:
+@st.experimental_memo
+def query_all_countries(_session: session.Session) -> list[str]:
     query = _session.query(Country)
-    return [i.name for i in query]
-
-
-def query_asset_types_from_image(_image: SatImage) -> list[str]:
-    return [i.id for i in _image.item_types.assets]
-
-
-def query_land_cover_class_from_image(_image: SatImage) -> list[str]:
-    return list(set([i.featureclass for i in _image.land_cover_class]))
+    return [i for i in query]
 
 
 @st.experimental_memo
@@ -79,6 +72,7 @@ def query_sat_images_with_filter(_session: session.Session,
     LOGGER.info(f'query sat images took {t2-t1} seconds')
     return gdf
 
+
 @st.experimental_memo
 def query_cities_with_filters(_session: session.Session,
                               sat_names: list,
@@ -100,14 +94,14 @@ def query_cities_with_filters(_session: session.Session,
                            City.name,
                            City.buffer.label('geom'),
                            func.count(SatImage.id).label('total_images'))\
-                                    .join(City.sat_images)\
-                                    .filter(City.country_iso == sq_country_iso)\
-                                    .filter(SatImage.geom.ST_Intersects(sq_country_geom))\
-                                    .filter(SatImage.sat_id.in_(select(subquery_sat)))\
-                                    .filter(SatImage.time_acquired >= start_date,
-                                            SatImage.time_acquired <= end_date,
-                                            SatImage.cloud_cover <= cloud_cover)\
-                                    .group_by(City.id)
+        .join(City.sat_images)\
+        .filter(City.country_iso == sq_country_iso)\
+        .filter(SatImage.geom.ST_Intersects(sq_country_geom))\
+        .filter(SatImage.sat_id.in_(select(subquery_sat)))\
+        .filter(SatImage.time_acquired >= start_date,
+                SatImage.time_acquired <= end_date,
+                SatImage.cloud_cover <= cloud_cover)\
+        .group_by(City.id)
 
     gdf = gpd.read_postgis(sql=query.statement,
                            con=query.session.bind, crs=4326)

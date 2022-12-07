@@ -1,8 +1,14 @@
 import streamlit as st
+import pytest
 from datetime import datetime, timedelta
 
 from app import filters
+from test_query_u import FakeCountry
 
+
+@pytest.fixture
+def fake_country():
+    return FakeCountry(iso='NL', name='Germany', total_images=50, geom='fake')
 
 def test_display_sat_name_filter():
     fake_sat_name_list = ['Planetscope', 'Skysat']
@@ -27,8 +33,8 @@ def test_display_cloud_cover_filter():
     assert cloud_filter == st.sidebar.slider('Cloud Cover Threshold', 0.0, 1.0, step=0.1, value=1.0)
 
 
-def test_display_country_filter():
+def test_display_country_filter(fake_country):
 
-    country_filter = filters.display_country_filter(['Germany'])
+    country_filter = filters.display_country_filter([fake_country])
 
     assert country_filter == 'Germany'
