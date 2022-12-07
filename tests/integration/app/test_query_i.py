@@ -28,7 +28,6 @@ def test_query_distinc_satellite_names(db_session, setup_test_db):
     assert sat_names == ['fake', 'fake2']
 
 
-
 sat_names_input_output = [
     (['Planetscope'], 1),
     (['Skysat'], 0),
@@ -68,16 +67,51 @@ def test_query_cities_with_filter(db_session, setup_models, city_berlin):
     gdf_cities = query.query_cities_with_filters(
         db_session, sat_names, cloud_cover, start_date, end_date, country_name)
 
-    #assert only city in bounds is returned
+    # assert only city in bounds is returned
+    assert len(gdf_cities.index) == 1
     assert gdf_cities['name'][0] == 'Berlin'
 
 
-def test_query_all_countries(db_session, setup_models):
+def test_query_sat_images_with_filter(db_session, setup_models):
 
-    fake_country = db.Country(iso='FKE', name='FAKE', geom=from_shape(Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))))
-    db_session.add(fake_country)
-    db_session.commit()
+    # setup filters
+    cloud_cover = 1.0
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
+    end_date = datetime.utcnow()
+    sat_names = ['Planetscope']
+    country_name = 'Germany'
 
-    countries_iso_list = query.query_all_countries_name(db_session)
+    gdf_images = query.query_sat_images_with_filter(
+        db_session, sat_names, cloud_cover, start_date, end_date, country_name)
 
-    assert countries_iso_list == ['Germany', 'FAKE']
+    assert len(gdf_images) == 1
+    assert gdf_images['id'][0] == 'ss20221002'
+    assert gdf_images['sat_id'][0] == 's145'
+    assert gdf_images['clear_confidence_percent'][0] == 95
+    assert gdf_images['cloud_cover'][0] == 0.65
+    assert gdf_images['time_acquired'][0] == datetime(2022, 10, 1, 23, 55, 59)
+    assert gdf_images['pixel_res'][0] == 3.15
+    assert gdf_images['item_type_id'][0] == 'PSScene'
+    assert gdf_images['lon'][0] == 8.804454520157185
+    assert gdf_images['lat'][0] == 55.474220203855445
+    assert gdf_images['area_sqkm'][0] == 1244037.118
+    assert gdf_images['land_cover_class'][0] == 'fake_area'
+    assert gdf_images['geom'].any()
+
+
+def test_query_land_cover_classes_with_filters(db_session, setup_models):
+
+    # setup filters
+    cloud_cover = 1.0
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
+    end_date = datetime.utcnow()
+    sat_names = ['Planetscope']
+    country_name = 'Germany'
+
+    gdf_land_cover = query.query_land_cover_classes_with_filters(
+        db_session, sat_names, cloud_cover, start_date, end_date, country_name)
+
+    assert gdf_land_cover['id'].any()
+    assert gdf_land_cover['total_images'][0] == 1
+    assert gdf_land_cover['featureclass'][0] == 'fake_area'
+    assert gdf_land_cover['geom'].any()

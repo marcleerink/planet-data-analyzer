@@ -39,7 +39,6 @@ def main():
                                                 start_date=start_date,
                                                 end_date=end_date,
                                                 country_name=country_name)
-
     lat_lon_lst = query.get_lat_lon_from_images(gdf_images)
 
     gdf_cities = query.query_cities_with_filters(_session=session,
@@ -49,14 +48,13 @@ def main():
                                              end_date=end_date,
                                              country_name=country_name)
    
-    land_cover_classes = query.query_land_cover_classes_with_filters(_session=session,
+    gdf_land_cover = query.query_land_cover_classes_with_filters(_session=session,
                                                                      sat_names=sat_names,
                                                                      cloud_cover=cloud_cover,
                                                                      start_date=start_date,
                                                                      end_date=end_date,
                                                                      country_name=country_name)
 
-    gdf_land_cover = query.create_land_cover_gpd(land_cover_classes)
 
     if len(gdf_images.index) == 0:
         st.write('No Images available for selected filters')

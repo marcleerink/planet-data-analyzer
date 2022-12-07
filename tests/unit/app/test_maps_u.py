@@ -3,10 +3,13 @@ import folium
 from app import maps
 import geopandas as gpd
 import pandas as pd
+from shapely.geometry import Point
 from tests.resources import fake_country_geojson, fake_image, fake_lat_lon_list
 
 @pytest.fixture
-
+def geom_city():
+    point = gpd.GeoSeries(Point([13.399602764700546, 52.523764522251156]))
+    return point.buffer(2)
 def test_create_basemap_fit_bounds_u():
     fake_map = folium.Map(location=[52.5200, 13.4050])
     fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
@@ -69,10 +72,19 @@ def test_image_info_map():
     assert streamlit_map['bounds']['_southWest'] == {'lat': 52.398654, 'lng': 12.921842}
     assert streamlit_map['bounds']['_northEast'] == {'lat': 52.629318, 'lng': 13.24332}
 
-def test_images_per_city():
+def test_images_per_city(geom_city):
     fake_map = folium.Map(location=[52.5200, 13.4050])
     fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
 
     gdf_cities = gpd.GeoDataFrame({'id': [1204],
                                     'name': ['Berlin'],
-                                    geom})
+                                    'total_images': [23],
+                                    'geom': geom_city}, geometry='geom')
+    
+    city_map, streamlit_map = maps.images_per_city(fake_map, gdf_cities)
+
+    assert 'Choropleth' in city_map.to_json()
+    assert 'GeoJsonTooltip' in city_map.to_json()
+    assert 'ColorMap' in city_map.to_json()
+    assert streamlit_map['bounds']['_southWest'] == {'lat': 50.523764522251156, 'lng': 11.399602764700546}
+    assert streamlit_map['bounds']['_northEast'] == {'lat': 54.523764522251156, 'lng': 15.399602764700546}
