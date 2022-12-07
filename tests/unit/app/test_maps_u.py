@@ -1,6 +1,7 @@
 import pytest
 import folium
 from app import maps
+import geopandas as gpd
 import pandas as pd
 from tests.resources import fake_country_geojson, fake_image, fake_lat_lon_list
 
@@ -54,18 +55,12 @@ def test_image_info_map():
     fake_map = folium.Map(location=[52.5200, 13.4050])
     fake_map.fit_bounds(fake_lat_lon_list.lat_lon_list, max_zoom=7)
 
-    df_images = pd.DataFrame({'id': ['6050990_3363309_2022-11-02_2446'],
-                              'cloud_cover': [0.0],
-                              'pixel_res': [3.125],
-                              'time_acquired': ['2022-11-02 10:44:57'],
-                              'sat_name': ['Planetscope'],
-                              'area_sqkm': [245.43],
-                              'asset_type': ['analytic']})
+    gdf_images = gpd.GeoDataFrame.from_features(fake_image.image_geojson)
+    gdf_images['time_acquired'] = pd.to_datetime(gdf_images['time_acquired'])
 
     info_map, streamlit_map = maps.image_info_map(
-        map=fake_map,
-        images_geojson=fake_image.image_geojson,
-        df_images=df_images)
+                                    map=fake_map,
+                                    gdf_images=gdf_images)
 
     assert 'Choropleth' in info_map.to_json()
     assert 'GeoJsonTooltip' in info_map.to_json()

@@ -28,16 +28,6 @@ def test_query_distinc_satellite_names(db_session, setup_test_db):
     assert sat_names == ['fake', 'fake2']
 
 
-def test_query_lat_lon_sat_images(db_session, setup_models):
-    # arrange
-    sat_images = db_session.query(db.SatImage).all()
-
-    # act
-    lat_lon = query.query_lat_lon_from_images(sat_images)
-
-    # assert
-    assert lat_lon == [[55.474220203855445, 8.804454520157185]]
-
 
 sat_names_input_output = [
     (['Planetscope'], 1),

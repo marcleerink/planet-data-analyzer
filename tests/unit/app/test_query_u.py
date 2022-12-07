@@ -4,12 +4,11 @@ from datetime import datetime
 import pandas as pd
 from shapely import geometry
 import geopandas as gpd
-from shapely.geometry import shape
+from shapely.geometry import shape, Point
 from geoalchemy2.shape import from_shape
 
 from app import query
 from tests.resources import fake_feature
-
 
 @dataclass
 class FakeSatellite:
@@ -44,6 +43,7 @@ class FakeSatImage:
     time_acquired: datetime
     geom: geometry
     area_sqkm: float
+    centroid: Point
     lon: float
     lat: float
 
@@ -89,6 +89,7 @@ def fake_asset_type2():
 
 @pytest.fixture
 def fake_image(fake_satellite, fake_item_type, fake_land_cover_class, geom_shape):
+    centroid = geom_shape.centroid
     return FakeSatImage(
         id='fake_id',
         cloud_cover=0.1,
@@ -98,6 +99,7 @@ def fake_image(fake_satellite, fake_item_type, fake_land_cover_class, geom_shape
         item_type_id='fake_item_type_id',
         item_types=fake_item_type,
         geom=from_shape(geom_shape),
+        centroid=centroid,
         area_sqkm=25.0,
         land_cover_class=[fake_land_cover_class],
         lon=23.0235,
@@ -116,6 +118,7 @@ def fake_country(geom_shape):
     return FakeCountry(iso='NL', name='Netherlands', total_images=50, geom=from_shape(geom_shape))
 
 
+
 def test_query_asset_types_from_image(fake_image):
 
     asset_types = query.query_asset_types_from_image(fake_image)
@@ -123,18 +126,20 @@ def test_query_asset_types_from_image(fake_image):
     assert asset_types == ['asset1', 'asset2']
 
 
-def test_query_query_land_cover_class_from_image(fake_image):
+def test_query_land_cover_class_from_image(fake_image):
 
     land_cover_class = query.query_land_cover_class_from_image(fake_image)
 
     assert land_cover_class == ['fake_land_cover_class']
 
 
-def test_query_lat_lon_from_images(fake_image):
+def test_get_lat_lon_from_images(fake_image):
 
-    lat_lon_list = query.query_lat_lon_from_images([fake_image])
+    gdf_images = gpd.GeoDataFrame({'lat':[fake_image.lat],
+                                    'lon': [fake_image.lon]})
+    lat_lon_list = query.get_lat_lon_from_images(gdf_images)
 
-    assert lat_lon_list == [[-15.0452, 23.0235]]
+    assert lat_lon_list == [(-15.0452, 23.0235)]
 
 
 def test_create_images_df(fake_image):

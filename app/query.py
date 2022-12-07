@@ -104,7 +104,7 @@ def query_distinct_satellite_names(_session: session.Session) -> list[str]:
     return sorted([sat.name for sat in query])
 
 
-def query_lat_lon_from_images(gdf_images: list[SatImage]) -> list[tuple[float]]:
+def get_lat_lon_from_images(gdf_images: list[SatImage]) -> list[tuple[float]]:
     """gets lon and lat for each row in gdf_images"""   
     return [(x,y) for x,y in zip(gdf_images['lat'],
                                         gdf_images['lon'])]

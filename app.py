@@ -40,7 +40,7 @@ def main():
                                                 end_date=end_date,
                                                 country_name=country_name)
 
-    lat_lon_lst = query.query_lat_lon_from_images(gdf_images)
+    lat_lon_lst = query.get_lat_lon_from_images(gdf_images)
 
     cities = query.query_cities_with_filters(_session=session,
                                              sat_names=sat_names,
