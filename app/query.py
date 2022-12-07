@@ -96,6 +96,7 @@ def query_cities_with_filters(_session: session.Session,
                             City.buffer.label('geom'), 
                             func.count(SatImage.id).label('total_images'))\
                             .join(City.sat_images)\
+                            .filter(City.geom.ST_Intersects(subquery_country))\
                             .filter(SatImage.geom.ST_Intersects(subquery_country))\
                             .filter(SatImage.sat_id.in_(select(subquery_sat)))\
                             .filter(SatImage.time_acquired >= start_date,

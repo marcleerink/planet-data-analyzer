@@ -59,7 +59,7 @@ def image_info_map(
                       name='Choropleth: Satellite Imagery Cloud Cover',
                       data=gdf_images,
                       columns=['id', 'area_sqkm'],
-                      key_on='feature.id',
+                      key_on='feature.properties.id',
                       fill_color='YlGnBu',
                       legend_name='Area Coverage in Sqkm',
                       smooth_factor=0).add_to(map)
