@@ -73,8 +73,11 @@ def main():
         st.write(
             f'Total images for each major city in {country_name} with 30km buffer radius from {start_date} to {end_date}')
         st.caption('This also displays cities near the borders due to the buffer polygon around the city and the geometry of the satellite image which may cross the border')
-        maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-                             gdf_cities=gdf_cities)
+        if len(gdf_cities.index) == 0:
+            st.write('No Images near cities in selected country')
+        else:
+            maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
+                                                        gdf_cities=gdf_cities)
 
         st.subheader(
             f"What is the imagery coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
