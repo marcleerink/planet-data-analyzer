@@ -45,37 +45,33 @@ def query_sat_images_with_filter(_session: session.Session,
     t1 = time.time()
     subquery = _session.query(Country.geom).filter(
         Country.name == country_name).scalar_subquery()
-        
-    query = _session.query(SatImage).distinct(SatImage.id)\
-        .join(SatImage.satellites)\
-        .filter(SatImage.geom.ST_Intersects(subquery),
-                Satellite.name.in_(sat_names),
-                SatImage.time_acquired >= start_date,
-                SatImage.time_acquired <= end_date,
-                SatImage.cloud_cover <= cloud_cover)
+    query = _session.query(SatImage.id,
+                           SatImage.clear_confidence_percent,
+                           SatImage.cloud_cover,
+                           SatImage.time_acquired,
+                           SatImage.sat_id,
+                           Satellite.name.label('sat_name'),
+                           Satellite.pixel_res.label('pixel_res'),
+                           SatImage.item_type_id,
+                           SatImage.lon.label('lon'),
+                           SatImage.lat.label('lat'),
+                           SatImage.area_sqkm,
+                           LandCoverClass.featureclass.label(
+                               'land_cover_class'),
+                           SatImage.geom).join(SatImage.satellites).join(SatImage.land_cover_class, isouter=True)\
+        .filter(SatImage.geom.ST_Intersects(subquery))\
+        .filter(Satellite.name.in_(sat_names))\
+        .filter(SatImage.time_acquired >= start_date)\
+        .filter(SatImage.time_acquired <= end_date)\
+        .filter(SatImage.cloud_cover <= cloud_cover)
 
     gdf = gpd.read_postgis(sql=query.statement,
                            con=query.session.bind, crs=4326)
-
-    #TODO get list of land cover classes directly in query (then all other extra queries here can be in one)
-    gdf['land_cover_class'] = [query_land_cover_class_from_image(image) for image in query if image]
-    gdf['lat'] = [i.lat for i in query]
-    gdf['lon'] = [i.lon for i in query]
-    gdf['area_sqkm'] = [i.area_sqkm for i in query]
-    gdf['sat_name'] = [i.satellites.name for i in query]
-    gdf['pixel_res'] = [i.satellites.pixel_res for i in query]
     gdf['area_sqkm'] = gdf['area_sqkm'].round(3)
-    gdf = gdf.drop('centroid', axis=1)
-    
     t2 = time.time()
     LOGGER.info(f'query sat images took {t2-t1} seconds')
-    
-    assert gdf.id.is_unique
     return gdf
 
-
-def query_land_cover_class_from_image(_image: SatImage) -> list[str]:
-    return [i.featureclass for i in _image.land_cover_class]
 
 @st.experimental_memo
 def query_cities_with_filters(_session: session.Session,

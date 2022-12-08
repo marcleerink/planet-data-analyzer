@@ -113,7 +113,7 @@ class SatImage(Base):
         'LandCoverClass',
         primaryjoin='func.ST_Intersects(foreign(SatImage.geom), remote(LandCoverClass.geom)).as_comparison(1,2)',
         backref='sat_image',
-        lazy='joined',
+        lazy='select',
         viewonly=True,
         uselist=True)
 

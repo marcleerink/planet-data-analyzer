@@ -95,9 +95,22 @@ def test_query_sat_images_with_filter(db_session, setup_models):
     assert gdf_images['lon'][0] == 8.804454520157185
     assert gdf_images['lat'][0] == 55.474220203855445
     assert gdf_images['area_sqkm'][0] == 1244037.118
-    assert gdf_images['land_cover_class'][0] == 'fake_area'
+    assert gdf_images['land_cover_class'][0] == ['fake_area']
     assert gdf_images['geom'].any()
 
+def test_query_images_with_filters_queries_unique_image_ids(db_session, setup_models):
+    
+    # setup filters
+    cloud_cover = 1.0
+    start_date = datetime(2022, 9, 1, 23, 55, 59)
+    end_date = datetime.utcnow()
+    sat_names = ['Planetscope']
+    country_name = 'Germany'
+
+    gdf_images = query.query_sat_images_with_filter(
+        db_session, sat_names, cloud_cover, start_date, end_date, country_name)
+
+    assert gdf_images['id'].is_unique
 
 def test_query_land_cover_classes_with_filters(db_session, setup_models):
 
