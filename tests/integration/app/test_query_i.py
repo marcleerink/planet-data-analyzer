@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
-from shapely.geometry import Polygon
-from geoalchemy2.shape import from_shape
+from shapely.geometry import Point
+from geoalchemy2.shape import from_shape, to_shape
 from database import db
 from app import query
 
@@ -128,3 +128,4 @@ def test_query_land_cover_classes_with_filters(db_session, setup_models):
     assert gdf_land_cover['total_images'][0] == 1
     assert gdf_land_cover['featureclass'][0] == 'fake_area'
     assert gdf_land_cover['geom'].any()
+

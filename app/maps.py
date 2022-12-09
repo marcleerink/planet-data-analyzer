@@ -2,7 +2,7 @@
 import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
-import pandas as pd
+import streamlit as st
 import geopandas as gpd
 
 
@@ -20,6 +20,7 @@ def create_basemap(zoom: int = None, lat_lon_list: list = None) -> folium.Map:
     if lat_lon_list:
         map.fit_bounds(lat_lon_list, max_zoom=7)
     return map
+
 
 
 def heatmap(map: folium.Map, lat_lon_lst: list, sat_name: str) -> tuple[folium.Map, dict]:
@@ -46,6 +47,7 @@ def _tooltip_highlight_func():
                       'color': '#000000',
                       'fillOpacity': 0.50,
                       'weight': 0.1}
+
 
 
 def image_info_map(
@@ -77,6 +79,7 @@ def image_info_map(
         )).add_to(map)
 
     return map, st_folium(map, height=500, width=700, key='Image')
+
 
 
 def images_per_city(
@@ -130,6 +133,33 @@ def images_per_land_cover_class(
         tooltip=folium.GeoJsonTooltip(
             fields=['featureclass', 'total_images'],
             aliases=['Featureclass:  ', 'Total Images: '],
+        )).add_to(map)
+
+    return map, st_folium(map, height=500, width=700, key='Land_Cover')
+
+
+
+def land_cover_image_coverage(map: folium.Map, gdf: gpd.GeoDataFrame) -> tuple[folium.Map, dict]:
+
+    geojson= gdf.to_json()
+
+    folium.Choropleth(geo_data=geojson,
+                      name='Choropleth: Coverage percentage per Land Cover Class',
+                      data=gdf,
+                      columns=['id', 'coverage_percentage'],
+                      key_on='feature.properties.id',
+                      fill_color='YlGnBu',
+                      legend_name='Coverage percentage per Land Cover Class',
+                      smooth_factor=0).add_to(map)
+
+    folium.GeoJson(
+        geojson,
+        control=False,
+        style_function=_tooltip_style_func(),
+        highlight_function=_tooltip_highlight_func(),
+        tooltip=folium.GeoJsonTooltip(
+            fields=['featureclass', 'coverage_percentage'],
+            aliases=['Featureclass:  ', 'Coverage Percentage: '],
         )).add_to(map)
 
     return map, st_folium(map, height=500, width=700, key='Land_Cover')

@@ -45,20 +45,21 @@ def query_sat_images_with_filter(_session: session.Session,
     t1 = time.time()
     subquery = _session.query(Country.geom).filter(
         Country.name == country_name).scalar_subquery()
-        
-    query = _session.query(SatImage).distinct(SatImage.id)\
+
+    query = _session.query(SatImage)\
         .join(SatImage.satellites)\
         .filter(SatImage.geom.ST_Intersects(subquery),
                 Satellite.name.in_(sat_names),
                 SatImage.time_acquired >= start_date,
                 SatImage.time_acquired <= end_date,
-                SatImage.cloud_cover <= cloud_cover)
+                SatImage.cloud_cover <= cloud_cover).group_by(SatImage.id)
 
     gdf = gpd.read_postgis(sql=query.statement,
                            con=query.session.bind, crs=4326)
 
-    #TODO get list of land cover classes directly in query (then all other extra queries here can be in one)
-    gdf['land_cover_class'] = [query_land_cover_class_from_image(image) for image in query if image]
+    # TODO get list of land cover classes directly in query (then all other extra queries here can be in one)
+    gdf['land_cover_class'] = [query_land_cover_class_from_image(
+        image) for image in query if image]
     gdf['lat'] = [i.lat for i in query]
     gdf['lon'] = [i.lon for i in query]
     gdf['area_sqkm'] = [i.area_sqkm for i in query]
@@ -66,10 +67,10 @@ def query_sat_images_with_filter(_session: session.Session,
     gdf['pixel_res'] = [i.satellites.pixel_res for i in query]
     gdf['area_sqkm'] = gdf['area_sqkm'].round(3)
     gdf = gdf.drop('centroid', axis=1)
-    
+
     t2 = time.time()
     LOGGER.info(f'query sat images took {t2-t1} seconds')
-    
+
     assert gdf.id.is_unique
     return gdf
 
@@ -77,13 +78,14 @@ def query_sat_images_with_filter(_session: session.Session,
 def query_land_cover_class_from_image(_image: SatImage) -> list[str]:
     return [i.featureclass for i in _image.land_cover_class]
 
+
 @st.experimental_memo
 def query_cities_with_filters(_session: session.Session,
                               sat_names: list,
                               cloud_cover: float,
                               start_date: datetime.date,
                               end_date: datetime.date,
-                              country_name: str) -> list[Country]:
+                              country_name: str) -> gpd.GeoDataFrame:
     '''
     gets all cities with total images per city from postgis with applied filters.
     '''
@@ -140,4 +142,37 @@ def query_land_cover_classes_with_filters(_session: session.Session,
                            con=query.session.bind, crs=4326)
     t2 = time.time()
     LOGGER.info(f'query land cover classes took {t2-t1} seconds')
+    return gdf
+
+@st.experimental_memo
+def query_land_cover_classes_with_filters_image_coverage(_session: session.Session,
+                                          sat_names: list,
+                                          cloud_cover: float,
+                                          start_date: datetime.date,
+                                          end_date: datetime.date,
+                                          country_name: str) -> gpd.GeoDataFrame:
+    t1 = time.time()
+    subquery_country = _session.query(Country.geom).filter(
+        Country.name == country_name).scalar_subquery()
+    subquery_sat = _session.query(Satellite.id).filter(
+        Satellite.name.in_(sat_names)).subquery()
+    query = _session.query(LandCoverClass.id,
+                           LandCoverClass.featureclass,
+                           LandCoverClass.geom,
+                           (LandCoverClass.geom.ST_Intersection(SatImage.geom).ST_Transform(3035).ST_Area(
+                           ) / SatImage.geom.ST_Transform(3035).ST_Area() * 100).label('coverage_percentage'))\
+        .join(LandCoverClass.sat_image)\
+        .filter(SatImage.geom.ST_Intersects(subquery_country))\
+        .filter(SatImage.sat_id.in_(select(subquery_sat)))\
+        .filter(SatImage.time_acquired >= start_date,
+                SatImage.time_acquired <= end_date,
+                SatImage.cloud_cover <= cloud_cover)\
+        .group_by(LandCoverClass.id, SatImage.geom)
+
+    gdf = gpd.read_postgis(sql=query.statement,
+                           con=query.session.bind, crs=4326)
+
+    gdf['coverage_percentage'] = gdf['coverage_percentage'].round(3)
+    t2 = time.time()
+    LOGGER.info(f'query land cover image coverage took {t2-t1} seconds')
     return gdf

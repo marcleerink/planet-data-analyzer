@@ -8,6 +8,7 @@ from config import POSTGIS_URL
 APP_TITLE = "Planets Satellite Imagery"
 APP_SUB_TITLE = 'Source: Planet  https://developers.planet.com/docs/apis/data/'
 
+
 @st.experimental_singleton
 def app_db_session():
     """Database session to use in app with streamlit caching decorator"""
@@ -15,8 +16,9 @@ def app_db_session():
     Session = sessionmaker(bind=engine)
     return Session()
 
+
 def main():
-    
+
     st.title(APP_TITLE)
     st.caption(APP_SUB_TITLE)
 
@@ -34,28 +36,32 @@ def main():
 
     # query postgis
     gdf_images = query.query_sat_images_with_filter(_session=session,
-                                                sat_names=sat_names,
-                                                cloud_cover=cloud_cover,
-                                                start_date=start_date,
-                                                end_date=end_date,
-                                                country_name=country_name)
+                                                    sat_names=sat_names,
+                                                    cloud_cover=cloud_cover,
+                                                    start_date=start_date,
+                                                    end_date=end_date,
+                                                    country_name=country_name)
     lat_lon_lst = query.get_lat_lon_from_images(gdf_images)
 
     gdf_cities = query.query_cities_with_filters(_session=session,
-                                             sat_names=sat_names,
-                                             cloud_cover=cloud_cover,
-                                             start_date=start_date,
-                                             end_date=end_date,
-                                             country_name=country_name)
-   
+                                                 sat_names=sat_names,
+                                                 cloud_cover=cloud_cover,
+                                                 start_date=start_date,
+                                                 end_date=end_date,
+                                                 country_name=country_name)
+
     gdf_land_cover = query.query_land_cover_classes_with_filters(_session=session,
-                                                                     sat_names=sat_names,
-                                                                     cloud_cover=cloud_cover,
-                                                                     start_date=start_date,
-                                                                     end_date=end_date,
-                                                                     country_name=country_name)
-
-
+                                                                 sat_names=sat_names,
+                                                                 cloud_cover=cloud_cover,
+                                                                 start_date=start_date,
+                                                                 end_date=end_date,
+                                                                 country_name=country_name)
+    gdf_land_cover_coverage = query.query_land_cover_classes_with_filters_image_coverage(_session=session,
+                                                                 sat_names=sat_names,
+                                                                 cloud_cover=cloud_cover,
+                                                                 start_date=start_date,
+                                                                 end_date=end_date,
+                                                                 country_name=country_name)
     if len(gdf_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
@@ -77,10 +83,10 @@ def main():
             st.write('No Images near cities in selected country')
         else:
             maps.images_per_city(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-                                                        gdf_cities=gdf_cities)
+                                 gdf_cities=gdf_cities)
 
         st.subheader(
-            f"What is the imagery coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
+            f"What is the amount of imagery for each land cover classification in {country_name} from {start_date} to {end_date}?")
 
         plots.plot_images_per_land_cover_class(df_images=gdf_images)
 
@@ -91,9 +97,16 @@ def main():
                                          gdf_land_cover=gdf_land_cover)
 
         st.subheader(
+            f"What is the percentage of coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
+        
+        st.caption('This map is in progress and not showing correct data yet')
+        maps.land_cover_image_coverage(map=maps.create_basemap(
+            lat_lon_list=lat_lon_lst), gdf=gdf_land_cover_coverage)
+        
+        st.subheader(
             f'Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date}?')
         maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-                           gdf_images=gdf_images)
+                            gdf_images=gdf_images)
 
 
 if __name__ == '__main__':
