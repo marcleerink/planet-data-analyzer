@@ -25,17 +25,21 @@ def create_basemap(zoom: int = None, lat_lon_list: list = None) -> folium.Map:
 
 
 def heatmap(map: folium.Map,
+            gdf: gpd.GeoDataFrame,
             lat_lon_lst: list, 
             sat_name: list, 
             ) -> tuple[folium.Map, dict]:
     """instantiates a HeatMap with lat_lon coordinates."""
+    # add polygon footprints to map layers
+    folium.GeoJson(gdf['geom'],
+                    name='Satellite Images Footprints').add_to(map)
     heat_data_list = [
         [lat_lon_lst, sat_name]
     ]
 
     for heat_data, title in heat_data_list:
         HeatMap(data=heat_data, name=title).add_to(map)
-
+    
 
     return map, st_folium(map, height=500, width=700, key='Heatmap')
 
@@ -45,7 +49,7 @@ def heatmap_time_series(map: folium.Map,
                         start_date: datetime, 
                         end_date: datetime, 
                         time_interval: str):
-    print(gdf)
+    
     #create time interval column in gdf datetime type
     gdf[time_interval] = gdf["time_acquired"].dt.to_period(time_interval[0]).astype(str)
 
@@ -78,7 +82,8 @@ def heatmap_time_series(map: folium.Map,
     HeatMapWithTime(data=heat_time_data_list,
                     index=time_index, 
                     name=f"All Satellite Images Per {time_interval} for {sat_name}", 
-                    show=False).add_to(map)
+                    show=False,
+                    auto_play=True).add_to(map)
 
     return folium_static(map)
 
@@ -189,10 +194,7 @@ def land_cover_image_coverage(
 
     # add dissolved land cover class footprints
     land_cover_footprints = folium.GeoJson(gdf_land_cover_dissolved['geom'],
-                                           name='Land Cover Class Footprints',
-                                           style_function=lambda x: {
-                                               'fillColor': 'orange'},
-                                           show=True)
+                                           name='Land Cover Class Footprints',)
     land_cover_footprints.add_to(map)
 
     # add choropleth layer with intersection between land cover classes and sat_images

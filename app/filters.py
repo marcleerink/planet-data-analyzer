@@ -24,6 +24,10 @@ def display_country_filter(country_list: list[Country]) -> str:
     default_index = country_names.index('Germany')
     return st.sidebar.selectbox('Country', country_names, index=default_index)
 
+def display_time_interval_filter():
+    options_list = ['Month', 'Week', 'Day', 'Hour', 'Minute']
+    default_index = options_list.index('Hour')
+    return st.sidebar.selectbox('Time Interval', options_list, index=default_index)
 
 def filter_gdf_images(
     gdf_images: gpd.GeoDataFrame, start_date: datetime, end_date: datetime, sat_names: list[str], cloud_cover: float) -> gpd.GeoDataFrame:
