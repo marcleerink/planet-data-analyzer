@@ -20,7 +20,7 @@ def create_basemap(zoom: int = None, lat_lon_list: list = None) -> folium.Map:
                      control=False).add_to(map)
 
     if lat_lon_list:
-        map.fit_bounds(lat_lon_list, max_zoom=7)
+        map.fit_bounds(lat_lon_list, max_zoom=8)
     return map
 
 
@@ -38,9 +38,11 @@ def heatmap(map: folium.Map,
     ]
 
     for heat_data, title in heat_data_list:
-        HeatMap(data=heat_data, name=title).add_to(map)
+        HeatMap(data=heat_data,
+                overlay=False,
+                name=title).add_to(map)
     
-
+    
     return map, st_folium(map, height=500, width=700, key='Heatmap')
 
 def heatmap_time_series(map: folium.Map, 
@@ -82,7 +84,7 @@ def heatmap_time_series(map: folium.Map,
     HeatMapWithTime(data=heat_time_data_list,
                     index=time_index, 
                     name=f"All Satellite Images Per {time_interval} for {sat_name}", 
-                    show=False,
+                    max_speed=20,
                     auto_play=True).add_to(map)
 
     return folium_static(map)

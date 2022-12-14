@@ -32,14 +32,14 @@ def main():
     # add sidebar with filters
     sat_names = filters.display_sat_name_filter(sat_name_list)
     start_date, end_date = filters.display_time_filter()
+    time_interval = filters.display_time_interval_filter()
     cloud_cover = filters.display_cloud_cover_filter()
     country_name = filters.display_country_filter(country_list=country_list)
-    time_interval = filters.display_time_interval_filter()
 
     # convert minute to proper offset alias
     if time_interval == 'Minute':
         time_interval = 'T'
-
+        
     # query postgis
     gdf_images = query.query_sat_images_with_filter(_session=session,
                                                     sat_names=sat_names,
@@ -113,7 +113,7 @@ def main():
             f"What is the amount of imagery for each land cover classification in \
                 {country_name} from {start_date} to {end_date} for {', '.join(sat_names)} satellites?")
 
-        plots.plot_images_per_land_cover_class(df_images=gdf_images)
+        plots.plot_images_per_land_cover_class(gdf_land_cover=gdf_land_cover)
 
         st.caption('This displays all land cover class geometries that are covered by Planets satellite imagery and specified filters,\
                     it does not display land cover geometries that are not covered by imagery with the specified filters')
