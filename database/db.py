@@ -5,7 +5,7 @@ import psycopg2
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, Table, Column, Integer, Float, String,\
-    DateTime, ForeignKey, select, func, Index
+    DateTime, ForeignKey, select, func, inspect, event
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
@@ -40,23 +40,27 @@ def sql_alch_commit(model):
     session.add(model)
     session.commit()
 
+def create_postgis_db(engine):
+    create_database(url=engine.url)
+    conn = psycopg2.connect(dbname=os.environ['DB_NAME'],
+                            user=os.environ['DB_USER'],
+                            password=os.environ['DB_PW'],
+                            host=os.environ['DB_HOST'],
+                            port=os.environ['DB_PORT'])
+    cursor = conn.cursor()
+    cursor.execute('CREATE EXTENSION postgis')
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 def create_tables(engine, Base):
-    if not database_exists(engine.url):
-        create_database(url=engine.url)
-        conn = psycopg2.connect(dbname=os.environ['DB_NAME'],
-                                user=os.environ['DB_USER'],
-                                password=os.environ['DB_PW'],
-                                host=os.environ['DB_HOST'],
-                                port=os.environ['DB_PORT'])
-        cursor = conn.cursor()
-        cursor.execute('CREATE EXTENSION postgis')
-        conn.commit()
-        cursor.close()
-        conn.close()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-
+    
+    # check tables exists
+    ins = inspect(engine)
+    for _t in ins.get_table_names():
+        print(_t)
 
 @compiles(Insert)
 def prefix_inserts(insert, compiler, **kw):
@@ -116,6 +120,8 @@ class SatImage(Base):
         lazy='select',
         viewonly=True,
         uselist=True)
+
+
 
     @hybrid_property
     def sat_name(self):
@@ -247,6 +253,10 @@ class LandCoverClass(Base):
                   nullable=False)
 
 
+
 if __name__ == '__main__':
     engine = get_db_engine()
+    if not database_exists(engine.url):
+        create_postgis_db(engine)
     create_tables(engine, Base)
+

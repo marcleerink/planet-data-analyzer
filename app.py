@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 from app import maps, plots, query, filters
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -33,6 +34,7 @@ def main():
     start_date, end_date = filters.display_time_filter()
     cloud_cover = filters.display_cloud_cover_filter()
     country_name = filters.display_country_filter(country_list=country_list)
+    time_interval = 'Hour'
 
     # query postgis
     gdf_images = query.query_sat_images_with_filter(_session=session,
@@ -57,11 +59,13 @@ def main():
                                                                  end_date=end_date,
                                                                  country_name=country_name)
     gdf_land_cover_coverage = query.query_land_cover_classes_with_filters_image_coverage(_session=session,
-                                                                 sat_names=sat_names,
-                                                                 cloud_cover=cloud_cover,
-                                                                 start_date=start_date,
-                                                                 end_date=end_date,
-                                                                 country_name=country_name)
+                                                                                         sat_names=sat_names,
+                                                                                         cloud_cover=cloud_cover,
+                                                                                         start_date=start_date,
+                                                                                         end_date=end_date,
+                                                                                         country_name=country_name)
+    gdf_land_cover_dissolved = query.query_land_cover_geom_dissolved(_session=session,
+                                                                     country_name=country_name)
     if len(gdf_images.index) == 0:
         st.write('No Images available for selected filters')
     else:
@@ -76,6 +80,12 @@ def main():
                      lat_lon_lst=lat_lon_lst,
                      sat_name=sat_names)
 
+        maps.heatmap_time_series(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
+                                gdf=gdf_images,
+                                sat_name=sat_names,
+                                start_date=start_date,
+                                end_date=end_date,
+                                time_interval=time_interval)
         st.write(
             f'Total images for each major city in {country_name} with 30km buffer radius from {start_date} to {end_date}')
         st.caption('This also displays cities near the borders due to the buffer polygon around the city and the geometry of the satellite image which may cross the border')
@@ -93,16 +103,22 @@ def main():
         st.caption('This displays all land cover class geometries that are covered by Planets satellite imagegery and specified filters,\
                     it does not display land cover geometries that are not covered by imagery with the specified filters')
 
-        maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
-                                         gdf_land_cover=gdf_land_cover)
+        map = maps.images_per_land_cover_class(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
+                                               gdf_land_cover=gdf_land_cover)
 
         st.subheader(
             f"What is the percentage of coverage for each land cover classification in {country_name} from {start_date} to {end_date}?")
-        
-        st.caption('This map is in progress and not showing correct data yet')
+
+        plots.plot_land_cover_image_coverage(gdf_land_cover_coverage)
+
+        st.subheader(
+            f"Where is the coverage of land cover classification in {country_name} from {start_date} to {end_date}?")
+
         maps.land_cover_image_coverage(map=maps.create_basemap(
-            lat_lon_list=lat_lon_lst), gdf=gdf_land_cover_coverage)
-        
+            lat_lon_list=lat_lon_lst),
+            gdf=gdf_land_cover_coverage,
+            gdf_land_cover_dissolved=gdf_land_cover_dissolved)
+
         st.subheader(
             f'Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date}?')
         maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
