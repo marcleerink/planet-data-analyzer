@@ -39,7 +39,7 @@ def main():
     # convert minute to proper offset alias
     if time_interval == 'Minute':
         time_interval = 'T'
-        
+
     # query postgis
     gdf_images = query.query_sat_images_with_filter(_session=session,
                                                     sat_names=sat_names,
@@ -75,7 +75,7 @@ def main():
     else:
         st.subheader(
             f"What is the amount of Planets satellite imagery in {country_name} from {start_date} \
-                to {end_date}? for {', '.join(sat_names)} satellites?")
+                to {end_date} for {', '.join(sat_names)} satellites?")
         st.write('Total Satellite Images: {}'.format(len(gdf_images.index)))
         plots.plot_images_per_satellite(df_images=gdf_images)
 
@@ -128,7 +128,7 @@ def main():
         plots.plot_land_cover_image_coverage(gdf_land_cover_coverage)
 
         st.subheader(
-            f"Where is the coverage of land cover classification in {country_name}\
+            f"Where is the coverage of each land cover classification {country_name}\
                  from {start_date} to {end_date} for {', '.join(sat_names)} satellites?")
 
         maps.land_cover_image_coverage(map=maps.create_basemap(
@@ -138,6 +138,7 @@ def main():
 
         st.subheader(
             f"Which land cover classifications are covered for each individual satellite image in {country_name} from {start_date} to {end_date} for {', '.join(sat_names)}?")
+       
         maps.image_info_map(map=maps.create_basemap(lat_lon_list=lat_lon_lst),
                             gdf_images=gdf_images)
 

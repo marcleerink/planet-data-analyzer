@@ -135,7 +135,7 @@ def query_land_cover_classes_with_filters(_session: session.Session,
     
     gdf = gpd.read_postgis(sql=query.statement,
                            con=query.session.bind, crs=4326)
-    print(gdf)
+        
     t2 = time.time()
     LOGGER.info(f'query land cover classes took {t2-t1} seconds')
     return gdf
